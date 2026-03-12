@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, AlertTriangle, Clock, CheckCircle2, X } from 'lucide-react'
+import { Plus, AlertTriangle, Clock, CheckCircle2, X, RefreshCw } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
+import { supabase } from '../lib/supabase'
 import type { User } from '../types'
 
 interface Props { user: User; onBack: () => void }
@@ -10,14 +11,20 @@ type Severity = 'low' | 'medium' | 'high' | 'critical'
 type Status   = 'open' | 'in_progress' | 'resolved'
 
 interface Anomaly {
-  id: string; reportedAt: string; category: string
-  description: string; severity: Severity; status: Status; reporterName: string
+  id: string
+  store_id: string
+  reporter_name: string
+  reported_at: string
+  category: string
+  description: string
+  severity: Severity
+  status: Status
 }
 
 const sevConfig: Record<Severity, { label: string; color: string; bg: string }> = {
-  low:      { label: '低',  color: '#6b7280', bg: '#f3f4f6' },
-  medium:   { label: '中',  color: '#f59e0b', bg: '#fffbeb' },
-  high:     { label: '高',  color: '#f97316', bg: '#fff7ed' },
+  low:      { label: '低',   color: '#6b7280', bg: '#f3f4f6' },
+  medium:   { label: '中',   color: '#f59e0b', bg: '#fffbeb' },
+  high:     { label: '高',   color: '#f97316', bg: '#fff7ed' },
   critical: { label: '緊急', color: '#ef4444', bg: '#fef2f2' },
 }
 const staConfig: Record<Status, { label: string; color: string; bg: string }> = {
@@ -28,32 +35,53 @@ const staConfig: Record<Status, { label: string; color: string; bg: string }> = 
 
 const categories = ['設備故障', '衛生問題', '商品品質', '人員事故', '顧客投訴', '設施損壞', '其他']
 
-const initAnomalies: Anomaly[] = [
-  { id: '1', reportedAt: '09:23', category: '設備故障',  description: '冷凍庫溫度偏高，顯示 -15°C，低於標準 -18°C', severity: 'high',   status: 'in_progress', reporterName: '阿澤' },
-  { id: '2', reportedAt: '昨天',  category: '顧客投訴',  description: '顧客反映鮮食包裝破損',                        severity: 'medium', status: 'open',        reporterName: '如思' },
-]
-
 export default function AnomalyPage({ user, onBack }: Props) {
-  const [anomalies, setAnomalies] = useState<Anomaly[]>(initAnomalies)
-  const [showForm, setShowForm] = useState(false)
+  const [anomalies, setAnomalies] = useState<Anomaly[]>([])
+  const [loading, setLoading]     = useState(true)
+  const [showForm, setShowForm]   = useState(false)
+  const [saving, setSaving]       = useState(false)
   const [form, setForm] = useState({ category: '設備故障', description: '', severity: 'medium' as Severity })
 
-  const updateStatus = (id: string, status: Status) =>
-    setAnomalies(p => p.map(a => a.id === id ? { ...a, status } : a))
+  const fetchAnomalies = async () => {
+    setLoading(true)
+    const { data, error } = await supabase
+      .from('anomaly_reports')
+      .select('*')
+      .eq('store_id', user.storeId)
+      .order('reported_at', { ascending: false })
+    if (!error && data) setAnomalies(data)
+    setLoading(false)
+  }
 
-  const submitAnomaly = () => {
+  useEffect(() => { fetchAnomalies() }, [])
+
+  const updateStatus = async (id: string, status: Status) => {
+    await supabase.from('anomaly_reports').update({ status }).eq('id', id)
+    setAnomalies(p => p.map(a => a.id === id ? { ...a, status } : a))
+  }
+
+  const submitAnomaly = async () => {
     if (!form.description.trim()) return
-    setAnomalies(p => [{
-      id: Date.now().toString(),
-      reportedAt: new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
-      category: form.category,
-      description: form.description,
-      severity: form.severity,
-      status: 'open',
-      reporterName: user.name,
-    }, ...p])
-    setShowForm(false)
-    setForm({ category: '設備故障', description: '', severity: 'medium' })
+    setSaving(true)
+    const { data, error } = await supabase
+      .from('anomaly_reports')
+      .insert({
+        store_id:      user.storeId,
+        reporter_name: user.name,
+        category:      form.category,
+        description:   form.description,
+        severity:      form.severity,
+        status:        'open',
+      })
+      .select()
+      .single()
+
+    if (!error && data) {
+      setAnomalies(p => [data, ...p])
+      setShowForm(false)
+      setForm({ category: '設備故障', description: '', severity: 'medium' })
+    }
+    setSaving(false)
   }
 
   const openCount = anomalies.filter(a => a.status === 'open').length
@@ -62,7 +90,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
     <div className="min-h-dvh bg-gray-50">
       <PageHeader
         title="異常回報"
-        subtitle={`${openCount} 件待處理`}
+        subtitle={loading ? '載入中...' : `${openCount} 件待處理`}
         onBack={onBack}
         rightElement={
           <button
@@ -91,8 +119,16 @@ export default function AnomalyPage({ user, onBack }: Props) {
           })}
         </div>
 
+        {/* Loading */}
+        {loading && (
+          <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            <span className="text-sm">載入中...</span>
+          </div>
+        )}
+
         {/* List */}
-        {anomalies.map((a, i) => {
+        {!loading && anomalies.map((a, i) => {
           const sev = sevConfig[a.severity]
           const sta = staConfig[a.status]
           return (
@@ -100,7 +136,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
               key={a.id}
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
+              transition={{ delay: i * 0.04 }}
               className="bg-white rounded-2xl p-4 shadow-sm"
             >
               <div className="flex items-start gap-3">
@@ -116,13 +152,13 @@ export default function AnomalyPage({ user, onBack }: Props) {
                   <p className="text-sm text-gray-700 leading-relaxed">{a.description}</p>
                   <div className="flex items-center gap-3 mt-2">
                     <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                      <Clock className="w-3 h-3" /> {a.reportedAt}
+                      <Clock className="w-3 h-3" />
+                      {new Date(a.reported_at).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </span>
-                    <span className="text-[10px] text-gray-400">回報：{a.reporterName}</span>
+                    <span className="text-[10px] text-gray-400">回報：{a.reporter_name}</span>
                   </div>
                 </div>
               </div>
-
               {a.status !== 'resolved' && (
                 <div className="flex gap-2 mt-3 pt-3 border-t border-gray-50">
                   {a.status === 'open' && (
@@ -145,7 +181,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
           )
         })}
 
-        {anomalies.length === 0 && (
+        {!loading && anomalies.length === 0 && (
           <div className="text-center py-12 text-gray-300">
             <AlertTriangle className="w-12 h-12 mx-auto mb-3" />
             <p className="text-sm">目前無異常紀錄</p>
@@ -153,7 +189,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
         )}
       </div>
 
-      {/* Create form - bottom sheet */}
+      {/* Create form */}
       <AnimatePresence>
         {showForm && (
           <>
@@ -218,10 +254,11 @@ export default function AnomalyPage({ user, onBack }: Props) {
 
                 <button
                   onClick={submitAnomaly}
-                  className="w-full py-4 rounded-2xl text-white font-bold text-sm"
-                  style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)' }}
+                  disabled={saving}
+                  className="w-full py-4 rounded-2xl text-white font-bold text-sm transition-opacity"
+                  style={{ background: 'linear-gradient(135deg, #ef4444, #f97316)', opacity: saving ? 0.7 : 1 }}
                 >
-                  送出回報（{user.name}）
+                  {saving ? '儲存中...' : `送出回報（${user.name}）`}
                 </button>
               </div>
             </motion.div>

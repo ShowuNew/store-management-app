@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle2, XCircle, MinusCircle, Save } from 'lucide-react'
+import { CheckCircle2, XCircle, MinusCircle, Save, RefreshCw } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
+import { supabase } from '../lib/supabase'
 import type { User } from '../types'
 
 interface Props { user: User; onBack: () => void }
@@ -51,17 +52,68 @@ const categories = [
 ]
 
 const shifts = ['07:00', '15:00', '23:00']
+const todayStr = new Date().toISOString().split('T')[0]
 
 export default function HygienePage({ user, onBack }: Props) {
   const [activeCategory, setActiveCategory] = useState(0)
-  const [activeShift, setActiveShift] = useState(0)
-  const [results, setResults] = useState<Record<string, Result>>({})
-  const [saved, setSaved] = useState(false)
+  const [activeShift, setActiveShift]       = useState(0)
+  const [results, setResults]               = useState<Record<string, Result>>({})
+  const [saved, setSaved]                   = useState(false)
+  const [saving, setSaving]                 = useState(false)
+  const [loading, setLoading]               = useState(true)
+  const [existingId, setExistingId]         = useState<string | null>(null)
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true)
+      const { data } = await supabase
+        .from('hygiene_records')
+        .select('*')
+        .eq('store_id', user.storeId)
+        .eq('record_date', todayStr)
+        .eq('shift', shifts[activeShift])
+        .maybeSingle()
+
+      if (data) {
+        setExistingId(data.id)
+        setResults(data.results || {})
+        setSaved(true)
+      } else {
+        setExistingId(null)
+        setResults({})
+        setSaved(false)
+      }
+      setLoading(false)
+    }
+    load()
+  }, [activeShift])
 
   const setResult = (key: string, val: Result) =>
     setResults(p => ({ ...p, [key]: p[key] === val ? null : val }))
 
-  const cat = categories[activeCategory]
+  const handleSave = async () => {
+    setSaving(true)
+    const payload = {
+      store_id:    user.storeId,
+      staff_name:  user.name,
+      record_date: todayStr,
+      shift:       shifts[activeShift],
+      results,
+      saved_at:    new Date().toISOString(),
+    }
+
+    if (existingId) {
+      await supabase.from('hygiene_records').update(payload).eq('id', existingId)
+    } else {
+      const { data } = await supabase.from('hygiene_records').insert(payload).select().single()
+      if (data) setExistingId(data.id)
+    }
+
+    setSaved(true)
+    setSaving(false)
+  }
+
+  const cat       = categories[activeCategory]
   const passCount = cat.items.filter((_, i) => results[`${activeCategory}-${i}`] === 'pass').length
   const failCount = cat.items.filter((_, i) => results[`${activeCategory}-${i}`] === 'fail').length
   const pendCount = cat.items.length - passCount - failCount
@@ -112,83 +164,88 @@ export default function HygienePage({ user, onBack }: Props) {
           ))}
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { label: '符合', count: passCount, color: '#10b981', bg: '#ecfdf5' },
-            { label: '缺失', count: failCount, color: '#ef4444', bg: '#fef2f2' },
-            { label: '未填', count: pendCount, color: '#9ca3af', bg: '#f9fafb' },
-          ].map(s => (
-            <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: s.bg }}>
-              <p className="text-2xl font-black" style={{ color: s.color }}>{s.count}</p>
-              <p className="text-xs font-semibold" style={{ color: s.color }}>{s.label}</p>
-            </div>
-          ))}
-        </div>
-
-        {/* Items */}
-        <div className="space-y-2">
-          {cat.items.map((item, i) => {
-            const key = `${activeCategory}-${i}`
-            const result = results[key]
-            return (
-              <motion.div
-                key={key}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="bg-white rounded-2xl p-4"
-              >
-                <p className="text-sm text-gray-700 mb-3 leading-relaxed">{item}</p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setResult(key, 'pass')}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                    style={{
-                      background: result === 'pass' ? '#10b981' : '#f0fdf4',
-                      color:      result === 'pass' ? 'white'   : '#10b981',
-                    }}
-                  >
-                    <CheckCircle2 className="w-3.5 h-3.5" /> 符合 ✓
-                  </button>
-                  <button
-                    onClick={() => setResult(key, 'fail')}
-                    className="flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                    style={{
-                      background: result === 'fail' ? '#ef4444' : '#fef2f2',
-                      color:      result === 'fail' ? 'white'   : '#ef4444',
-                    }}
-                  >
-                    <XCircle className="w-3.5 h-3.5" /> 缺失 ✗
-                  </button>
-                  <button
-                    onClick={() => setResult(key, null)}
-                    className="px-3 py-2.5 rounded-xl bg-gray-50"
-                  >
-                    <MinusCircle className="w-3.5 h-3.5 text-gray-300" />
-                  </button>
-                </div>
-              </motion.div>
-            )
-          })}
-        </div>
-
-        {/* Save */}
-        {!saved ? (
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => setSaved(true)}
-            className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2"
-            style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)' }}
-          >
-            <Save className="w-4 h-4" />
-            儲存 {shifts[activeShift]} 衛生紀錄（{user.name}）
-          </motion.button>
-        ) : (
-          <div className="w-full py-4 rounded-2xl bg-green-50 border border-green-100 text-center">
-            <p className="text-green-600 font-bold text-sm">✓ {shifts[activeShift]} 紀錄已儲存</p>
-            <p className="text-green-400 text-xs mt-0.5">{new Date().toLocaleTimeString('zh-TW')}・{user.name}</p>
+        {loading ? (
+          <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
+            <RefreshCw className="w-4 h-4 animate-spin" />
+            <span className="text-sm">載入紀錄...</span>
           </div>
+        ) : (
+          <>
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: '符合', count: passCount, color: '#10b981', bg: '#ecfdf5' },
+                { label: '缺失', count: failCount, color: '#ef4444', bg: '#fef2f2' },
+                { label: '未填', count: pendCount, color: '#9ca3af', bg: '#f9fafb' },
+              ].map(s => (
+                <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: s.bg }}>
+                  <p className="text-2xl font-black" style={{ color: s.color }}>{s.count}</p>
+                  <p className="text-xs font-semibold" style={{ color: s.color }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Items */}
+            <div className="space-y-2">
+              {cat.items.map((item, i) => {
+                const key    = `${activeCategory}-${i}`
+                const result = results[key]
+                return (
+                  <motion.div
+                    key={key}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.04 }}
+                    className="bg-white rounded-2xl p-4"
+                  >
+                    <p className="text-sm text-gray-700 mb-3 leading-relaxed">{item}</p>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => setResult(key, 'pass')}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                        style={{ background: result === 'pass' ? '#10b981' : '#f0fdf4', color: result === 'pass' ? 'white' : '#10b981' }}
+                      >
+                        <CheckCircle2 className="w-3.5 h-3.5" /> 符合 ✓
+                      </button>
+                      <button
+                        onClick={() => setResult(key, 'fail')}
+                        className="flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
+                        style={{ background: result === 'fail' ? '#ef4444' : '#fef2f2', color: result === 'fail' ? 'white' : '#ef4444' }}
+                      >
+                        <XCircle className="w-3.5 h-3.5" /> 缺失 ✗
+                      </button>
+                      <button
+                        onClick={() => setResult(key, null)}
+                        className="px-3 py-2.5 rounded-xl bg-gray-50"
+                      >
+                        <MinusCircle className="w-3.5 h-3.5 text-gray-300" />
+                      </button>
+                    </div>
+                  </motion.div>
+                )
+              })}
+            </div>
+
+            {/* Save */}
+            {!saved ? (
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={handleSave}
+                disabled={saving}
+                className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-opacity"
+                style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)', opacity: saving ? 0.7 : 1 }}
+              >
+                <Save className="w-4 h-4" />
+                {saving ? '儲存中...' : `儲存 ${shifts[activeShift]} 衛生紀錄（${user.name}）`}
+              </motion.button>
+            ) : (
+              <div className="w-full py-4 rounded-2xl bg-green-50 border border-green-100 text-center">
+                <p className="text-green-600 font-bold text-sm">✓ {shifts[activeShift]} 紀錄已儲存至資料庫</p>
+                <p className="text-green-400 text-xs mt-0.5">{new Date().toLocaleTimeString('zh-TW')}・{user.name}</p>
+                <button onClick={() => setSaved(false)} className="mt-2 text-xs text-green-500 underline">繼續編輯</button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

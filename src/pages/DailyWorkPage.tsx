@@ -60,7 +60,10 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     load()
   }, [selectedShift])
 
-  const toggleTask = (key: string) => setDoneMap(p => ({ ...p, [key]: !p[key] }))
+  const toggleTask = (key: string) => {
+    setDoneMap(p => ({ ...p, [key]: !p[key] }))
+    setSubmitted(false)
+  }
 
   const handleSubmit = async () => {
     setSaving(true)
@@ -221,6 +224,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               <div className="w-full py-4 rounded-2xl bg-green-50 border border-green-100 text-center">
                 <p className="text-green-600 font-bold text-sm">✓ 已完成班次確認並簽署</p>
                 <p className="text-green-400 text-xs mt-0.5">{new Date().toLocaleTimeString('zh-TW')} 已儲存至資料庫</p>
+                <button onClick={() => setSubmitted(false)} className="mt-2 text-xs text-green-500 underline">繼續編輯</button>
               </div>
             )}
           </>

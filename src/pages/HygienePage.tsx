@@ -88,8 +88,10 @@ export default function HygienePage({ user, onBack }: Props) {
     load()
   }, [activeShift])
 
-  const setResult = (key: string, val: Result) =>
+  const setResult = (key: string, val: Result) => {
     setResults(p => ({ ...p, [key]: p[key] === val ? null : val }))
+    setSaved(false)
+  }
 
   const handleSave = async () => {
     setSaving(true)

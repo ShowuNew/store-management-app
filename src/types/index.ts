@@ -8,6 +8,10 @@ export type Page =
   | 'inspection'
   | 'anomaly'
   | 'equipment'
+  | 'admin-dashboard'
+  | 'admin-records'
+  | 'admin-anomaly'
+  | 'admin-stats'
 
 export interface User {
   id: string

@@ -20,7 +20,7 @@ interface AlertItem {
   time: string
 }
 
-interface TempEntry { location: string; value: number; isNormal: boolean }
+interface TempEntry { location: string; value: number | null; isNormal: boolean | null }
 
 const todayStr = new Date().toISOString().split('T')[0]
 
@@ -94,16 +94,16 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         const frozenItem = temps.find(t => t.location.includes('冷凍') && !t.location.includes('冰淇淋'))
         const hotItem    = temps.find(t => t.location.includes('蒸箱') || t.location.includes('關東煮') || t.location.includes('鮮食'))
 
-        const fmt = (v: number) => `${v > 0 ? '+' : ''}${v}°C`
+        const fmt = (v: number | null) => v === null ? '—' : `${v > 0 ? '+' : ''}${v}°C`
 
         setTempStatus([
-          { label: '冷藏', value: coldItem   ? fmt(coldItem.value)   : '—', ok: coldItem   ? coldItem.isNormal   : true },
-          { label: '冷凍', value: frozenItem ? fmt(frozenItem.value) : '—', ok: frozenItem ? frozenItem.isNormal : true },
-          { label: '熱食', value: hotItem    ? fmt(hotItem.value)    : '—', ok: hotItem    ? hotItem.isNormal    : true },
+          { label: '冷藏', value: coldItem   ? fmt(coldItem.value)   : '—', ok: coldItem   ? coldItem.isNormal   !== false : true },
+          { label: '冷凍', value: frozenItem ? fmt(frozenItem.value) : '—', ok: frozenItem ? frozenItem.isNormal !== false : true },
+          { label: '熱食', value: hotItem    ? fmt(hotItem.value)    : '—', ok: hotItem    ? hotItem.isNormal    !== false : true },
         ])
 
-        // 溫度異常 → 紅色通知
-        temps.filter(t => !t.isNormal).forEach(t => {
+        // 溫度異常 → 紅色通知（null = 未填，不警告）
+        temps.filter(t => t.isNormal === false).forEach(t => {
           newAlerts.push({
             type: 'error',
             msg:  `${t.location} 溫度異常（${fmt(t.value)}），請30分鐘後複核`,

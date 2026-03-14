@@ -9,31 +9,30 @@ interface Props { user: User; onBack: () => void }
 
 const shifts = ['早班 07:00–15:00', '晚班 15:00–23:00', '大夜班 23:00–07:00']
 
-interface TempItem {
+interface TempSpec {
   location: string
   required: string
-  value: number
-  isNormal: boolean
   zone: string
+  check: (v: number) => boolean
 }
 
-const tempItems: TempItem[] = [
+const tempSpecs: TempSpec[] = [
   // 賣場區
-  { location: '4°C 間隔機（前後中島）', required: '4°C',      value: 4,   isNormal: true,  zone: '賣場' },
-  { location: 'OC',                    required: '0~7°C',    value: 3,   isNormal: true,  zone: '賣場' },
-  { location: 'WI（走入式冷藏）',      required: '0~7°C',    value: 5,   isNormal: true,  zone: '賣場' },
-  { location: '立式冷凍',              required: '-18°C以下', value: -20, isNormal: true,  zone: '賣場' },
-  { location: '18°C 欄',               required: '18°C以下',  value: 16,  isNormal: true,  zone: '賣場' },
+  { location: '4°C 間隔機（前後中島）', required: '4°C',       zone: '賣場', check: v => v >= 2 && v <= 6 },
+  { location: 'OC',                    required: '0~7°C',     zone: '賣場', check: v => v >= 0 && v <= 7 },
+  { location: 'WI（走入式冷藏）',      required: '0~7°C',     zone: '賣場', check: v => v >= 0 && v <= 7 },
+  { location: '立式冷凍',              required: '-18°C以下',  zone: '賣場', check: v => v <= -18 },
+  { location: '18°C 欄',               required: '18°C以下',   zone: '賣場', check: v => v <= 18 },
   // 咖啡/牛奶區
-  { location: '咖啡冷藏機台',          required: '0~7°C',    value: 4,   isNormal: true,  zone: '咖啡' },
-  { location: '牛奶冰箱',             required: '0~7°C',    value: 5,   isNormal: true,  zone: '咖啡' },
-  { location: '冷凍冰箱',             required: '-18°C以下', value: -19, isNormal: true,  zone: '咖啡' },
-  { location: '冰淇淋機（子母機）',    required: '依機台',    value: -8,  isNormal: true,  zone: '咖啡' },
+  { location: '咖啡冷藏機台',          required: '0~7°C',     zone: '咖啡', check: v => v >= 0 && v <= 7 },
+  { location: '牛奶冰箱',             required: '0~7°C',     zone: '咖啡', check: v => v >= 0 && v <= 7 },
+  { location: '冷凍冰箱',             required: '-18°C以下',  zone: '咖啡', check: v => v <= -18 },
+  { location: '冰淇淋機（子母機）',    required: '依機台',     zone: '咖啡', check: () => true },
   // FF 區熱食
-  { location: '蒸箱',                 required: '65°C以上',  value: 72,  isNormal: true,  zone: 'FF區' },
-  { location: '關東煮機',              required: '82~85°C',   value: 83,  isNormal: true,  zone: 'FF區' },
-  { location: '鮮食機',               required: '0~7°C',    value: 8,   isNormal: false, zone: 'FF區' },
-  { location: 'FF 冷凍冰箱',           required: '-20°C以下', value: -21, isNormal: true,  zone: 'FF區' },
+  { location: '蒸箱',                 required: '65°C以上',   zone: 'FF區', check: v => v >= 65 },
+  { location: '關東煮機',              required: '82~85°C',    zone: 'FF區', check: v => v >= 82 && v <= 85 },
+  { location: '鮮食機',               required: '0~7°C',     zone: 'FF區', check: v => v >= 0 && v <= 7 },
+  { location: 'FF 冷凍冰箱',           required: '-20°C以下',  zone: 'FF區', check: v => v <= -20 },
 ]
 
 const tasksByTime = [
@@ -94,14 +93,18 @@ const tasksByTime = [
 const zones = ['全部', '賣場', '咖啡', 'FF區']
 const todayStr = new Date().toISOString().split('T')[0]
 
+// 初始溫度值為空字串，讓使用者手動填入
+type TempValues = Record<number, string>
+
 export default function DailyWorkPage({ user, onBack }: Props) {
   const [selectedShift, setSelectedShift] = useState(0)
-  const [doneMap, setDoneMap]     = useState<Record<string, boolean>>({})
-  const [submitted, setSubmitted] = useState(false)
-  const [saving, setSaving]       = useState(false)
-  const [loading, setLoading]     = useState(true)
+  const [doneMap, setDoneMap]       = useState<Record<string, boolean>>({})
+  const [tempValues, setTempValues] = useState<TempValues>({})
+  const [submitted, setSubmitted]   = useState(false)
+  const [saving, setSaving]         = useState(false)
+  const [loading, setLoading]       = useState(true)
   const [existingId, setExistingId] = useState<string | null>(null)
-  const [tempZone, setTempZone]   = useState('全部')
+  const [tempZone, setTempZone]     = useState('全部')
 
   useEffect(() => {
     const load = async () => {
@@ -118,9 +121,20 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         setExistingId(data.id)
         setDoneMap(data.tasks_done || {})
         setSubmitted(!!data.submitted_at)
+        // 還原已儲存的溫度值
+        if (Array.isArray(data.temperatures)) {
+          const vals: TempValues = {}
+          data.temperatures.forEach((t: { value?: string | number }, i: number) => {
+            if (t.value !== undefined && t.value !== null) vals[i] = String(t.value)
+          })
+          setTempValues(vals)
+        } else {
+          setTempValues({})
+        }
       } else {
         setExistingId(null)
         setDoneMap({})
+        setTempValues({})
         setSubmitted(false)
       }
       setLoading(false)
@@ -133,15 +147,49 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     setSubmitted(false)
   }
 
+  const setTemp = (i: number, val: string) => {
+    setTempValues(p => ({ ...p, [i]: val }))
+    setSubmitted(false)
+  }
+
+  // 判斷某項是否正常（有輸入才判斷）
+  const isNormal = (i: number): boolean | null => {
+    const raw = tempValues[i]
+    if (raw === undefined || raw === '') return null
+    const num = parseFloat(raw)
+    if (isNaN(num)) return null
+    return tempSpecs[i].check(num)
+  }
+
+  const filteredSpecs = tempZone === '全部' ? tempSpecs : tempSpecs.filter(t => t.zone === tempZone)
+  const filteredIndices = tempZone === '全部'
+    ? tempSpecs.map((_, i) => i)
+    : tempSpecs.map((_, i) => i).filter(i => tempSpecs[i].zone === tempZone)
+
+  const hasAbnormal = tempSpecs.some((_, i) => isNormal(i) === false)
+  const filledCount = tempSpecs.filter((_, i) => tempValues[i] !== undefined && tempValues[i] !== '').length
+
   const handleSubmit = async () => {
     setSaving(true)
+    const temperaturesPayload = tempSpecs.map((spec, i) => {
+      const raw = tempValues[i] ?? ''
+      const num = raw !== '' ? parseFloat(raw) : null
+      return {
+        location: spec.location,
+        required: spec.required,
+        zone: spec.zone,
+        value: num,
+        isNormal: num !== null ? spec.check(num) : null,
+      }
+    })
+
     const payload = {
       store_id:     user.storeId,
       staff_name:   user.name,
       log_date:     todayStr,
       shift:        shifts[selectedShift],
       tasks_done:   doneMap,
-      temperatures: tempItems,
+      temperatures: temperaturesPayload,
       submitted_at: new Date().toISOString(),
     }
 
@@ -158,8 +206,6 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
   const allKeys   = tasksByTime.flatMap(t => t.tasks.map((_, i) => `${t.time}-${i}`))
   const doneCount = allKeys.filter(k => doneMap[k]).length
-  const hasAbnormal = tempItems.some(t => !t.isNormal)
-  const filteredTemps = tempZone === '全部' ? tempItems : tempItems.filter(t => t.zone === tempZone)
 
   return (
     <div className="min-h-dvh bg-gray-50">
@@ -205,11 +251,14 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                   <Thermometer className="w-4 h-4 text-blue-500" />
                   <p className="text-sm font-bold text-gray-800">溫度記錄</p>
                 </div>
-                {hasAbnormal && (
-                  <span className="flex items-center gap-1 text-xs text-red-500 font-semibold">
-                    <AlertCircle className="w-3.5 h-3.5" /> 有異常
-                  </span>
-                )}
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-400">{filledCount}/{tempSpecs.length} 已填</span>
+                  {hasAbnormal && (
+                    <span className="flex items-center gap-1 text-xs text-red-500 font-semibold">
+                      <AlertCircle className="w-3.5 h-3.5" /> 有異常
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Zone filter */}
@@ -224,28 +273,49 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               </div>
 
               <div className="space-y-2">
-                {filteredTemps.map((t, i) => (
-                  <div key={i} className={`flex items-center justify-between py-2.5 px-3 rounded-xl ${t.isNormal ? 'bg-gray-50' : 'bg-red-50'}`}>
-                    <div>
-                      <p className="text-xs font-semibold text-gray-700">{t.location}</p>
-                      <p className="text-[10px] text-gray-400">標準：{t.required}</p>
+                {filteredIndices.map((specIdx) => {
+                  const spec = filteredSpecs[filteredIndices.indexOf(specIdx)]
+                  const normal = isNormal(specIdx)
+                  const filled = tempValues[specIdx] !== undefined && tempValues[specIdx] !== ''
+                  return (
+                    <div key={specIdx}
+                      className="flex items-center justify-between py-2.5 px-3 rounded-xl"
+                      style={{ background: normal === false ? '#fef2f2' : filled ? '#f0fdf4' : '#f9fafb' }}
+                    >
+                      <div className="flex-1 min-w-0 mr-3">
+                        <p className="text-xs font-semibold text-gray-700">{spec.location}</p>
+                        <p className="text-[10px] text-gray-400">標準：{spec.required}</p>
+                      </div>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center border rounded-xl overflow-hidden"
+                          style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
+                          <input
+                            type="number"
+                            inputMode="decimal"
+                            className="w-16 text-center text-sm font-bold outline-none bg-transparent py-1.5 px-2"
+                            style={{ color: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151' }}
+                            placeholder="--"
+                            value={tempValues[specIdx] ?? ''}
+                            onChange={e => setTemp(specIdx, e.target.value)}
+                          />
+                          <span className="text-xs text-gray-400 pr-2">°C</span>
+                        </div>
+                        {filled && (
+                          <span className="text-[10px] font-bold w-8 text-center"
+                            style={{ color: normal === false ? '#ef4444' : '#10b981' }}>
+                            {normal === false ? '異常' : '正常'}
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="text-sm font-bold" style={{ color: t.isNormal ? '#10b981' : '#ef4444' }}>
-                        {t.value > 0 ? '+' : ''}{t.value}°C
-                      </p>
-                      <p className="text-[10px] font-semibold" style={{ color: t.isNormal ? '#10b981' : '#ef4444' }}>
-                        {t.isNormal ? '正常' : '⚠ 異常'}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
 
               {hasAbnormal && (
                 <div className="mt-3 p-3 bg-red-50 rounded-xl border border-red-100">
                   <p className="text-xs font-bold text-red-600">⚠ 溫度異常處理程序</p>
-                  <p className="text-[11px] text-red-500 mt-1">超出正常範圍 → 30分鐘後重新確認 → 仍異常請立即至「異常回報」送出報修申請</p>
+                  <p className="text-[11px] text-red-500 mt-1">超出正常範圍 → 30分鐘後重新確認 → 仍異常請至「異常回報」送出報修申請</p>
                 </div>
               )}
             </div>

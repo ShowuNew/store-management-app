@@ -112,22 +112,24 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           { label: '熱食', value: hotItem    ? fmt(latestReading(hotItem).value)    : '—', ok: hotItem    ? latestReading(hotItem).isNormal    !== false : true },
         ])
 
-        // 溫度異常 → 紅色通知（null = 未填，不警告）
+        // 溫度異常 → 只看最後一筆有效 reading，若最新已回正常則不通知
         temps.forEach(t => {
-          const allReadings = Array.isArray(t.readings) ? t.readings : []
-          allReadings.filter(r => r.isNormal === false).forEach(r => {
-            newAlerts.push({
-              type: 'error',
-              msg:  `${t.location} 溫度異常（${fmt(r.value)} @ ${r.time}），請30分鐘後複核`,
-              time: new Date(latestLog.submitted_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
-            })
-          })
-          // 兼容舊格式
-          if (!Array.isArray(t.readings) && t.isNormal === false) {
+          const logTime = new Date(latestLog.submitted_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
+          if (Array.isArray(t.readings)) {
+            const lastFilled = [...t.readings].reverse().find(r => r.value !== null)
+            if (lastFilled?.isNormal === false) {
+              newAlerts.push({
+                type: 'error',
+                msg:  `${t.location} 溫度異常（${fmt(lastFilled.value)} @ ${lastFilled.time}），請30分鐘後複核`,
+                time: logTime,
+              })
+            }
+          } else if (t.isNormal === false) {
+            // 兼容舊格式
             newAlerts.push({
               type: 'error',
               msg:  `${t.location} 溫度異常（${fmt(t.value ?? null)}），請30分鐘後複核`,
-              time: new Date(latestLog.submitted_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+              time: logTime,
             })
           }
         })

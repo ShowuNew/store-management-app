@@ -94,11 +94,16 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         setExistingId(data.id)
         setDoneMap(data.tasks_done || {})
         setSubmitted(!!data.submitted_at)
-        // 還原已儲存的多筆溫度
+        // 還原已儲存的多筆溫度（DB 存的 value 是 number，UI 需要 string）
         if (Array.isArray(data.temperatures)) {
           const restored: TempData = {}
-          data.temperatures.forEach((item: { readings?: { time: string; value: string }[] }, i: number) => {
-            if (Array.isArray(item.readings)) restored[i] = item.readings
+          data.temperatures.forEach((item: { readings?: { time: string; value: number | null }[] }, i: number) => {
+            if (Array.isArray(item.readings)) {
+              restored[i] = item.readings.map(r => ({
+                time:  r.time ?? '',
+                value: r.value !== null && r.value !== undefined ? String(r.value) : '',
+              }))
+            }
           })
           setTempData(restored)
         } else {

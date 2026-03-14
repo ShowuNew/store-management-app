@@ -11,42 +11,44 @@ type Result = 'pass' | 'fail' | null
 
 const categories = [
   {
-    name: '場所衛生',
+    name: '場所衛生環境',
     items: [
-      '營業場所（地面/牆壁/支柱/天花板）保持清潔，不得有納垢、積塵、積水等情形',
-      '出入口、門窗、通氣口無蟲鼠侵入跡象，且防止蒼蠅、蚊蟲進入',
-      '廁所保持清潔，無不良氣味，並貼有洗手標示',
-      '洗手台之皂液備品充足，且洗手步驟標示完整',
-      '倉庫後場保持乾燥，無病媒孳生跡象',
+      '營業場所（地面／牆壁／支柱／天花板）保持清潔，不得有納垢、剝落、積灰、積水等情形',
+      '出入口、門窗、處理口及其他孔道應通風良好，保持清潔無異味，並設置防止病媒侵入之設施，以避免有病媒或其出沒之痕跡（老鼠、蟑螂、蚊蟲等）；食品曝露之正上方天花板不得有結露現象',
+      '廁所應保持清潔，不得有不良氣味，並應於明顯處標示「如廁後應洗手」之字樣，且備有洗潔劑、乾手器或擦手紙巾等',
+      '洗手接觸面應保持平滑、無凹陷或裂縫，並保持清潔',
     ],
   },
   {
-    name: '衛生品質',
+    name: '衛生品質管理',
     items: [
-      '食品應分類存放，不得直接落地，並在有效日期內使用',
-      '冷凍溫度應保持在 -18°C 以下；冷藏溫度應保持 0~7°C',
-      '食品設備、器具及抹布等，使用前後確認清潔消毒',
-      '清洗和消毒器具應符合食品衛生相關規定',
-      '包材收納區域乾淨，未使用包材放置正確',
+      '食品接觸面應保持平滑、無凹陷或裂縫，並保持清潔',
+      '清洗、清潔和消毒機具應專用器具妥善保管',
+      '使用之原料應符合相關食品衛生標準或規定，並可追溯來源',
+      '食品應分開貯放，不得直接置於地面，並依先進先出使用，且在有效日期內使用',
+      '冷凍溫度應保持在 -18°C 以下；冷藏溫度應保持在 7°C 以下；溫藏溫度保持 65°C 以上（溫度計功能正常操作）',
+      '食品設備、器具及抹布等，使用前後應確認其清潔，並定期有效消毒',
     ],
   },
   {
-    name: '從業人員',
+    name: '從業人員衛生管理',
     items: [
       '從業人員每年定期健康檢查（含工讀生）',
-      '從業人員應穿戴整齊工作服，手部不得佩戴飾物或留指甲',
-      '從業人員手部保持清潔，進入食品作業場所前洗手或消毒',
-      '工作中不得有吸菸、嚼檳榔或口嚼糖、飲食及其他污染食品行為',
+      '從業人員應穿戴整潔之工作衣，與食品直接接觸者，手部不得佩戴飾物或留指甲，或配戴清潔之手套',
+      '從業人員手部應保持清潔，並應於進入食品作業場所前、如廁後或手部受污染時應正確洗手或消毒',
+      '作業人員工作中不得有吸菸、嚼檳榔或口含糖、飲食及其他可能污染食品之行為',
+      '私人及清潔用具等以明標（區）統一收置',
     ],
   },
   {
     name: '菸害防制',
     items: [
-      '不供應菸品予未滿 20 歲者',
-      '不販售菸品形狀之糖果、玩具及其他物品',
-      '不促銷菸品或進行菸品廣告',
-      '不可將菸盒代替熟食交付消費者使用',
-      '張貼「吸菸有害健康」及「未滿 20 歲者不得吸菸」等法定標示',
+      '所有入口處應設置明顯禁菸標示，且不得供應與菸品相關聯物，無吸菸行為人',
+      '不供應菸品予未滿 20 歲者，且不得販售菸品形狀之糖果、點心、玩具或其他任何物品',
+      '不促銷菸品或菸品廣告',
+      '不可將菸盒代替隔熱紙夾付消費者使用，以免觸犯菸防制相關法規，違反者店鋪將處 10～50 萬不等罰鍰',
+      '菸品或菸品容器之展示，應以使消費者獲知菸品品牌及價格之必要者為限（菸品展示正面距場外外部二公尺以上者，不在此限）',
+      '應於明顯處標示「吸菸有害健康」、「免費戒菸專線 0800-636363」、「本場所不供應菸品予未滿20歲」、「未滿 20 歲者不得吸菸」、「不得強迫、誘使孕婦吸菸」之警示圖文',
     ],
   },
 ]
@@ -115,7 +117,12 @@ export default function HygienePage({ user, onBack }: Props) {
     setSaving(false)
   }
 
-  const cat       = categories[activeCategory]
+  const cat = categories[activeCategory]
+  const allPassCount = categories.reduce((total, c, ci) =>
+    total + c.items.filter((_, i) => results[`${ci}-${i}`] === 'pass').length, 0)
+  const allFailCount = categories.reduce((total, c, ci) =>
+    total + c.items.filter((_, i) => results[`${ci}-${i}`] === 'fail').length, 0)
+  const totalItems = categories.reduce((s, c) => s + c.items.length, 0)
   const passCount = cat.items.filter((_, i) => results[`${activeCategory}-${i}`] === 'pass').length
   const failCount = cat.items.filter((_, i) => results[`${activeCategory}-${i}`] === 'fail').length
   const pendCount = cat.items.length - passCount - failCount
@@ -124,11 +131,33 @@ export default function HygienePage({ user, onBack }: Props) {
     <div className="min-h-dvh bg-gray-50">
       <PageHeader
         title="衛生自主管理"
-        subtitle={`${new Date().getMonth() + 1}月 ${new Date().getDate()}日 班次確認`}
+        subtitle={`${new Date().getMonth() + 1}月 ${new Date().getDate()}日・共21項`}
         onBack={onBack}
       />
 
       <div className="px-4 py-4 space-y-4 pb-8">
+        {/* Overall progress */}
+        <div className="bg-white rounded-2xl p-4">
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs font-semibold text-gray-500">全部查核進度</p>
+            <p className="text-xs font-bold text-gray-700">{allPassCount + allFailCount}/{totalItems} 已填</p>
+          </div>
+          <div className="bg-gray-100 rounded-full h-2 overflow-hidden">
+            <div
+              className="h-2 rounded-full transition-all"
+              style={{
+                width: `${Math.round((allPassCount + allFailCount) / totalItems * 100)}%`,
+                background: 'linear-gradient(90deg, #00a86b, #00d47e)',
+              }}
+            />
+          </div>
+          <div className="flex gap-3 mt-2">
+            <span className="text-[11px] text-green-600 font-semibold">✓ 符合 {allPassCount}</span>
+            <span className="text-[11px] text-red-500 font-semibold">✗ 缺失 {allFailCount}</span>
+            <span className="text-[11px] text-gray-400 font-semibold">― 未填 {totalItems - allPassCount - allFailCount}</span>
+          </div>
+        </div>
+
         {/* Shift */}
         <div className="bg-white rounded-2xl p-4">
           <p className="text-xs font-semibold text-gray-400 mb-2">班次時段</p>
@@ -151,19 +180,27 @@ export default function HygienePage({ user, onBack }: Props) {
 
         {/* Category tabs */}
         <div className="flex gap-2 overflow-x-auto pb-1">
-          {categories.map((c, i) => (
-            <button
-              key={i}
-              onClick={() => setActiveCategory(i)}
-              className="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap"
-              style={{
-                background: activeCategory === i ? '#005f3b' : 'white',
-                color:      activeCategory === i ? 'white'   : '#6b7280',
-              }}
-            >
-              {c.name}
-            </button>
-          ))}
+          {categories.map((c, i) => {
+            const cFail = c.items.filter((_, j) => results[`${i}-${j}`] === 'fail').length
+            return (
+              <button
+                key={i}
+                onClick={() => setActiveCategory(i)}
+                className="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap"
+                style={{
+                  background: activeCategory === i ? '#005f3b' : 'white',
+                  color:      activeCategory === i ? 'white'   : '#6b7280',
+                }}
+              >
+                {c.name}
+                {cFail > 0 && (
+                  <span className="ml-1 w-4 h-4 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-black">
+                    {cFail}
+                  </span>
+                )}
+              </button>
+            )
+          })}
         </div>
 
         {loading ? (
@@ -192,6 +229,7 @@ export default function HygienePage({ user, onBack }: Props) {
               {cat.items.map((item, i) => {
                 const key    = `${activeCategory}-${i}`
                 const result = results[key]
+                const itemNo = categories.slice(0, activeCategory).reduce((s, c) => s + c.items.length, 0) + i + 1
                 return (
                   <motion.div
                     key={key}
@@ -200,8 +238,13 @@ export default function HygienePage({ user, onBack }: Props) {
                     transition={{ delay: i * 0.04 }}
                     className="bg-white rounded-2xl p-4"
                   >
-                    <p className="text-sm text-gray-700 mb-3 leading-relaxed">{item}</p>
-                    <div className="flex gap-2">
+                    <div className="flex gap-2 mb-3">
+                      <span className="w-5 h-5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-500 flex items-center justify-center shrink-0 mt-0.5">
+                        {itemNo}
+                      </span>
+                      <p className="text-sm text-gray-700 leading-relaxed flex-1">{item}</p>
+                    </div>
+                    <div className="flex gap-2 ml-7">
                       <button
                         onClick={() => setResult(key, 'pass')}
                         className="flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"

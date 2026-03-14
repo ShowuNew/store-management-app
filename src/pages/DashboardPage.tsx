@@ -20,7 +20,8 @@ interface AlertItem {
   time: string
 }
 
-interface TempEntry { location: string; value: number | null; isNormal: boolean | null }
+interface TempReading { time: string; value: number | null; isNormal: boolean | null }
+interface TempEntry { location: string; required: string; zone: string; readings?: TempReading[]; value?: number | null; isNormal?: boolean | null }
 
 const todayStr = new Date().toISOString().split('T')[0]
 
@@ -90,25 +91,45 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
       if (latestLog) {
         const temps: TempEntry[] = latestLog.temperatures || []
 
-        const coldItem   = temps.find(t => t.location.includes('4°C') || t.location.includes('店鋪冷藏') || t.location.includes('WI'))
+        const fmt = (v: number | null) => v === null ? '—' : `${v > 0 ? '+' : ''}${v}°C`
+
+        // 取每個設備最新一筆有效 reading（支援新格式 readings[]，也兼容舊格式 value/isNormal）
+        const latestReading = (t: TempEntry): { value: number | null; isNormal: boolean | null } => {
+          if (Array.isArray(t.readings) && t.readings.length > 0) {
+            const filled = [...t.readings].reverse().find(r => r.value !== null)
+            return filled ? { value: filled.value, isNormal: filled.isNormal } : { value: null, isNormal: null }
+          }
+          return { value: t.value ?? null, isNormal: t.isNormal ?? null }
+        }
+
+        const coldItem   = temps.find(t => t.location.includes('4°C') || t.location.includes('WI'))
         const frozenItem = temps.find(t => t.location.includes('冷凍') && !t.location.includes('冰淇淋'))
         const hotItem    = temps.find(t => t.location.includes('蒸箱') || t.location.includes('關東煮') || t.location.includes('鮮食'))
 
-        const fmt = (v: number | null) => v === null ? '—' : `${v > 0 ? '+' : ''}${v}°C`
-
         setTempStatus([
-          { label: '冷藏', value: coldItem   ? fmt(coldItem.value)   : '—', ok: coldItem   ? coldItem.isNormal   !== false : true },
-          { label: '冷凍', value: frozenItem ? fmt(frozenItem.value) : '—', ok: frozenItem ? frozenItem.isNormal !== false : true },
-          { label: '熱食', value: hotItem    ? fmt(hotItem.value)    : '—', ok: hotItem    ? hotItem.isNormal    !== false : true },
+          { label: '冷藏', value: coldItem   ? fmt(latestReading(coldItem).value)   : '—', ok: coldItem   ? latestReading(coldItem).isNormal   !== false : true },
+          { label: '冷凍', value: frozenItem ? fmt(latestReading(frozenItem).value) : '—', ok: frozenItem ? latestReading(frozenItem).isNormal !== false : true },
+          { label: '熱食', value: hotItem    ? fmt(latestReading(hotItem).value)    : '—', ok: hotItem    ? latestReading(hotItem).isNormal    !== false : true },
         ])
 
         // 溫度異常 → 紅色通知（null = 未填，不警告）
-        temps.filter(t => t.isNormal === false).forEach(t => {
-          newAlerts.push({
-            type: 'error',
-            msg:  `${t.location} 溫度異常（${fmt(t.value)}），請30分鐘後複核`,
-            time: new Date(latestLog.submitted_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+        temps.forEach(t => {
+          const allReadings = Array.isArray(t.readings) ? t.readings : []
+          allReadings.filter(r => r.isNormal === false).forEach(r => {
+            newAlerts.push({
+              type: 'error',
+              msg:  `${t.location} 溫度異常（${fmt(r.value)} @ ${r.time}），請30分鐘後複核`,
+              time: new Date(latestLog.submitted_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+            })
           })
+          // 兼容舊格式
+          if (!Array.isArray(t.readings) && t.isNormal === false) {
+            newAlerts.push({
+              type: 'error',
+              msg:  `${t.location} 溫度異常（${fmt(t.value ?? null)}），請30分鐘後複核`,
+              time: new Date(latestLog.submitted_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+            })
+          }
         })
       }
 

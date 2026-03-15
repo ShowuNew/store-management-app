@@ -113,7 +113,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       if (shiftLog) {
         setExistingId(shiftLog.id)
         const td = shiftLog.tasks_done || {}
-        setDoneMap(Object.fromEntries(Object.entries(td).filter(([k]) => !k.startsWith('_'))))
+        setDoneMap(Object.fromEntries(Object.entries(td).filter(([k]) => !k.startsWith('_'))) as Record<string, boolean>)
         setSubmitted(!!shiftLog.submitted_at)
         if (Array.isArray(shiftLog.temperatures)) {
           const restored: TempData = {}

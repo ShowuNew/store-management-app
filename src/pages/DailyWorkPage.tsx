@@ -80,6 +80,43 @@ const anomalyStatus = (spec: TempSpec, readings: TempReading[]): AnomalyStatus =
   return 'none'
 }
 
+// ── 交接班結構化欄位 parse/serialize ──
+const HANDOVER_SECTIONS = ['異常事項', '備品需求', '客訴記錄', '其他事項'] as const
+type HandoverKey = typeof HANDOVER_SECTIONS[number]
+
+function parseHandover(note: string): Record<HandoverKey, string> {
+  const result: Record<HandoverKey, string> = { '異常事項': '', '備品需求': '', '客訴記錄': '', '其他事項': '' }
+  if (!note.trim()) return result
+  // Check if note uses structured markers
+  if (note.includes('【')) {
+    for (const key of HANDOVER_SECTIONS) {
+      const marker = `【${key}】`
+      const idx = note.indexOf(marker)
+      if (idx === -1) continue
+      const start = idx + marker.length
+      // Find the next marker
+      let end = note.length
+      for (const other of HANDOVER_SECTIONS) {
+        if (other === key) continue
+        const oIdx = note.indexOf(`【${other}】`, start)
+        if (oIdx !== -1 && oIdx < end) end = oIdx
+      }
+      result[key] = note.slice(start, end).trim()
+    }
+  } else {
+    // Legacy free-text: put everything in 其他事項
+    result['其他事項'] = note.trim()
+  }
+  return result
+}
+
+function serializeHandover(fields: Record<HandoverKey, string>): string {
+  return HANDOVER_SECTIONS
+    .filter(k => fields[k].trim())
+    .map(k => `【${k}】${fields[k].trim()}`)
+    .join('\n')
+}
+
 export default function DailyWorkPage({ user, onBack }: Props) {
   const [view, setView]             = useState<ViewType>('overview')
   const [selectedShift, setSelectedShift] = useState(0)
@@ -89,6 +126,10 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [friendly, setFriendly]     = useState<Record<string, boolean>>({})
   const [uniform, setUniform]       = useState({ appearance: false, sanitize: false })
   const [handoverNote, setHandoverNote] = useState('')
+  const [handoverAnomaly, setHandoverAnomaly]       = useState('')
+  const [handoverSupply, setHandoverSupply]         = useState('')
+  const [handoverComplaint, setHandoverComplaint]   = useState('')
+  const [handoverOther, setHandoverOther]           = useState('')
   const [submitted, setSubmitted]   = useState(false)
   const [saveError, setSaveError]   = useState<string | null>(null)
   const [saving, setSaving]         = useState(false)
@@ -113,7 +154,13 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       const shiftLog = allLogs.find((l: any) => l.shift === shifts[selectedShift])
       if (shiftLog) {
         setExistingId(shiftLog.id)
-        setHandoverNote(shiftLog.handover_note ?? '')
+        const hn = shiftLog.handover_note ?? ''
+        setHandoverNote(hn)
+        const parsed = parseHandover(hn)
+        setHandoverAnomaly(parsed['異常事項'])
+        setHandoverSupply(parsed['備品需求'])
+        setHandoverComplaint(parsed['客訴記錄'])
+        setHandoverOther(parsed['其他事項'])
         setSubmitted(!!shiftLog.submitted_at)
         if (Array.isArray(shiftLog.temperatures)) {
           const restored: TempData = {}
@@ -129,6 +176,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         } else { setTempData({}) }
       } else {
         setExistingId(null); setHandoverNote(''); setTempData({}); setSubmitted(false)
+        setHandoverAnomaly(''); setHandoverSupply(''); setHandoverComplaint(''); setHandoverOther('')
       }
 
       const sorted = [...allLogs].sort((a: any, b: any) =>
@@ -764,18 +812,59 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // ────────────────────────────────────────────────
   // 交接班紀錄
   // ────────────────────────────────────────────────
+  const updateHandoverField = (key: HandoverKey, val: string) => {
+    const fields: Record<HandoverKey, string> = {
+      '異常事項': handoverAnomaly,
+      '備品需求': handoverSupply,
+      '客訴記錄': handoverComplaint,
+      '其他事項': handoverOther,
+      [key]: val,
+    }
+    if (key === '異常事項') setHandoverAnomaly(val)
+    else if (key === '備品需求') setHandoverSupply(val)
+    else if (key === '客訴記錄') setHandoverComplaint(val)
+    else setHandoverOther(val)
+    setHandoverNote(serializeHandover(fields))
+    setSubmitted(false)
+  }
+
+  const handoverFields: { key: HandoverKey; placeholder: string; hint?: string }[] = [
+    { key: '異常事項', placeholder: '填寫本班發現的設備或商品異常…' },
+    { key: '備品需求', placeholder: '填寫需補充的備品或耗材…' },
+    { key: '客訴記錄', placeholder: '記錄顧客姓名、電話、反應時間及內容…', hint: '如有品質客訴，請同步記錄機台溫度' },
+    { key: '其他事項', placeholder: '其他需交接的事項…' },
+  ]
+
   const renderHandover = () => (
-    <div className="bg-white rounded-2xl p-4">
-      <p className="text-[10px] text-gray-400 mb-3">
-        如有消費者反應，請記錄姓名、電話、反應時間；如有品質異常客訴，請量測並記錄機台溫度
-      </p>
-      <textarea
-        rows={8}
-        placeholder="請填寫交接事項、消費者反應或其他店鋪紀錄..."
-        className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 outline-none resize-none leading-relaxed"
-        value={handoverNote}
-        onChange={e => { setHandoverNote(e.target.value); setSubmitted(false) }}
-      />
+    <div className="space-y-3">
+      {handoverFields.map(({ key, placeholder, hint }) => {
+        const value =
+          key === '異常事項' ? handoverAnomaly :
+          key === '備品需求' ? handoverSupply :
+          key === '客訴記錄' ? handoverComplaint : handoverOther
+        const hasContent = value.trim().length > 0
+        return (
+          <div key={key} className="bg-white rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <span
+                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                style={{ background: hasContent ? '#dcfce7' : '#f3f4f6', color: hasContent ? '#16a34a' : '#6b7280' }}
+              >
+                {key}
+              </span>
+              {hint && <span className="text-[10px] text-gray-400">{hint}</span>}
+            </div>
+            <textarea
+              rows={3}
+              placeholder={placeholder}
+              className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 outline-none resize-none leading-relaxed"
+              style={{ borderColor: hasContent ? '#86efac' : undefined }}
+              value={value}
+              onChange={e => updateHandoverField(key, e.target.value)}
+            />
+          </div>
+        )
+      })}
     </div>
   )
 

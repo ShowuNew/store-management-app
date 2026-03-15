@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, TrendingUp, Award } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type { User } from '../../types'
 
@@ -22,64 +22,120 @@ interface AnomalyCategory {
 
 const CATEGORY_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#6b7280']
 
+function groupByDate(rows: any[], key: string): Record<string, number> {
+  const map: Record<string, number> = {}
+  for (const row of rows) {
+    const d = row[key]
+    map[d] = (map[d] || 0) + 1
+  }
+  return map
+}
+
+function getMonthStart(): string {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
+}
+
+function buildDateRange(fromDate: string): string[] {
+  const days: string[] = []
+  const from = new Date(fromDate + 'T12:00:00')
+  const today = new Date()
+  today.setHours(12, 0, 0, 0)
+  const cur = new Date(from)
+  while (cur <= today) {
+    days.push(cur.toISOString().split('T')[0])
+    cur.setDate(cur.getDate() + 1)
+  }
+  return days
+}
+
+// Group daily data into ~5 week buckets for monthly bar chart
+function groupByWeek(days: string[], dwByDay: Record<string, number>, hyByDay: Record<string, number>, eqByDay: Record<string, number>): DayStats[] {
+  if (days.length <= 7) {
+    return days.map(d => ({
+      date: d, label: new Date(d + 'T12:00:00').toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' }),
+      dailyWork: dwByDay[d] || 0, hygiene: hyByDay[d] || 0, equipment: eqByDay[d] || 0,
+    }))
+  }
+  // Group into chunks of ~7
+  const chunkSize = Math.ceil(days.length / 5)
+  const result: DayStats[] = []
+  for (let i = 0; i < days.length; i += chunkSize) {
+    const chunk = days.slice(i, i + chunkSize)
+    const label = new Date(chunk[0] + 'T12:00:00').toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' })
+    result.push({
+      date: chunk[0], label,
+      dailyWork: chunk.reduce((s, d) => s + (dwByDay[d] || 0), 0),
+      hygiene:   chunk.reduce((s, d) => s + (hyByDay[d] || 0), 0),
+      equipment: chunk.reduce((s, d) => s + (eqByDay[d] || 0), 0),
+    })
+  }
+  return result
+}
+
 export default function StatsPage({ user, onBack }: Props) {
-  const [weekStats, setWeekStats] = useState<DayStats[]>([])
+  const [tab, setTab] = useState<'7d' | 'month'>('7d')
+  const [barStats, setBarStats] = useState<DayStats[]>([])
   const [anomalyStats, setAnomalyStats] = useState<AnomalyCategory[]>([])
   const [hygieneRate, setHygieneRate] = useState({ pass: 0, fail: 0, total: 0 })
+  const [monthCompletion, setMonthCompletion] = useState({ full: 0, total: 0 })
+  const [score, setScore] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     const load = async () => {
       setLoading(true)
-
-      // Build last 7 days
-      const days: string[] = []
-      for (let i = 6; i >= 0; i--) {
-        const d = new Date()
-        d.setDate(d.getDate() - i)
-        days.push(d.toISOString().split('T')[0])
-      }
-
-      // Query all three tables for last 7 days
-      // 督導/admin 看全店，一般員工/店長只看自己的店
       const isSupervisor = user.role === 'supervisor' || user.role === 'admin'
 
+      const fromDate = tab === '7d'
+        ? (() => { const d = new Date(); d.setDate(d.getDate() - 6); return d.toISOString().split('T')[0] })()
+        : getMonthStart()
+
+      const days = buildDateRange(fromDate)
+
+      const q = (table: string, select: string) => {
+        const base = supabase.from(table).select(select)
+        return isSupervisor ? base.gte(table === 'anomaly_reports' ? 'created_at' : (table === 'hygiene_records' ? 'record_date' : 'log_date'), fromDate)
+          : base.eq('store_id', user.storeId).gte(table === 'anomaly_reports' ? 'created_at' : (table === 'hygiene_records' ? 'record_date' : 'log_date'), fromDate)
+      }
+
       const [dwRes, hyRes, eqRes, anRes] = await Promise.all([
+        q('daily_work_logs', 'log_date'),
+        q('hygiene_records', 'record_date, results'),
+        q('equipment_logs', 'log_date'),
         isSupervisor
-          ? supabase.from('daily_work_logs').select('log_date').gte('log_date', days[0])
-          : supabase.from('daily_work_logs').select('log_date').eq('store_id', user.storeId).gte('log_date', days[0]),
-        isSupervisor
-          ? supabase.from('hygiene_records').select('record_date, results').gte('record_date', days[0])
-          : supabase.from('hygiene_records').select('record_date, results').eq('store_id', user.storeId).gte('record_date', days[0]),
-        isSupervisor
-          ? supabase.from('equipment_logs').select('log_date').gte('log_date', days[0])
-          : supabase.from('equipment_logs').select('log_date').eq('store_id', user.storeId).gte('log_date', days[0]),
-        isSupervisor
-          ? supabase.from('anomaly_reports').select('category')
-          : supabase.from('anomaly_reports').select('category').eq('store_id', user.storeId),
+          ? supabase.from('anomaly_reports').select('category, created_at').gte('created_at', fromDate)
+          : supabase.from('anomaly_reports').select('category, created_at').eq('store_id', user.storeId).gte('created_at', fromDate),
       ])
 
       const dwByDay = groupByDate(dwRes.data || [], 'log_date')
       const hyByDay = groupByDate(hyRes.data || [], 'record_date')
       const eqByDay = groupByDate(eqRes.data || [], 'log_date')
 
-      const stats: DayStats[] = days.map(d => ({
-        date: d,
-        label: new Date(d + 'T12:00:00').toLocaleDateString('zh-TW', { month: 'numeric', day: 'numeric' }),
-        dailyWork: dwByDay[d] || 0,
-        hygiene:   hyByDay[d] || 0,
-        equipment: eqByDay[d] || 0,
-      }))
-      setWeekStats(stats)
+      setBarStats(groupByWeek(days, dwByDay, hyByDay, eqByDay))
 
-      // Hygiene pass/fail rate (all records in last 7 days)
+      // Hygiene pass/fail rate
       let totalPass = 0, totalFail = 0
-      for (const row of (hyRes.data || [])) {
+      for (const row of ((hyRes.data as any[]) || [])) {
         const vals = Object.values(row.results || {})
         totalPass += vals.filter(v => v === 'pass').length
         totalFail += vals.filter(v => v === 'fail').length
       }
       setHygieneRate({ pass: totalPass, fail: totalFail, total: totalPass + totalFail })
+
+      // Monthly completion: days where all 3 modules have ≥1 entry
+      if (tab === 'month') {
+        const fullDays = days.filter(d => (dwByDay[d] || 0) > 0 && (hyByDay[d] || 0) > 0 && (eqByDay[d] || 0) > 0)
+        setMonthCompletion({ full: fullDays.length, total: days.length })
+
+        // Score: hygiene rate 50% + completion rate 50%
+        const completionRate = days.length > 0 ? fullDays.length / days.length : 0
+        const hyRate = (totalPass + totalFail) > 0 ? totalPass / (totalPass + totalFail) : 0
+        setScore(Math.round((completionRate * 50 + hyRate * 50)))
+      } else {
+        setMonthCompletion({ full: 0, total: 0 })
+        setScore(null)
+      }
 
       // Anomaly by category
       const catMap: Record<string, number> = {}
@@ -94,9 +150,9 @@ export default function StatsPage({ user, onBack }: Props) {
       setLoading(false)
     }
     load()
-  }, [])
+  }, [tab, user.role, user.storeId])
 
-  const maxCount = Math.max(...weekStats.map(d => Math.max(d.dailyWork, d.hygiene, d.equipment)), 1)
+  const maxCount = Math.max(...barStats.map(d => Math.max(d.dailyWork, d.hygiene, d.equipment)), 1)
 
   return (
     <div className="min-h-dvh bg-gray-50">
@@ -108,8 +164,26 @@ export default function StatsPage({ user, onBack }: Props) {
           </button>
           <div>
             <h1 className="text-lg font-black text-gray-900">數據統計</h1>
-            <p className="text-xs text-gray-400">近 7 天趨勢分析</p>
+            <p className="text-xs text-gray-400">趨勢分析與績效評估</p>
           </div>
+        </div>
+
+        {/* Tab selector */}
+        <div className="flex mt-3 bg-gray-100 rounded-xl p-1 gap-1">
+          {(['7d', 'month'] as const).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className="flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all"
+              style={{
+                background: tab === t ? '#ffffff' : 'transparent',
+                color: tab === t ? '#111827' : '#6b7280',
+                boxShadow: tab === t ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
+              }}
+            >
+              {t === '7d' ? '近 7 天' : '本月'}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -121,9 +195,57 @@ export default function StatsPage({ user, onBack }: Props) {
           </div>
         ) : (
           <>
-            {/* Weekly bar chart */}
+            {/* Monthly score card */}
+            {tab === 'month' && score !== null && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl p-4 flex items-center gap-4"
+              >
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0"
+                  style={{ background: score >= 80 ? '#dcfce7' : score >= 60 ? '#fef9c3' : '#fee2e2' }}
+                >
+                  <Award className="w-7 h-7" style={{ color: score >= 80 ? '#16a34a' : score >= 60 ? '#ca8a04' : '#dc2626' }} />
+                </div>
+                <div className="flex-1">
+                  <p className="text-xs text-gray-400 mb-0.5">本月綜合評分</p>
+                  <p className="text-3xl font-black" style={{ color: score >= 80 ? '#16a34a' : score >= 60 ? '#ca8a04' : '#dc2626' }}>
+                    {score} <span className="text-base font-normal text-gray-400">/ 100</span>
+                  </p>
+                  <p className="text-[11px] text-gray-400 mt-0.5">全勤日 {monthCompletion.full}/{monthCompletion.total} 天 · 衛生合格率 {hygieneRate.total > 0 ? Math.round(hygieneRate.pass / hygieneRate.total * 100) : 0}%</p>
+                </div>
+              </motion.div>
+            )}
+
+            {/* Monthly completion rate */}
+            {tab === 'month' && (
+              <div className="bg-white rounded-2xl p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <TrendingUp className="w-4 h-4 text-blue-500" />
+                  <p className="text-sm font-bold text-gray-800">本月全勤完成率</p>
+                </div>
+                <div className="flex items-end gap-2 mb-2">
+                  <span className="text-3xl font-black text-blue-600">
+                    {monthCompletion.total > 0 ? Math.round(monthCompletion.full / monthCompletion.total * 100) : 0}%
+                  </span>
+                  <span className="text-sm text-gray-400 mb-1">{monthCompletion.full} / {monthCompletion.total} 天三項全填</span>
+                </div>
+                <div className="h-2.5 bg-blue-50 rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${monthCompletion.total > 0 ? monthCompletion.full / monthCompletion.total * 100 : 0}%` }}
+                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                    className="h-2.5 bg-blue-500 rounded-full"
+                  />
+                </div>
+                <p className="text-[10px] text-gray-400 mt-1">每日工作、衛生記錄、設備保養均填寫計為全勤</p>
+              </div>
+            )}
+
+            {/* Bar chart */}
             <div className="bg-white rounded-2xl p-4">
-              <p className="text-sm font-bold text-gray-800 mb-1">近 7 天提交量</p>
+              <p className="text-sm font-bold text-gray-800 mb-1">{tab === '7d' ? '近 7 天' : '本月'}提交量</p>
               <div className="flex items-center gap-3 mb-4">
                 {[
                   { label: '每日工作', color: '#3b82f6' },
@@ -137,7 +259,7 @@ export default function StatsPage({ user, onBack }: Props) {
                 ))}
               </div>
               <div className="flex items-end gap-2 h-28">
-                {weekStats.map((d, i) => (
+                {barStats.map((d, i) => (
                   <motion.div
                     key={d.date}
                     initial={{ opacity: 0 }}
@@ -170,7 +292,7 @@ export default function StatsPage({ user, onBack }: Props) {
 
             {/* Hygiene pass rate */}
             <div className="bg-white rounded-2xl p-4">
-              <p className="text-sm font-bold text-gray-800 mb-3">衛生檢查合格率（近 7 天）</p>
+              <p className="text-sm font-bold text-gray-800 mb-3">衛生檢查合格率（{tab === '7d' ? '近 7 天' : '本月'}）</p>
               {hygieneRate.total === 0 ? (
                 <p className="text-xs text-gray-400">暫無資料</p>
               ) : (
@@ -202,7 +324,7 @@ export default function StatsPage({ user, onBack }: Props) {
 
             {/* Anomaly category distribution */}
             <div className="bg-white rounded-2xl p-4">
-              <p className="text-sm font-bold text-gray-800 mb-3">異常類別分布（全部）</p>
+              <p className="text-sm font-bold text-gray-800 mb-3">異常類別分布（{tab === '7d' ? '近 7 天' : '本月'}）</p>
               {anomalyStats.length === 0 ? (
                 <p className="text-xs text-gray-400">暫無資料</p>
               ) : (
@@ -241,13 +363,4 @@ export default function StatsPage({ user, onBack }: Props) {
       </div>
     </div>
   )
-}
-
-function groupByDate(rows: any[], key: string): Record<string, number> {
-  const map: Record<string, number> = {}
-  for (const row of rows) {
-    const d = row[key]
-    map[d] = (map[d] || 0) + 1
-  }
-  return map
 }

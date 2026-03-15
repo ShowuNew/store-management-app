@@ -17,7 +17,6 @@ const roleLabels: Record<Role, string> = {
 // FamilyMart 品牌色
 const FM_GREEN = '#00a040'
 const FM_GREEN_DARK = '#007d30'
-const FM_GREEN_LIGHT = '#e8f7ee'
 
 export default function LoginPage({ onLogin }: Props) {
   const [storeCode, setStoreCode] = useState('')

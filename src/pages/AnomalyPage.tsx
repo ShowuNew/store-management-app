@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, AlertTriangle, Clock, CheckCircle2, X, RefreshCw,
-  Wrench, ShieldAlert, Building2, Camera,
+  Wrench, ShieldAlert, Building2, Camera, Image,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -52,6 +52,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
   const [loading, setLoading]       = useState(true)
   const [showForm, setShowForm]     = useState(false)
   const [saving, setSaving]         = useState(false)
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   // ── 通用異常表單 ──
   const [generalForm, setGeneralForm] = useState({
@@ -322,13 +323,33 @@ export default function AnomalyPage({ user, onBack }: Props) {
                     <span className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold" style={{ background: sev.bg, color: sev.color }}>{sev.label}</span>
                     <span className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold" style={{ background: sta.bg, color: sta.color }}>{sta.label}</span>
                   </div>
-                  <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{a.description}</p>
+                  {(() => {
+                    const match = a.description.match(/\n?\[現場照片：(https?:\/\/[^\]]+)\]/)
+                    const photoUrl = match ? match[1] : null
+                    const text = match ? a.description.replace(match[0], '').trim() : a.description
+                    return (
+                      <>
+                        {text && <p className="text-xs text-gray-600 leading-relaxed whitespace-pre-line">{text}</p>}
+                        {photoUrl && (
+                          <button onClick={() => setLightboxUrl(photoUrl)} className="mt-2">
+                            <img
+                              src={photoUrl}
+                              alt="現場照片"
+                              className="w-20 h-20 object-cover rounded-xl border border-blue-100"
+                              onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                            />
+                          </button>
+                        )}
+                      </>
+                    )
+                  })()}
                   <div className="flex items-center gap-3 mt-2">
                     <span className="text-[10px] text-gray-400 flex items-center gap-1">
                       <Clock className="w-3 h-3" />
                       {new Date(a.reported_at).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                     </span>
                     <span className="text-[10px] text-gray-400">回報：{a.reporter_name}</span>
+                    {a.description.includes('[現場照片：') && <span className="text-[10px] text-blue-400 flex items-center gap-0.5"><Image className="w-3 h-3" />有附照</span>}
                   </div>
                 </div>
               </div>
@@ -680,6 +701,35 @@ export default function AnomalyPage({ user, onBack }: Props) {
               )}
             </motion.div>
           </>
+        )}
+      </AnimatePresence>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="absolute top-10 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            <motion.img
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              src={lightboxUrl}
+              alt="現場照片"
+              className="max-w-full max-h-[80dvh] rounded-2xl object-contain"
+              onClick={e => e.stopPropagation()}
+            />
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

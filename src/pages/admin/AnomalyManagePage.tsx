@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
-import { AlertTriangle, Clock, CheckCircle2, RefreshCw, Store } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { AlertTriangle, Clock, CheckCircle2, RefreshCw, Store, X, Image } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type { User } from '../../types'
 
@@ -32,10 +32,18 @@ const staConfig: Record<Status, { label: string; color: string; bg: string }> = 
   resolved:    { label: '已結案', color: '#10b981', bg: '#ecfdf5' },
 }
 
+// Parse photo URLs out of description text
+function parseDescription(desc: string): { text: string; photoUrl: string | null } {
+  const match = desc.match(/\n?\[現場照片：(https?:\/\/[^\]]+)\]/)
+  if (!match) return { text: desc, photoUrl: null }
+  return { text: desc.replace(match[0], '').trim(), photoUrl: match[1] }
+}
+
 export default function AnomalyManagePage({ onBack }: Props) {
   const [anomalies, setAnomalies] = useState<Anomaly[]>([])
   const [loading, setLoading]     = useState(true)
   const [statusFilter, setStatusFilter] = useState<Status | 'all'>('all')
+  const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   const fetchAll = async () => {
     setLoading(true)
@@ -109,6 +117,7 @@ export default function AnomalyManagePage({ onBack }: Props) {
           filtered.map((a, i) => {
             const sev = sevConfig[a.severity]
             const sta = staConfig[a.status]
+            const { text, photoUrl } = parseDescription(a.description)
             return (
               <motion.div
                 key={a.id}
@@ -127,7 +136,20 @@ export default function AnomalyManagePage({ onBack }: Props) {
                       <span className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold" style={{ background: sev.bg, color: sev.color }}>{sev.label}</span>
                       <span className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold" style={{ background: sta.bg, color: sta.color }}>{sta.label}</span>
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed">{a.description}</p>
+                    {text && <p className="text-sm text-gray-700 leading-relaxed">{text}</p>}
+                    {photoUrl && (
+                      <button
+                        onClick={() => setLightboxUrl(photoUrl)}
+                        className="mt-2 flex items-center gap-1.5 text-blue-600 text-xs font-semibold"
+                      >
+                        <img
+                          src={photoUrl}
+                          alt="現場照片"
+                          className="w-20 h-20 object-cover rounded-xl border border-blue-100"
+                          onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none' }}
+                        />
+                      </button>
+                    )}
                     <div className="flex flex-wrap items-center gap-3 mt-2">
                       <span className="text-[10px] text-gray-400 flex items-center gap-1">
                         <Store className="w-3 h-3" /> {a.store_id}
@@ -137,6 +159,7 @@ export default function AnomalyManagePage({ onBack }: Props) {
                         {new Date(a.reported_at).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
                       <span className="text-[10px] text-gray-400">回報：{a.reporter_name}</span>
+                      {photoUrl && <span className="text-[10px] text-blue-400 flex items-center gap-0.5"><Image className="w-3 h-3" />有附照</span>}
                     </div>
                   </div>
                 </div>
@@ -164,6 +187,35 @@ export default function AnomalyManagePage({ onBack }: Props) {
           })
         )}
       </div>
+
+      {/* Lightbox */}
+      <AnimatePresence>
+        {lightboxUrl && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 px-4"
+            onClick={() => setLightboxUrl(null)}
+          >
+            <button
+              onClick={() => setLightboxUrl(null)}
+              className="absolute top-10 right-4 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center"
+            >
+              <X className="w-5 h-5 text-white" />
+            </button>
+            <motion.img
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              src={lightboxUrl}
+              alt="現場照片"
+              className="max-w-full max-h-[80dvh] rounded-2xl object-contain"
+              onClick={e => e.stopPropagation()}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

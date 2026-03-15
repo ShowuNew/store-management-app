@@ -90,6 +90,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [uniform, setUniform]       = useState({ appearance: false, sanitize: false })
   const [handoverNote, setHandoverNote] = useState('')
   const [submitted, setSubmitted]   = useState(false)
+  const [saveError, setSaveError]   = useState<string | null>(null)
   const [saving, setSaving]         = useState(false)
   const [loading, setLoading]       = useState(true)
   const [existingId, setExistingId] = useState<string | null>(null)
@@ -153,6 +154,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
   const handleSubmit = async () => {
     setSaving(true)
+    setSaveError(null)
     const temperaturesPayload = tempSpecs.map((spec, i) => ({
       location: spec.location, required: spec.required, zone: spec.zone,
       readings: (tempData[i] ?? []).map(r => {
@@ -167,11 +169,20 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       handover_note: handoverNote,
       submitted_at: new Date().toISOString(),
     }
+    let dbError: any = null
     if (existingId) {
-      await supabase.from('daily_work_logs').update(payload).eq('id', existingId)
+      const { error } = await supabase.from('daily_work_logs').update(payload).eq('id', existingId)
+      dbError = error
     } else {
-      const { data } = await supabase.from('daily_work_logs').insert(payload).select().single()
+      const { data, error } = await supabase.from('daily_work_logs').insert(payload).select().single()
+      dbError = error
       if (data) setExistingId(data.id)
+    }
+    if (dbError) {
+      console.error('Save error:', dbError)
+      setSaveError(`儲存失敗：${dbError.message ?? '請確認網路連線或聯絡管理員'}`)
+      setSaving(false)
+      return
     }
     setSubmitted(true); setSaving(false)
   }
@@ -307,6 +318,11 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         </div>
 
         {/* Submit */}
+        {saveError && (
+          <div className="w-full px-4 py-3 rounded-2xl bg-red-50 border border-red-100">
+            <p className="text-red-600 text-xs font-semibold">{saveError}</p>
+          </div>
+        )}
         {!submitted ? (
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleSubmit} disabled={saving}
             className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-opacity"

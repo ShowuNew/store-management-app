@@ -143,9 +143,12 @@ export default function InspectionPage({ user, onBack }: Props) {
     setSaved(true)
   }
 
-  const allItems      = cats.flatMap(c => c.items)
+  const allItems       = cats.flatMap(c => c.items)
+  const answeredCount  = allItems.filter(i => i.result !== null).length
+  const totalItems     = allItems.length
   const criticalFailed = allItems.some(i => i.isCritical && i.result === 'fail')
   const totalDeducted  = allItems.reduce((s, i) => i.result === 'fail' ? s + i.maxScore : s, 0)
+  const failCount      = allItems.filter(i => i.result === 'fail').length
   const totalScore     = criticalFailed ? 0 : Math.max(0, 100 - totalDeducted)
   const pass           = !criticalFailed && totalScore >= 80
 
@@ -186,10 +189,24 @@ export default function InspectionPage({ user, onBack }: Props) {
               <span className="text-2xl font-black">{totalScore}</span>
             </div>
           </div>
+
+          {/* 進度列 */}
           <div className="mt-4 bg-white/20 rounded-full h-2">
             <div className="h-2 rounded-full bg-white transition-all" style={{ width: `${totalScore}%` }} />
           </div>
-          <p className="text-white/50 text-[10px] mt-2">計分方式：倒扣制（滿分100），缺失項目扣對應分數；★第33項缺失則總分歸零</p>
+
+          {/* 勾選進度 & 缺失數 */}
+          <div className="mt-3 flex items-center justify-between">
+            <p className="text-white/70 text-[11px]">
+              已確認 <span className="font-bold text-white">{answeredCount}</span> / {totalItems} 項
+            </p>
+            {failCount > 0 && (
+              <p className="text-[11px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+                缺失 {failCount} 項，扣 {totalDeducted} 分
+              </p>
+            )}
+          </div>
+          <p className="text-white/40 text-[10px] mt-1">倒扣制：點「缺失」才扣分；點「符合」確認無缺失</p>
         </motion.div>
 
         {criticalFailed && (

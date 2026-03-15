@@ -45,7 +45,7 @@ export default function LoginPage({ onLogin }: Props) {
           <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl">
             <Store className="w-10 h-10" style={{ color: '#00a86b' }} />
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-wide">店鋪管理系統</h1>
+          <h1 className="text-2xl font-bold text-white tracking-wide">店鋪工作日誌FamilyMart</h1>
           <p className="text-green-200 text-sm mt-1">便利商店數位化管理平台</p>
         </motion.div>
 

@@ -201,7 +201,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   return (
     <div className="min-h-dvh bg-gray-50">
       <PageHeader
-        title="店鋪管理系統"
+        title="店鋪工作日誌FamilyMart"
         subtitle={`${user.storeName}・${user.name}（${roleLabel}）`}
         onLogout={onLogout}
         rightElement={

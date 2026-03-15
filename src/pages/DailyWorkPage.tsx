@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircle2, Circle, Thermometer, Save, AlertCircle,
-  RefreshCw, Clock, Plus, Trash2, Package, Wrench, Leaf, Shirt,
+  RefreshCw, Clock, Plus, Trash2, Package, Wrench, Leaf, Shirt, MessageSquare,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -45,11 +45,6 @@ const friendlyTasks = [
   { key: 't2400', time: '24:00', label: '過期品下架',    detail: '預購/隨買/蘭購/各溫層專區（冷藏、冷凍、常溫）' },
 ]
 
-// ── 作業清單（溫度/友善食光已拆分，僅留其他任務）──
-const tasksByTime = [
-  { time: '07:00', tasks: ['確認鮮食上架日期標籤', '確認熱食區設備電源', '清潔咖啡機出水口'] },
-  { time: '12:00', tasks: ['補充貨架缺貨商品', '清潔微波爐內部', '確認霜淇淋機清潔時間登記'] },
-]
 
 const zones = ['全部', '賣場', '咖啡', 'FF區']
 const todayStr = new Date().toISOString().split('T')[0]
@@ -87,12 +82,12 @@ const anomalyStatus = (spec: TempSpec, readings: TempReading[]): AnomalyStatus =
 
 export default function DailyWorkPage({ user, onBack }: Props) {
   const [selectedShift, setSelectedShift] = useState(0)
-  const [doneMap, setDoneMap]       = useState<Record<string, boolean>>({})
   const [tempData, setTempData]     = useState<TempData>({})
   const [waste, setWaste]           = useState<WasteState>(defaultWaste)
   const [cleaning, setCleaning]     = useState<Record<string, string>>({})
   const [friendly, setFriendly]     = useState<Record<string, boolean>>({})
   const [uniform, setUniform]       = useState({ appearance: false, sanitize: false })
+  const [handoverNote, setHandoverNote] = useState('')
   const [submitted, setSubmitted]   = useState(false)
   const [saving, setSaving]         = useState(false)
   const [loading, setLoading]       = useState(true)
@@ -112,8 +107,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       const shiftLog = allLogs.find((l: any) => l.shift === shifts[selectedShift])
       if (shiftLog) {
         setExistingId(shiftLog.id)
-        const td = shiftLog.tasks_done || {}
-        setDoneMap(Object.fromEntries(Object.entries(td).filter(([k]) => !k.startsWith('_'))) as Record<string, boolean>)
+        setHandoverNote(shiftLog.handover_note ?? '')
         setSubmitted(!!shiftLog.submitted_at)
         if (Array.isArray(shiftLog.temperatures)) {
           const restored: TempData = {}
@@ -128,7 +122,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           setTempData(restored)
         } else { setTempData({}) }
       } else {
-        setExistingId(null); setDoneMap({}); setTempData({}); setSubmitted(false)
+        setExistingId(null); setHandoverNote(''); setTempData({}); setSubmitted(false)
       }
 
       // Non-shift data: merge from any shift (most recent submission wins)
@@ -148,7 +142,6 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     load()
   }, [selectedShift, user.storeId])
 
-  const toggleTask = (key: string) => { setDoneMap(p => ({ ...p, [key]: !p[key] })); setSubmitted(false) }
   const getReadings = (i: number) => tempData[i] ?? []
   const addReading = (i: number) => {
     setTempData(p => ({ ...p, [i]: [...(p[i] ?? []), { time: nowTimeStr(), value: '' }] }))
@@ -175,7 +168,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const payload = {
       store_id: user.storeId, staff_name: user.name, log_date: todayStr,
       shift: shifts[selectedShift], temperatures: temperaturesPayload,
-      tasks_done: { ...doneMap, _waste: waste, _cleaning: cleaning, _friendly: friendly, _uniform: uniform },
+      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _uniform: uniform },
+      handover_note: handoverNote,
       submitted_at: new Date().toISOString(),
     }
     if (existingId) {
@@ -192,8 +186,6 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     : tempSpecs.map((_, i) => i).filter(i => tempSpecs[i].zone === tempZone)
   const totalReadings = tempSpecs.reduce((s, _, i) => s + (tempData[i]?.filter(r => r.value.trim()).length ?? 0), 0)
   const hasAbnormal = filteredIndices.some(i => anomalyStatus(tempSpecs[i], getReadings(i)) === 'recheck' || anomalyStatus(tempSpecs[i], getReadings(i)) === 'repair')
-  const allTasks = tasksByTime.flatMap(t => t.tasks.map((_, i) => `${t.time}-${i}`))
-  const doneCount = allTasks.filter(k => doneMap[k]).length
   const friendlyDone = friendlyTasks.filter(t => friendly[t.key]).length
 
   return (
@@ -452,39 +444,22 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               </div>
             </div>
 
-            {/* ─── 5. 作業確認清單 ─── */}
+            {/* ─── 5. 交接班紀錄 ─── */}
             <div className="bg-white rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-4">
-                <p className="text-sm font-bold text-gray-800">作業確認清單</p>
-                <span className="text-xs px-2.5 py-1 rounded-xl font-bold"
-                  style={{ background: doneCount === allTasks.length ? '#ecfdf5' : '#f3f4f6', color: doneCount === allTasks.length ? '#10b981' : '#6b7280' }}>
-                  {doneCount}/{allTasks.length}
-                </span>
+              <div className="flex items-center gap-2 mb-1">
+                <MessageSquare className="w-4 h-4 text-indigo-500" />
+                <p className="text-sm font-bold text-gray-800">交接班紀錄</p>
               </div>
-              <div className="space-y-5">
-                {tasksByTime.map(({ time, tasks }) => (
-                  <div key={time}>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Clock className="w-3 h-3 text-gray-400" />
-                      <span className="text-xs font-bold px-2 py-0.5 bg-gray-100 text-gray-500 rounded-lg">{time}</span>
-                      <span className="flex-1 h-px bg-gray-100" />
-                    </div>
-                    <div className="space-y-1.5">
-                      {tasks.map((task, i) => {
-                        const key = `${time}-${i}`, done = doneMap[key]
-                        return (
-                          <motion.button key={key} whileTap={{ scale: 0.98 }} onClick={() => toggleTask(key)}
-                            className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all"
-                            style={{ background: done ? '#ecfdf5' : '#f9fafb' }}>
-                            {done ? <CheckCircle2 className="w-5 h-5 shrink-0 text-green-500" /> : <Circle className="w-5 h-5 shrink-0 text-gray-200" />}
-                            <span className="text-sm" style={{ color: done ? '#059669' : '#374151', textDecoration: done ? 'line-through' : 'none' }}>{task}</span>
-                          </motion.button>
-                        )
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p className="text-[10px] text-gray-400 mb-3">
+                如有消費者反應，請記錄姓名、電話、反應時間；如有品質異常客訴，請量測並記錄機台溫度
+              </p>
+              <textarea
+                rows={5}
+                placeholder="請填寫交接事項、消費者反應或其他店鋪紀錄..."
+                className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 outline-none resize-none leading-relaxed"
+                value={handoverNote}
+                onChange={e => { setHandoverNote(e.target.value); setSubmitted(false) }}
+              />
             </div>
 
             {/* Submit */}

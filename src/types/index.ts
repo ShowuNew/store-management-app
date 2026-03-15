@@ -8,6 +8,7 @@ export type Page =
   | 'inspection'
   | 'anomaly'
   | 'equipment'
+  | 'stats'
   | 'admin-dashboard'
   | 'admin-records'
   | 'admin-anomaly'

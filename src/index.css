@@ -16,3 +16,20 @@ body {
   min-height: 100dvh;
   background: #f5f7fa;
 }
+
+/* 防止 iOS 自動縮放（input focus 時） */
+input, select, textarea {
+  font-size: 16px;
+}
+
+/* 全域觸控目標最小高度（衛生記錄符合/缺失按鈕等） */
+button {
+  min-height: 44px;
+}
+
+/* 衛生/點檢頁的符合缺失按鈕加大 */
+.compliance-btn {
+  min-height: 60px;
+  font-size: 17px;
+  font-weight: 700;
+}

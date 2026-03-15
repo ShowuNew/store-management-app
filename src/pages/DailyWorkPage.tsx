@@ -97,6 +97,11 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [tempZone, setTempZone]     = useState('全部')
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
 
+  // Swipe card mode states
+  const [swipeMode, setSwipeMode] = useState(true)
+  const [cardIdx, setCardIdx] = useState(0)
+  const [cardValue, setCardValue] = useState('')
+
   useEffect(() => {
     const load = async () => {
       setLoading(true)
@@ -137,6 +142,14 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     }
     load()
   }, [selectedShift, user.storeId])
+
+  // When cardIdx changes or entering swipe mode, pre-fill cardValue with last reading
+  useEffect(() => {
+    if (!swipeMode) return
+    const readings = getReadings(cardIdx)
+    const lastFilled = [...readings].reverse().find(r => r.value.trim())
+    setCardValue(lastFilled?.value ?? '')
+  }, [cardIdx, swipeMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const getReadings = (i: number) => tempData[i] ?? []
   const addReading = (i: number) => {
@@ -342,7 +355,247 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   }
 
   // ────────────────────────────────────────────────
-  // 溫度記錄
+  // 溫度記錄 - List mode (existing accordion)
+  // ────────────────────────────────────────────────
+  const renderTempList = () => (
+    <>
+      <div className="flex gap-1.5 mb-3 overflow-x-auto pb-0.5">
+        {zones.map(z => (
+          <button key={z} onClick={() => setTempZone(z)}
+            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+            style={{ background: tempZone === z ? '#1e40af' : '#f3f4f6', color: tempZone === z ? 'white' : '#6b7280' }}>
+            {z}
+          </button>
+        ))}
+      </div>
+      <div className="space-y-2">
+        {filteredIndices.map(specIdx => {
+          const spec       = tempSpecs[specIdx]
+          const readings   = getReadings(specIdx)
+          const isExpanded = expandedIdx === specIdx
+          const status     = anomalyStatus(spec, readings)
+          const lastFilled = [...readings].reverse().find(r => r.value.trim())
+          const lastNormal = lastFilled ? evalReading(spec, lastFilled) : null
+          const bgHeader   = status === 'repair' ? '#fef2f2' : status === 'recheck' ? '#fffbeb' : status === 'resolved' ? '#f0fdf4' : readings.length > 0 ? '#f0fdf4' : '#f9fafb'
+
+          return (
+            <div key={specIdx} className="border border-gray-100 rounded-xl overflow-hidden">
+              <button className="w-full flex items-center justify-between px-3 py-2.5"
+                style={{ background: bgHeader }}
+                onClick={() => setExpandedIdx(isExpanded ? null : specIdx)}>
+                <div className="text-left">
+                  <p className="text-xs font-semibold text-gray-700">{spec.location}</p>
+                  <p className="text-[10px] text-gray-400">標準：{spec.required}</p>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                  {status === 'recheck'  && <span className="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">需複核</span>}
+                  {status === 'repair'   && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">需報修</span>}
+                  {status === 'resolved' && <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">已正常</span>}
+                  {lastFilled
+                    ? <span className="text-sm font-bold" style={{ color: lastNormal === false ? '#ef4444' : '#10b981' }}>
+                        {parseFloat(lastFilled.value) > 0 ? '+' : ''}{parseFloat(lastFilled.value)}°C
+                      </span>
+                    : <span className="text-xs text-gray-300">未填</span>
+                  }
+                  {readings.length > 0 && <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded-md">{readings.length}筆</span>}
+                </div>
+              </button>
+              <AnimatePresence>
+                {isExpanded && (
+                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+                    <div className="px-3 pb-3 pt-2 space-y-2 border-t border-gray-100">
+                      {readings.length === 0 && <p className="text-xs text-gray-300 text-center py-1">尚無量測紀錄</p>}
+                      {readings.map((r, rIdx) => {
+                        const normal = evalReading(spec, r)
+                        return (
+                          <div key={rIdx} className="flex items-center gap-2">
+                            <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50">
+                              <Clock className="w-3 h-3 text-gray-300 shrink-0" />
+                              <input type="time" className="text-xs font-medium text-gray-700 outline-none bg-transparent w-16"
+                                value={r.time} onChange={e => updateReading(specIdx, rIdx, 'time', e.target.value)} />
+                            </div>
+                            <div className="flex items-center border rounded-lg overflow-hidden flex-1"
+                              style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
+                              <input type="number" inputMode="decimal"
+                                className="flex-1 text-center text-sm font-bold outline-none bg-transparent py-1.5 px-2"
+                                style={{ color: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151' }}
+                                placeholder="溫度" value={r.value}
+                                onChange={e => updateReading(specIdx, rIdx, 'value', e.target.value)} />
+                              <span className="text-xs text-gray-400 pr-2">°C</span>
+                            </div>
+                            {r.value.trim() && <span className="text-[10px] font-bold w-7 text-center shrink-0" style={{ color: normal === false ? '#ef4444' : '#10b981' }}>{normal === false ? '異常' : 'OK'}</span>}
+                            <button onClick={() => removeReading(specIdx, rIdx)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 shrink-0">
+                              <Trash2 className="w-3 h-3 text-gray-400" />
+                            </button>
+                          </div>
+                        )
+                      })}
+                      <button onClick={() => addReading(specIdx)}
+                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-blue-300 text-xs font-semibold text-blue-500">
+                        <Plus className="w-3.5 h-3.5" /> 新增量測
+                      </button>
+                      {status === 'recheck' && <p className="text-[11px] text-yellow-600 bg-yellow-50 rounded-lg px-3 py-2">⏱ 請於 30 分鐘後再次量測確認</p>}
+                      {status === 'repair'  && <p className="text-[11px] text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複核後仍異常，請至「異常回報」提交報修申請</p>}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+          )
+        })}
+      </div>
+    </>
+  )
+
+  // ────────────────────────────────────────────────
+  // 溫度記錄 - Card (swipe) mode
+  // ────────────────────────────────────────────────
+  const renderTempCard = () => {
+    const spec = tempSpecs[cardIdx]
+    const readings = getReadings(cardIdx)
+    const cardNormal = cardValue.trim() ? (() => {
+      const n = parseFloat(cardValue)
+      return isNaN(n) ? null : spec.check(n)
+    })() : null
+    const status = anomalyStatus(spec, readings)
+
+    const saveCurrentCard = () => {
+      if (!cardValue.trim()) return
+      const time = nowTimeStr()
+      setTempData(p => {
+        const existing = [...(p[cardIdx] ?? [])]
+        const last = [...existing].reverse().find(r => r.value.trim())
+        if (last && last.value === cardValue) return p // unchanged, skip
+        return { ...p, [cardIdx]: [...existing, { time, value: cardValue }] }
+      })
+      setSubmitted(false)
+    }
+
+    const goCard = (nextIdx: number) => {
+      saveCurrentCard()
+      setCardIdx(Math.max(0, Math.min(tempSpecs.length - 1, nextIdx)))
+    }
+
+    const isLast = cardIdx === tempSpecs.length - 1
+
+    return (
+      <div>
+        {/* Progress header */}
+        <div className="flex items-center justify-between mb-4">
+          <span className="text-sm font-bold text-gray-500">{cardIdx + 1} / {tempSpecs.length}</span>
+          <span className="px-2 py-1 rounded-lg text-xs font-bold"
+            style={{
+              background: spec.zone === '賣場' ? '#eff6ff' : spec.zone === '咖啡' ? '#fdf4ff' : '#fff7ed',
+              color: spec.zone === '賣場' ? '#1d4ed8' : spec.zone === '咖啡' ? '#7c3aed' : '#c2410c',
+            }}>
+            {spec.zone}
+          </span>
+        </div>
+
+        {/* Device name */}
+        <p className="text-lg font-bold text-gray-800 mb-1">{spec.location}</p>
+        <p className="text-sm text-gray-400 mb-4">標準：{spec.required}</p>
+
+        {/* Large input */}
+        <div className="flex items-end justify-center gap-2 mb-2">
+          <input
+            type="number"
+            inputMode="decimal"
+            placeholder="—"
+            value={cardValue}
+            onChange={e => setCardValue(e.target.value)}
+            className="outline-none bg-transparent text-center font-black"
+            style={{
+              fontSize: '56px',
+              width: '180px',
+              borderBottom: `3px solid ${cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#d1d5db'}`,
+              color: cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#374151',
+            }}
+          />
+          <span className="text-2xl font-bold text-gray-400 pb-2">°C</span>
+        </div>
+
+        {/* Status line */}
+        <div className="text-center mb-3 h-6">
+          {cardNormal === true && <span className="text-sm font-semibold text-green-600">✅ 在標準範圍內</span>}
+          {cardNormal === false && <span className="text-sm font-semibold text-red-500">⚠️ 超出標準範圍</span>}
+        </div>
+
+        {/* Anomaly banners */}
+        {status === 'recheck' && (
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 mb-3 text-xs font-semibold text-yellow-700">
+            ⏱ 請於 30 分鐘後再次量測確認
+          </div>
+        )}
+        {status === 'repair' && (
+          <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3 text-xs font-semibold text-red-700">
+            ⚠ 複核後仍異常，請至「異常回報」提交報修申請
+          </div>
+        )}
+
+        {/* Dots progress */}
+        <div className="flex justify-center gap-1.5 my-3">
+          {tempSpecs.map((sp, i) => {
+            const r = getReadings(i)
+            const lf = [...r].reverse().find(rd => rd.value.trim())
+            const isNorm = lf ? evalReading(sp, lf) : null
+            const isCurrent = i === cardIdx
+            return (
+              <div key={i} className="rounded-full transition-all"
+                style={{
+                  width: isCurrent ? 10 : 6,
+                  height: isCurrent ? 10 : 6,
+                  background: isCurrent ? '#1e40af'
+                    : isNorm === false ? '#ef4444'
+                    : isNorm === true ? '#10b981'
+                    : '#d1d5db',
+                }}
+              />
+            )
+          })}
+        </div>
+
+        {/* Navigation buttons */}
+        <div className="flex gap-2 mt-4">
+          <button
+            onClick={() => goCard(cardIdx - 1)}
+            disabled={cardIdx === 0}
+            className="flex-1 py-3 rounded-2xl text-sm font-bold transition-all disabled:opacity-40"
+            style={{ background: '#f3f4f6', color: '#374151' }}
+          >
+            ← 上一台
+          </button>
+          <button
+            onClick={() => {
+              if (isLast) {
+                saveCurrentCard()
+              } else {
+                goCard(cardIdx + 1)
+              }
+            }}
+            className="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all"
+            style={{ background: isLast ? 'linear-gradient(135deg, #00a86b, #00d47e)' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}
+          >
+            {isLast ? '完成 ✓' : '確認，下一台 →'}
+          </button>
+        </div>
+
+        {/* Small list mode link */}
+        <div className="text-center mt-3">
+          <button
+            onClick={() => setSwipeMode(false)}
+            className="text-xs text-gray-400 underline"
+          >
+            切換為列表模式
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // ────────────────────────────────────────────────
+  // 溫度記錄 (top-level with toggle)
   // ────────────────────────────────────────────────
   const renderTemperature = () => {
     const totalReadings = tempSpecs.reduce((s, _, i) => s + (tempData[i]?.filter(r => r.value.trim()).length ?? 0), 0)
@@ -350,99 +603,33 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       const s = anomalyStatus(spec, getReadings(i))
       return s === 'recheck' || s === 'repair'
     })
+
     return (
       <div className="space-y-4">
         <div className="bg-white rounded-2xl p-4">
+          {/* Header with toggle */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs text-gray-400">{totalReadings} 筆已填</span>
-            {hasAbnormal && <span className="flex items-center gap-1 text-xs text-red-500 font-semibold"><AlertCircle className="w-3.5 h-3.5" /> 有異常</span>}
-          </div>
-          <div className="flex gap-1.5 mb-3 overflow-x-auto pb-0.5">
-            {zones.map(z => (
-              <button key={z} onClick={() => setTempZone(z)}
-                className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-                style={{ background: tempZone === z ? '#1e40af' : '#f3f4f6', color: tempZone === z ? 'white' : '#6b7280' }}>
-                {z}
+            <span className="text-sm text-gray-500">{totalReadings} 筆已填</span>
+            <div className="flex items-center gap-2">
+              {hasAbnormal && (
+                <span className="text-xs text-red-500 font-semibold flex items-center gap-1">
+                  <AlertCircle className="w-3.5 h-3.5" /> 有異常
+                </span>
+              )}
+              <button
+                onClick={() => setSwipeMode(m => !m)}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                style={{
+                  background: swipeMode ? '#00a86b' : '#f3f4f6',
+                  color: swipeMode ? 'white' : '#6b7280',
+                }}
+              >
+                {swipeMode ? '⊞ 列表' : '⊟ 卡片'}
               </button>
-            ))}
+            </div>
           </div>
-          <div className="space-y-2">
-            {filteredIndices.map(specIdx => {
-              const spec       = tempSpecs[specIdx]
-              const readings   = getReadings(specIdx)
-              const isExpanded = expandedIdx === specIdx
-              const status     = anomalyStatus(spec, readings)
-              const lastFilled = [...readings].reverse().find(r => r.value.trim())
-              const lastNormal = lastFilled ? evalReading(spec, lastFilled) : null
-              const bgHeader   = status === 'repair' ? '#fef2f2' : status === 'recheck' ? '#fffbeb' : status === 'resolved' ? '#f0fdf4' : readings.length > 0 ? '#f0fdf4' : '#f9fafb'
 
-              return (
-                <div key={specIdx} className="border border-gray-100 rounded-xl overflow-hidden">
-                  <button className="w-full flex items-center justify-between px-3 py-2.5"
-                    style={{ background: bgHeader }}
-                    onClick={() => setExpandedIdx(isExpanded ? null : specIdx)}>
-                    <div className="text-left">
-                      <p className="text-xs font-semibold text-gray-700">{spec.location}</p>
-                      <p className="text-[10px] text-gray-400">標準：{spec.required}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {status === 'recheck'  && <span className="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">需複核</span>}
-                      {status === 'repair'   && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">需報修</span>}
-                      {status === 'resolved' && <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">已正常</span>}
-                      {lastFilled
-                        ? <span className="text-sm font-bold" style={{ color: lastNormal === false ? '#ef4444' : '#10b981' }}>
-                            {parseFloat(lastFilled.value) > 0 ? '+' : ''}{parseFloat(lastFilled.value)}°C
-                          </span>
-                        : <span className="text-xs text-gray-300">未填</span>
-                      }
-                      {readings.length > 0 && <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded-md">{readings.length}筆</span>}
-                    </div>
-                  </button>
-                  <AnimatePresence>
-                    {isExpanded && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
-                        <div className="px-3 pb-3 pt-2 space-y-2 border-t border-gray-100">
-                          {readings.length === 0 && <p className="text-xs text-gray-300 text-center py-1">尚無量測紀錄</p>}
-                          {readings.map((r, rIdx) => {
-                            const normal = evalReading(spec, r)
-                            return (
-                              <div key={rIdx} className="flex items-center gap-2">
-                                <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50">
-                                  <Clock className="w-3 h-3 text-gray-300 shrink-0" />
-                                  <input type="time" className="text-xs font-medium text-gray-700 outline-none bg-transparent w-16"
-                                    value={r.time} onChange={e => updateReading(specIdx, rIdx, 'time', e.target.value)} />
-                                </div>
-                                <div className="flex items-center border rounded-lg overflow-hidden flex-1"
-                                  style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
-                                  <input type="number" inputMode="decimal"
-                                    className="flex-1 text-center text-sm font-bold outline-none bg-transparent py-1.5 px-2"
-                                    style={{ color: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151' }}
-                                    placeholder="溫度" value={r.value}
-                                    onChange={e => updateReading(specIdx, rIdx, 'value', e.target.value)} />
-                                  <span className="text-xs text-gray-400 pr-2">°C</span>
-                                </div>
-                                {r.value.trim() && <span className="text-[10px] font-bold w-7 text-center shrink-0" style={{ color: normal === false ? '#ef4444' : '#10b981' }}>{normal === false ? '異常' : 'OK'}</span>}
-                                <button onClick={() => removeReading(specIdx, rIdx)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 shrink-0">
-                                  <Trash2 className="w-3 h-3 text-gray-400" />
-                                </button>
-                              </div>
-                            )
-                          })}
-                          <button onClick={() => addReading(specIdx)}
-                            className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-blue-300 text-xs font-semibold text-blue-500">
-                            <Plus className="w-3.5 h-3.5" /> 新增量測
-                          </button>
-                          {status === 'recheck' && <p className="text-[11px] text-yellow-600 bg-yellow-50 rounded-lg px-3 py-2">⏱ 請於 30 分鐘後再次量測確認</p>}
-                          {status === 'repair'  && <p className="text-[11px] text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複核後仍異常，請至「異常回報」提交報修申請</p>}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-              )
-            })}
-          </div>
+          {swipeMode ? renderTempCard() : renderTempList()}
         </div>
       </div>
     )

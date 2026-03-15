@@ -81,6 +81,7 @@ const initCategories: CategoryData[] = [
 ]
 
 const todayStr = new Date().toISOString().split('T')[0]
+const draftKey = (storeId: string) => `inspection_${storeId}_${todayStr}`
 
 export default function InspectionPage({ user, onBack }: Props) {
   const [cats, setCats] = useState<CategoryData[]>(initCategories)
@@ -89,6 +90,7 @@ export default function InspectionPage({ user, onBack }: Props) {
   const [saved, setSaved] = useState(false)
   const [saveError, setSaveError] = useState('')
   const [existingId, setExistingId] = useState<string | null>(null)
+  const [draftRestored, setDraftRestored] = useState(false)
 
   // 載入今日既有紀錄
   useEffect(() => {
@@ -102,10 +104,31 @@ export default function InspectionPage({ user, onBack }: Props) {
       if (data) {
         setExistingId(data.id)
         setCats(data.categories)
+        setSaved(true)
+      } else {
+        // Try localStorage draft
+        try {
+          const raw = localStorage.getItem(draftKey(user.storeId))
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (parsed.categories) {
+              setCats(parsed.categories)
+              setDraftRestored(true)
+            }
+          }
+        } catch { /* ignore */ }
       }
     }
     load()
   }, [user.storeId])
+
+  // Auto-save draft to localStorage on every setResult
+  useEffect(() => {
+    if (saved) return
+    try {
+      localStorage.setItem(draftKey(user.storeId), JSON.stringify({ categories: cats }))
+    } catch { /* ignore */ }
+  }, [cats]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const setResult = (ci: number, ii: number, result: Result) => {
     setCats(p => p.map((c, cIdx) =>
@@ -140,6 +163,9 @@ export default function InspectionPage({ user, onBack }: Props) {
     }
     setSaving(false)
     if (err) { setSaveError(err.message); return }
+    // Clear draft
+    try { localStorage.removeItem(draftKey(user.storeId)) } catch { /* ignore */ }
+    setDraftRestored(false)
     setSaved(true)
   }
 
@@ -219,6 +245,23 @@ export default function InspectionPage({ user, onBack }: Props) {
           </div>
         )}
 
+        {/* Draft restored banner */}
+        {draftRestored && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 flex items-center justify-between gap-3">
+            <p className="text-sm font-semibold text-blue-700">已還原上次未儲存的草稿</p>
+            <button
+              onClick={() => {
+                try { localStorage.removeItem(draftKey(user.storeId)) } catch { /* ignore */ }
+                setCats(initCategories)
+                setDraftRestored(false)
+              }}
+              className="shrink-0 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 text-xs font-bold"
+            >
+              重新開始
+            </button>
+          </div>
+        )}
+
         {/* Accordions */}
         {cats.map((cat, ci) => {
           const catDeducted = cat.items.reduce((s, i) => i.result === 'fail' ? s + i.maxScore : s, 0)
@@ -282,30 +325,51 @@ export default function InspectionPage({ user, onBack }: Props) {
                                   ★重點
                                 </span>
                               )}
-                              <p className="text-xs text-gray-600 leading-relaxed mt-0.5">{item.description}</p>
+                              <p className="text-sm text-gray-600 leading-relaxed mt-0.5">{item.description}</p>
                             </div>
                           </div>
-                          <div className="flex gap-2 ml-8">
-                            {(['pass', 'fail', 'na'] as const).map(r => (
+
+                          {/* Redesigned buttons: full width, no ml-8, big 符合/缺失, small N/A below */}
+                          <div>
+                            <div className="flex gap-2 mb-1">
+                              {/* 符合 - big */}
                               <button
-                                key={r}
-                                onClick={() => setResult(ci, ii, r)}
-                                className="flex-1 py-2 rounded-xl text-[11px] font-bold transition-all"
+                                onClick={() => setResult(ci, ii, 'pass')}
+                                className="flex-1 flex items-center justify-center gap-2 rounded-2xl font-bold text-base transition-all"
                                 style={{
-                                  background: item.result === r
-                                    ? r === 'pass' ? '#10b981' : r === 'fail' ? '#ef4444' : '#6b7280'
-                                    : r === 'pass' ? '#f0fdf4'  : r === 'fail' ? '#fef2f2'  : '#f9fafb',
-                                  color: item.result === r
-                                    ? 'white'
-                                    : r === 'pass' ? '#10b981' : r === 'fail' ? '#ef4444' : '#9ca3af',
+                                  minHeight: '56px',
+                                  background: item.result === 'pass' ? '#10b981' : '#f0fdf4',
+                                  color: item.result === 'pass' ? 'white' : '#10b981',
                                 }}
                               >
-                                {r === 'pass' ? '符合' : r === 'fail' ? '缺失' : 'N/A'}
+                                ✓ 符合
                               </button>
-                            ))}
-                            <span className="px-2 py-2 text-[11px] text-amber-500 font-black shrink-0">
-                              {item.maxScore}分
-                            </span>
+                              {/* 缺失 - big */}
+                              <button
+                                onClick={() => setResult(ci, ii, 'fail')}
+                                className="flex-1 flex items-center justify-center gap-2 rounded-2xl font-bold text-base transition-all"
+                                style={{
+                                  minHeight: '56px',
+                                  background: item.result === 'fail' ? '#ef4444' : '#fef2f2',
+                                  color: item.result === 'fail' ? 'white' : '#ef4444',
+                                }}
+                              >
+                                ✗ 缺失
+                              </button>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <button
+                                onClick={() => setResult(ci, ii, 'na')}
+                                className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                                style={{
+                                  background: item.result === 'na' ? '#6b7280' : '#f9fafb',
+                                  color: item.result === 'na' ? 'white' : '#9ca3af',
+                                }}
+                              >
+                                N/A 不適用
+                              </button>
+                              <span className="text-sm text-amber-500 font-black">{item.maxScore}分</span>
+                            </div>
                           </div>
                         </div>
                       ))}

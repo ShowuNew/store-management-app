@@ -189,7 +189,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
       color: '#ef4444', bg: '#fef2f2', done: null, total: null,
       badge: counts.openAnomaly > 0 ? `${counts.openAnomaly} 待處理` : undefined,
     },
-    { page: 'dashboard',  icon: TrendingUp,   label: '月報統計',     desc: '數據・績效分析',    color: '#007d30', bg: '#d4efdf', done: null, total: null },
+    { page: 'stats',      icon: TrendingUp,   label: '月報統計',     desc: '數據・績效分析',    color: '#007d30', bg: '#d4efdf', done: null, total: null },
   ]
 
   const countable    = modules.filter(m => m.done !== null && m.total !== null && (m.total ?? 0) > 0)
@@ -289,9 +289,9 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           ) : (
             alerts.map((a, i) => {
               const styleMap = {
-                error: { bg: '#fef2f2', color: '#dc2626', dot: '🔴' },
-                warn:  { bg: '#fffbeb', color: '#d97706', dot: '🟡' },
-                info:  { bg: '#eff6ff', color: '#2563eb', dot: '🔵' },
+                error: { bg: '#fef2f2', color: '#dc2626', dot: '🔴', label: '警示' },
+                warn:  { bg: '#fffbeb', color: '#d97706', dot: '🟡', label: '注意' },
+                info:  { bg: '#eff6ff', color: '#2563eb', dot: '🔵', label: '待辦' },
               } as const
               const s = styleMap[a.type]
               return (
@@ -300,12 +300,12 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  className="flex items-center gap-3 px-4 py-3 rounded-2xl"
+                  className="flex items-start gap-3 px-4 py-3 rounded-2xl"
                   style={{ background: s.bg }}
                 >
-                  <span>{s.dot}</span>
-                  <p className="flex-1 text-xs font-medium" style={{ color: s.color }}>{a.msg}</p>
-                  {a.time && <span className="text-[10px] text-gray-400 shrink-0">{a.time}</span>}
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0 mt-0.5" style={{ background: s.color, color: '#fff', fontSize: '10px' }}>{s.label}</span>
+                  <p className="flex-1 text-sm font-medium" style={{ color: s.color }}>{a.msg}</p>
+                  {a.time && <span className="text-xs text-gray-400 shrink-0">{a.time}</span>}
                 </motion.div>
               )
             })

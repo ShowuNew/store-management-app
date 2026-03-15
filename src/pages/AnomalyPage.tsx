@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, AlertTriangle, Clock, CheckCircle2, X, RefreshCw,
-  Wrench, ShieldAlert, Building2,
+  Wrench, ShieldAlert, Building2, Camera,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -57,11 +57,15 @@ export default function AnomalyPage({ user, onBack }: Props) {
   const [generalForm, setGeneralForm] = useState({
     category: '設備故障', description: '', severity: 'medium' as Severity,
   })
+  const [photoFile, setPhotoFile]       = useState<File | null>(null)
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null)
 
   // ── 報修記錄表單 ──
   const [repairForm, setRepairForm] = useState({
     equipmentName: '', abnormalStatus: '', reporterPhone: '',
   })
+  const [repairPhotoFile, setRepairPhotoFile]       = useState<File | null>(null)
+  const [repairPhotoPreview, setRepairPhotoPreview] = useState<string | null>(null)
 
   // ── 品質異常表單 ──
   const [qualityForm, setQualityForm] = useState({
@@ -100,15 +104,32 @@ export default function AnomalyPage({ user, onBack }: Props) {
 
   const closeForm = () => setShowForm(false)
 
+  // ── Photo upload helper ──
+  const uploadPhoto = async (file: File, storeId: string): Promise<string> => {
+    const ext = file.name.split('.').pop() || 'jpg'
+    const path = `${storeId}/${Date.now()}.${ext}`
+    const { error: upErr } = await supabase.storage.from('anomaly-photos').upload(path, file)
+    if (upErr) throw upErr
+    const { data: urlData } = supabase.storage.from('anomaly-photos').getPublicUrl(path)
+    return urlData.publicUrl
+  }
+
   // ── 送出通用異常 ──
   const submitGeneral = async () => {
     if (!generalForm.description.trim()) return
     setSaving(true)
+    let photoUrl = ''
+    if (photoFile) {
+      try {
+        photoUrl = await uploadPhoto(photoFile, user.storeId)
+      } catch { /* silently ignore */ }
+    }
+    const description = generalForm.description + (photoUrl ? `\n[現場照片：${photoUrl}]` : '')
     const { data, error } = await supabase.from('anomaly_reports').insert({
       store_id:      user.storeId,
       reporter_name: user.name,
       category:      generalForm.category,
-      description:   generalForm.description,
+      description,
       severity:      generalForm.severity,
       status:        'open',
     }).select().single()
@@ -116,6 +137,9 @@ export default function AnomalyPage({ user, onBack }: Props) {
       setAnomalies(p => [data, ...p])
       closeForm()
       setGeneralForm({ category: '設備故障', description: '', severity: 'medium' })
+      setPhotoFile(null)
+      if (photoPreview) URL.revokeObjectURL(photoPreview)
+      setPhotoPreview(null)
     }
     setSaving(false)
   }
@@ -124,7 +148,13 @@ export default function AnomalyPage({ user, onBack }: Props) {
   const submitRepair = async () => {
     if (!repairForm.equipmentName.trim() || !repairForm.abnormalStatus.trim()) return
     setSaving(true)
-    const desc = `【設備報修】\n設備名稱：${repairForm.equipmentName}\n異常狀況：${repairForm.abnormalStatus}\n報修電話：${repairForm.reporterPhone || '—'}`
+    let photoUrl = ''
+    if (repairPhotoFile) {
+      try {
+        photoUrl = await uploadPhoto(repairPhotoFile, user.storeId)
+      } catch { /* silently ignore */ }
+    }
+    const desc = `【設備報修】\n設備名稱：${repairForm.equipmentName}\n異常狀況：${repairForm.abnormalStatus}\n報修電話：${repairForm.reporterPhone || '—'}` + (photoUrl ? `\n[現場照片：${photoUrl}]` : '')
     const { data, error } = await supabase.from('anomaly_reports').insert({
       store_id:      user.storeId,
       reporter_name: user.name,
@@ -137,6 +167,9 @@ export default function AnomalyPage({ user, onBack }: Props) {
       setAnomalies(p => [data, ...p])
       closeForm()
       setRepairForm({ equipmentName: '', abnormalStatus: '', reporterPhone: '' })
+      setRepairPhotoFile(null)
+      if (repairPhotoPreview) URL.revokeObjectURL(repairPhotoPreview)
+      setRepairPhotoPreview(null)
     }
     setSaving(false)
   }
@@ -357,7 +390,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
               {activeTab === 'general' && (
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">異常類別</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">異常類別</label>
                     <select
                       className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                       value={generalForm.category}
@@ -367,7 +400,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
                     </select>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">嚴重程度</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">嚴重程度</label>
                     <div className="flex gap-2">
                       {(Object.entries(sevConfig) as [Severity, typeof sevConfig[Severity]][]).map(([s, cfg]) => (
                         <button key={s} onClick={() => setGeneralForm(p => ({ ...p, severity: s }))}
@@ -379,13 +412,45 @@ export default function AnomalyPage({ user, onBack }: Props) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">異常描述</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">異常描述</label>
                     <textarea
                       className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none resize-none"
                       rows={3} placeholder="請描述異常狀況..."
                       value={generalForm.description}
                       onChange={e => setGeneralForm(p => ({ ...p, description: e.target.value }))}
                     />
+                  </div>
+                  {/* Photo upload */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-500 mb-1.5 block">現場照片（選填）</label>
+                    <label
+                      className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all"
+                      style={{ borderColor: photoPreview ? '#10b981' : '#e5e7eb', background: photoPreview ? '#f0fdf4' : '#fafafa' }}
+                    >
+                      <Camera className="w-5 h-5" style={{ color: photoPreview ? '#10b981' : '#9ca3af' }} />
+                      <span className="text-sm font-medium" style={{ color: photoPreview ? '#10b981' : '#9ca3af' }}>
+                        {photoPreview ? '已選擇照片（點擊更換）' : '拍照或從相簿選取'}
+                      </span>
+                      <input type="file" accept="image/*" capture="environment" className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          setPhotoFile(file)
+                          if (photoPreview) URL.revokeObjectURL(photoPreview)
+                          setPhotoPreview(URL.createObjectURL(file))
+                        }} />
+                    </label>
+                    {photoPreview && (
+                      <div className="relative mt-2">
+                        <img src={photoPreview} className="w-full rounded-2xl object-cover max-h-48" alt="preview" />
+                        <button
+                          onClick={() => { setPhotoFile(null); if (photoPreview) URL.revokeObjectURL(photoPreview); setPhotoPreview(null) }}
+                          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center"
+                        >
+                          <X className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <button onClick={submitGeneral} disabled={saving}
                     className="w-full py-4 rounded-2xl text-white font-bold text-sm transition-opacity"
@@ -402,25 +467,57 @@ export default function AnomalyPage({ user, onBack }: Props) {
                     📞 一般報修：0800-71999（機修 71999）　POS 機修：0800-222200
                   </p>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">設備名稱 *</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">設備名稱 *</label>
                     <input className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                       placeholder="例：咖啡機、POS 機、冷藏冰箱..."
                       value={repairForm.equipmentName}
                       onChange={e => setRepairForm(p => ({ ...p, equipmentName: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">異常狀況 *</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">異常狀況 *</label>
                     <textarea className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none resize-none"
                       rows={3} placeholder="請描述設備異常狀況..."
                       value={repairForm.abnormalStatus}
                       onChange={e => setRepairForm(p => ({ ...p, abnormalStatus: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">報修電話</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">報修電話</label>
                     <input className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                       placeholder="聯絡電話（選填）"
                       value={repairForm.reporterPhone}
                       onChange={e => setRepairForm(p => ({ ...p, reporterPhone: e.target.value }))} />
+                  </div>
+                  {/* Repair photo upload */}
+                  <div>
+                    <label className="text-sm font-semibold text-gray-500 mb-1.5 block">現場照片（選填）</label>
+                    <label
+                      className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl border-2 border-dashed cursor-pointer transition-all"
+                      style={{ borderColor: repairPhotoPreview ? '#10b981' : '#e5e7eb', background: repairPhotoPreview ? '#f0fdf4' : '#fafafa' }}
+                    >
+                      <Camera className="w-5 h-5" style={{ color: repairPhotoPreview ? '#10b981' : '#9ca3af' }} />
+                      <span className="text-sm font-medium" style={{ color: repairPhotoPreview ? '#10b981' : '#9ca3af' }}>
+                        {repairPhotoPreview ? '已選擇照片（點擊更換）' : '拍照或從相簿選取'}
+                      </span>
+                      <input type="file" accept="image/*" capture="environment" className="hidden"
+                        onChange={e => {
+                          const file = e.target.files?.[0]
+                          if (!file) return
+                          setRepairPhotoFile(file)
+                          if (repairPhotoPreview) URL.revokeObjectURL(repairPhotoPreview)
+                          setRepairPhotoPreview(URL.createObjectURL(file))
+                        }} />
+                    </label>
+                    {repairPhotoPreview && (
+                      <div className="relative mt-2">
+                        <img src={repairPhotoPreview} className="w-full rounded-2xl object-cover max-h-48" alt="preview" />
+                        <button
+                          onClick={() => { setRepairPhotoFile(null); if (repairPhotoPreview) URL.revokeObjectURL(repairPhotoPreview); setRepairPhotoPreview(null) }}
+                          className="absolute top-2 right-2 w-7 h-7 rounded-full bg-black/50 flex items-center justify-center"
+                        >
+                          <X className="w-4 h-4 text-white" />
+                        </button>
+                      </div>
+                    )}
                   </div>
                   <button onClick={submitRepair} disabled={saving}
                     className="w-full py-4 rounded-2xl text-white font-bold text-sm transition-opacity"
@@ -438,34 +535,34 @@ export default function AnomalyPage({ user, onBack }: Props) {
                   </p>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">商品代號</label>
+                      <label className="text-sm font-semibold text-gray-600 mb-1.5 block">商品代號</label>
                       <input className="w-full border border-gray-200 rounded-2xl px-3 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                         placeholder="條碼或代號"
                         value={qualityForm.productCode}
                         onChange={e => setQualityForm(p => ({ ...p, productCode: e.target.value }))} />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">數量</label>
+                      <label className="text-sm font-semibold text-gray-600 mb-1.5 block">數量</label>
                       <input type="number" min="1" className="w-full border border-gray-200 rounded-2xl px-3 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                         value={qualityForm.quantity}
                         onChange={e => setQualityForm(p => ({ ...p, quantity: e.target.value }))} />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">商品名稱</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">商品名稱</label>
                     <input className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                       placeholder="商品名稱（不知道可留空）"
                       value={qualityForm.productName}
                       onChange={e => setQualityForm(p => ({ ...p, productName: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">商品效期</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">商品效期</label>
                     <input type="date" className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                       value={qualityForm.expiryDate}
                       onChange={e => setQualityForm(p => ({ ...p, expiryDate: e.target.value }))} />
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">異常原因 *</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">異常原因 *</label>
                     <textarea className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none resize-none"
                       rows={2} placeholder="請描述異常原因..."
                       value={qualityForm.anomalyReason}
@@ -473,14 +570,14 @@ export default function AnomalyPage({ user, onBack }: Props) {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">機台顯示溫度 (°C)</label>
+                      <label className="text-sm font-semibold text-gray-600 mb-1.5 block">機台顯示溫度 (°C)</label>
                       <input type="number" className="w-full border border-gray-200 rounded-2xl px-3 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                         placeholder="例：8"
                         value={qualityForm.displayTemp}
                         onChange={e => setQualityForm(p => ({ ...p, displayTemp: e.target.value }))} />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">商品表面溫度 (°C)</label>
+                      <label className="text-sm font-semibold text-gray-600 mb-1.5 block">商品表面溫度 (°C)</label>
                       <input type="number" className="w-full border border-gray-200 rounded-2xl px-3 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                         placeholder="例：9"
                         value={qualityForm.productSurfaceTemp}
@@ -488,7 +585,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">店鋪處理方式</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">店鋪處理方式</label>
                     <div className="flex gap-2">
                       {[
                         { v: 'refund'   as const, label: '退費' },
@@ -504,7 +601,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">特殊說明</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">特殊說明</label>
                     <input className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                       placeholder="（選填）"
                       value={qualityForm.specialNote}
@@ -525,7 +622,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
                     外部機關（衛生局、經濟部等）到店稽查時填寫，記錄完整後立即拍照回報 → 營業廳
                   </p>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-1.5 block">稽查單位 *</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-1.5 block">稽查單位 *</label>
                     <input className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                       placeholder="例：台北市衛生局"
                       value={externalForm.agency}
@@ -533,20 +630,20 @@ export default function AnomalyPage({ user, onBack }: Props) {
                   </div>
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">稽查日期</label>
+                      <label className="text-sm font-semibold text-gray-600 mb-1.5 block">稽查日期</label>
                       <input type="date" className="w-full border border-gray-200 rounded-2xl px-3 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                         value={externalForm.inspectedDate}
                         onChange={e => setExternalForm(p => ({ ...p, inspectedDate: e.target.value }))} />
                     </div>
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">稽查時間</label>
+                      <label className="text-sm font-semibold text-gray-600 mb-1.5 block">稽查時間</label>
                       <input type="time" className="w-full border border-gray-200 rounded-2xl px-3 py-3 text-sm text-gray-700 bg-gray-50 outline-none"
                         value={externalForm.inspectedTime}
                         onChange={e => setExternalForm(p => ({ ...p, inspectedTime: e.target.value }))} />
                     </div>
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-gray-500 mb-2 block">有無稽查單</label>
+                    <label className="text-sm font-semibold text-gray-600 mb-2 block">有無稽查單</label>
                     <div className="flex gap-3">
                       {[
                         { v: true,  label: '有稽查單', desc: '拍照回報即可' },
@@ -567,7 +664,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
                   </div>
                   {!externalForm.hasForm && (
                     <div>
-                      <label className="text-xs font-semibold text-gray-500 mb-1.5 block">稽查狀況與內容 *</label>
+                      <label className="text-sm font-semibold text-gray-600 mb-1.5 block">稽查狀況與內容 *</label>
                       <textarea className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-sm text-gray-700 bg-gray-50 outline-none resize-none"
                         rows={4} placeholder="請記錄稽查狀況及稽查項目..."
                         value={externalForm.content}

@@ -14,7 +14,7 @@ import BottomNav           from './components/BottomNav'
 import AdminBottomNav      from './components/AdminBottomNav'
 import type { User, Page } from './types'
 
-const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment']
+const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats']
 const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats']
 
 function App() {
@@ -40,6 +40,7 @@ function App() {
       case 'inspection':      return <InspectionPage    user={user} onBack={goBack} />
       case 'anomaly':         return <AnomalyPage       user={user} onBack={goBack} />
       case 'equipment':       return <EquipmentPage     user={user} onBack={goBack} />
+      case 'stats':           return <StatsPage         user={user} onBack={goBack} />
       case 'admin-dashboard': return <AdminDashboard    user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />
       case 'admin-records':   return <RecordsPage       user={user} onBack={goBack} />
       case 'admin-anomaly':   return <AnomalyManagePage user={user} onBack={goBack} />

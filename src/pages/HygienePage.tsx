@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, XCircle, MinusCircle, Save, RefreshCw } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -60,14 +60,21 @@ export default function HygienePage({ user, onBack }: Props) {
   const [activeCategory, setActiveCategory] = useState(0)
   const [activeShift, setActiveShift]       = useState(0)
   const [results, setResults]               = useState<Record<string, Result>>({})
+  const [failNotes, setFailNotes]           = useState<Record<string, string>>({})
   const [saved, setSaved]                   = useState(false)
   const [saving, setSaving]                 = useState(false)
   const [loading, setLoading]               = useState(true)
   const [existingId, setExistingId]         = useState<string | null>(null)
+  const [draftRestored, setDraftRestored]   = useState<{ at: string } | null>(null)
+  const [draftSavedAt, setDraftSavedAt]     = useState<string | null>(null)
 
+  const draftKey = `hygiene_${user.storeId}_${todayStr}_${activeShift}`
+
+  // Load from Supabase (or restore draft)
   useEffect(() => {
     const load = async () => {
       setLoading(true)
+      setDraftRestored(null)
       const { data } = await supabase
         .from('hygiene_records')
         .select('*')
@@ -79,19 +86,54 @@ export default function HygienePage({ user, onBack }: Props) {
       if (data) {
         setExistingId(data.id)
         setResults(data.results || {})
+        setFailNotes(data.fail_notes || {})
         setSaved(true)
       } else {
+        // Try localStorage draft
+        try {
+          const raw = localStorage.getItem(draftKey)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            setResults(parsed.results || {})
+            setFailNotes(parsed.failNotes || {})
+            setDraftRestored({ at: parsed.savedAt || '' })
+            setSaved(false)
+          } else {
+            setResults({})
+            setFailNotes({})
+            setSaved(false)
+          }
+        } catch {
+          setResults({})
+          setFailNotes({})
+          setSaved(false)
+        }
         setExistingId(null)
-        setResults({})
-        setSaved(false)
       }
       setLoading(false)
     }
     load()
-  }, [activeShift])
+  }, [activeShift]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-save draft to localStorage whenever results or failNotes change
+  useEffect(() => {
+    if (loading) return
+    if (saved) return
+    const now = new Date().toLocaleTimeString('zh-TW')
+    const draft = { results, failNotes, savedAt: now }
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(draft))
+      setDraftSavedAt(now)
+    } catch { /* ignore */ }
+  }, [results, failNotes]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const setResult = (key: string, val: Result) => {
     setResults(p => ({ ...p, [key]: p[key] === val ? null : val }))
+    setSaved(false)
+  }
+
+  const setFailNote = (key: string, note: string) => {
+    setFailNotes(p => ({ ...p, [key]: note }))
     setSaved(false)
   }
 
@@ -103,6 +145,7 @@ export default function HygienePage({ user, onBack }: Props) {
       record_date: todayStr,
       shift:       shifts[activeShift],
       results,
+      fail_notes:  failNotes,
       saved_at:    new Date().toISOString(),
     }
 
@@ -113,8 +156,21 @@ export default function HygienePage({ user, onBack }: Props) {
       if (data) setExistingId(data.id)
     }
 
+    // Clear draft after successful save
+    try { localStorage.removeItem(draftKey) } catch { /* ignore */ }
+    setDraftRestored(null)
+    setDraftSavedAt(null)
     setSaved(true)
     setSaving(false)
+  }
+
+  const handleRestartDraft = () => {
+    try { localStorage.removeItem(draftKey) } catch { /* ignore */ }
+    setResults({})
+    setFailNotes({})
+    setDraftRestored(null)
+    setDraftSavedAt(null)
+    setSaved(false)
   }
 
   const cat = categories[activeCategory]
@@ -139,8 +195,8 @@ export default function HygienePage({ user, onBack }: Props) {
         {/* Overall progress */}
         <div className="bg-white rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-gray-500">全部查核進度</p>
-            <p className="text-xs font-bold text-gray-700">{allPassCount + allFailCount}/{totalItems} 已填</p>
+            <p className="text-sm font-semibold text-gray-600">全部查核進度</p>
+            <p className="text-sm font-bold text-gray-700">{allPassCount + allFailCount}/{totalItems} 已填</p>
           </div>
           <div className="bg-gray-100 rounded-full h-2 overflow-hidden">
             <div
@@ -158,9 +214,25 @@ export default function HygienePage({ user, onBack }: Props) {
           </div>
         </div>
 
+        {/* Draft restored banner */}
+        {draftRestored && (
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-bold text-blue-700">已還原草稿</p>
+              <p className="text-xs text-blue-500 mt-0.5">上次自動儲存於 {draftRestored.at}</p>
+            </div>
+            <button
+              onClick={handleRestartDraft}
+              className="shrink-0 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 text-xs font-bold"
+            >
+              重新開始
+            </button>
+          </div>
+        )}
+
         {/* Shift */}
         <div className="bg-white rounded-2xl p-4">
-          <p className="text-xs font-semibold text-gray-400 mb-2">班次時段</p>
+          <p className="text-sm font-semibold text-gray-600 mb-2">班次時段</p>
           <div className="flex gap-2">
             {shifts.map((s, i) => (
               <button
@@ -186,7 +258,7 @@ export default function HygienePage({ user, onBack }: Props) {
               <button
                 key={i}
                 onClick={() => setActiveCategory(i)}
-                className="shrink-0 px-3 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap"
+                className="shrink-0 px-3 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap"
                 style={{
                   background: activeCategory === i ? '#005f3b' : 'white',
                   color:      activeCategory === i ? 'white'   : '#6b7280',
@@ -229,6 +301,7 @@ export default function HygienePage({ user, onBack }: Props) {
               {cat.items.map((item, i) => {
                 const key    = `${activeCategory}-${i}`
                 const result = results[key]
+                const note   = failNotes[key] ?? ''
                 const itemNo = categories.slice(0, activeCategory).reduce((s, c) => s + c.items.length, 0) + i + 1
                 return (
                   <motion.div
@@ -244,28 +317,59 @@ export default function HygienePage({ user, onBack }: Props) {
                       </span>
                       <p className="text-sm text-gray-700 leading-relaxed flex-1">{item}</p>
                     </div>
-                    <div className="flex gap-2 ml-7">
+                    {/* Full-width buttons, no ml-7 indent */}
+                    <div className="flex gap-2">
                       <button
                         onClick={() => setResult(key, 'pass')}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                        style={{ background: result === 'pass' ? '#10b981' : '#f0fdf4', color: result === 'pass' ? 'white' : '#10b981' }}
+                        className="flex-1 flex items-center justify-center gap-2 rounded-2xl font-bold text-base transition-all"
+                        style={{
+                          minHeight: '60px',
+                          background: result === 'pass' ? '#10b981' : '#f0fdf4',
+                          color: result === 'pass' ? 'white' : '#10b981',
+                        }}
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5" /> 符合 ✓
+                        <CheckCircle2 className="w-5 h-5" /> 符合 ✓
                       </button>
                       <button
                         onClick={() => setResult(key, 'fail')}
-                        className="flex-1 py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition-all"
-                        style={{ background: result === 'fail' ? '#ef4444' : '#fef2f2', color: result === 'fail' ? 'white' : '#ef4444' }}
+                        className="flex-1 flex items-center justify-center gap-2 rounded-2xl font-bold text-base transition-all"
+                        style={{
+                          minHeight: '60px',
+                          background: result === 'fail' ? '#ef4444' : '#fef2f2',
+                          color: result === 'fail' ? 'white' : '#ef4444',
+                        }}
                       >
-                        <XCircle className="w-3.5 h-3.5" /> 缺失 ✗
+                        <XCircle className="w-5 h-5" /> 缺失 ✗
                       </button>
                       <button
                         onClick={() => setResult(key, null)}
-                        className="px-3 py-2.5 rounded-xl bg-gray-50"
+                        className="px-3 rounded-2xl bg-gray-50"
+                        style={{ minHeight: '60px' }}
                       >
-                        <MinusCircle className="w-3.5 h-3.5 text-gray-300" />
+                        <MinusCircle className="w-5 h-5 text-gray-300" />
                       </button>
                     </div>
+
+                    {/* Animated fail notes textarea */}
+                    <AnimatePresence>
+                      {result === 'fail' && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          transition={{ duration: 0.2 }}
+                          className="overflow-hidden"
+                        >
+                          <textarea
+                            className="w-full mt-3 border border-red-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 bg-red-50 outline-none resize-none leading-relaxed"
+                            rows={2}
+                            placeholder="請記錄缺失說明（選填）..."
+                            value={note}
+                            onChange={e => setFailNote(key, e.target.value)}
+                          />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </motion.div>
                 )
               })}
@@ -289,6 +393,13 @@ export default function HygienePage({ user, onBack }: Props) {
                 <p className="text-green-400 text-xs mt-0.5">{new Date().toLocaleTimeString('zh-TW')}・{user.name}</p>
                 <button onClick={() => setSaved(false)} className="mt-2 text-xs text-green-500 underline">繼續編輯</button>
               </div>
+            )}
+
+            {/* Draft auto-save indicator */}
+            {!saved && draftSavedAt && (
+              <p className="text-center text-xs text-gray-400">
+                🗒 自動儲存草稿 {draftSavedAt}
+              </p>
             )}
           </>
         )}

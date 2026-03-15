@@ -22,7 +22,7 @@ interface AnomalyCategory {
 
 const CATEGORY_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#f97316', '#6b7280']
 
-export default function StatsPage({ onBack }: Props) {
+export default function StatsPage({ user, onBack }: Props) {
   const [weekStats, setWeekStats] = useState<DayStats[]>([])
   const [anomalyStats, setAnomalyStats] = useState<AnomalyCategory[]>([])
   const [hygieneRate, setHygieneRate] = useState({ pass: 0, fail: 0, total: 0 })
@@ -41,11 +41,22 @@ export default function StatsPage({ onBack }: Props) {
       }
 
       // Query all three tables for last 7 days
+      // 督導/admin 看全店，一般員工/店長只看自己的店
+      const isSupervisor = user.role === 'supervisor' || user.role === 'admin'
+
       const [dwRes, hyRes, eqRes, anRes] = await Promise.all([
-        supabase.from('daily_work_logs').select('log_date').gte('log_date', days[0]),
-        supabase.from('hygiene_records').select('record_date, results').gte('record_date', days[0]),
-        supabase.from('equipment_logs').select('log_date').gte('log_date', days[0]),
-        supabase.from('anomaly_reports').select('category'),
+        isSupervisor
+          ? supabase.from('daily_work_logs').select('log_date').gte('log_date', days[0])
+          : supabase.from('daily_work_logs').select('log_date').eq('store_id', user.storeId).gte('log_date', days[0]),
+        isSupervisor
+          ? supabase.from('hygiene_records').select('record_date, results').gte('record_date', days[0])
+          : supabase.from('hygiene_records').select('record_date, results').eq('store_id', user.storeId).gte('record_date', days[0]),
+        isSupervisor
+          ? supabase.from('equipment_logs').select('log_date').gte('log_date', days[0])
+          : supabase.from('equipment_logs').select('log_date').eq('store_id', user.storeId).gte('log_date', days[0]),
+        isSupervisor
+          ? supabase.from('anomaly_reports').select('category')
+          : supabase.from('anomaly_reports').select('category').eq('store_id', user.storeId),
       ])
 
       const dwByDay = groupByDate(dwRes.data || [], 'log_date')

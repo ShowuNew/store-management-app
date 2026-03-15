@@ -123,7 +123,11 @@ export default function AnomalyPage({ user, onBack }: Props) {
     if (photoFile) {
       try {
         photoUrl = await uploadPhoto(photoFile, user.storeId)
-      } catch { /* silently ignore */ }
+      } catch (err: any) {
+        setSaving(false)
+        alert(`照片上傳失敗：${err?.message ?? JSON.stringify(err)}`)
+        return
+      }
     }
     const description = generalForm.description + (photoUrl ? `\n[現場照片：${photoUrl}]` : '')
     const { data, error } = await supabase.from('anomaly_reports').insert({
@@ -153,7 +157,11 @@ export default function AnomalyPage({ user, onBack }: Props) {
     if (repairPhotoFile) {
       try {
         photoUrl = await uploadPhoto(repairPhotoFile, user.storeId)
-      } catch { /* silently ignore */ }
+      } catch (err: any) {
+        setSaving(false)
+        alert(`照片上傳失敗：${err?.message ?? JSON.stringify(err)}`)
+        return
+      }
     }
     const desc = `【設備報修】\n設備名稱：${repairForm.equipmentName}\n異常狀況：${repairForm.abnormalStatus}\n報修電話：${repairForm.reporterPhone || '—'}` + (photoUrl ? `\n[現場照片：${photoUrl}]` : '')
     const { data, error } = await supabase.from('anomaly_reports').insert({

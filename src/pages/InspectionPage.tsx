@@ -1,7 +1,8 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ChevronDown, ChevronUp, Award, AlertTriangle } from 'lucide-react'
+import { ChevronDown, ChevronUp, Award, AlertTriangle, Save } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
+import { supabase } from '../lib/supabase'
 import type { User } from '../types'
 
 interface Props { user: User; onBack: () => void }
@@ -79,16 +80,68 @@ const initCategories: CategoryData[] = [
   },
 ]
 
+const todayStr = new Date().toISOString().split('T')[0]
+
 export default function InspectionPage({ user, onBack }: Props) {
   const [cats, setCats] = useState<CategoryData[]>(initCategories)
   const [openCat, setOpenCat] = useState<number | null>(0)
+  const [saving, setSaving] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [saveError, setSaveError] = useState('')
+  const [existingId, setExistingId] = useState<string | null>(null)
 
-  const setResult = (ci: number, ii: number, result: Result) =>
+  // 載入今日既有紀錄
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from('inspection_logs')
+        .select('*')
+        .eq('store_id', user.storeId)
+        .eq('inspect_date', todayStr)
+        .single()
+      if (data) {
+        setExistingId(data.id)
+        setCats(data.categories)
+      }
+    }
+    load()
+  }, [user.storeId])
+
+  const setResult = (ci: number, ii: number, result: Result) => {
     setCats(p => p.map((c, cIdx) =>
       cIdx === ci
         ? { ...c, items: c.items.map((item, iIdx) => iIdx === ii ? { ...item, result } : item) }
         : c
     ))
+    setSaved(false)
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    setSaveError('')
+    const payload = {
+      store_id:       user.storeId,
+      staff_name:     user.name,
+      inspect_date:   todayStr,
+      categories:     cats,
+      total_score:    totalScore,
+      passed:         pass,
+      critical_failed: criticalFailed,
+      saved_at:       new Date().toISOString(),
+    }
+    let err = null
+    if (existingId) {
+      const res = await supabase.from('inspection_logs').update(payload).eq('id', existingId)
+      err = res.error
+    } else {
+      const res = await supabase.from('inspection_logs').insert(payload).select().single()
+      err = res.error
+      if (res.data) setExistingId(res.data.id)
+    }
+    setSaving(false)
+    if (err) { setSaveError(err.message); return }
+    setSaved(true)
+  }
 
   const allItems      = cats.flatMap(c => c.items)
   const criticalFailed = allItems.some(i => i.isCritical && i.result === 'fail')
@@ -247,11 +300,20 @@ export default function InspectionPage({ user, onBack }: Props) {
           )
         })}
 
+        {saveError && (
+          <div className="px-4 py-3 bg-red-50 text-red-600 text-sm rounded-2xl border border-red-100">
+            ⚠️ 儲存失敗：{saveError}
+          </div>
+        )}
+
         <button
-          className="w-full py-4 rounded-2xl text-white font-bold text-sm"
-          style={{ background: 'linear-gradient(135deg, #8b5cf6, #a78bfa)' }}
+          onClick={handleSave}
+          disabled={saving}
+          className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+          style={{ background: saved ? 'linear-gradient(135deg,#00a040,#007d30)' : 'linear-gradient(135deg,#8b5cf6,#a78bfa)' }}
         >
-          提交點檢結果（{user.role === 'supervisor' ? '督導' : user.name}簽署）
+          <Save className="w-4 h-4" />
+          {saving ? '儲存中...' : saved ? '已儲存 ✓' : `提交點檢結果（${user.role === 'supervisor' ? '督導' : user.name}簽署）`}
         </button>
       </div>
     </div>

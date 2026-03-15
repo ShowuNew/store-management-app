@@ -109,9 +109,9 @@ export default function AnomalyPage({ user, onBack }: Props) {
   const uploadPhoto = async (file: File, storeId: string): Promise<string> => {
     const ext = file.name.split('.').pop() || 'jpg'
     const path = `${storeId}/${Date.now()}.${ext}`
-    const { error: upErr } = await supabase.storage.from('new').upload(path, file)
+    const { error: upErr } = await supabase.storage.from('photos').upload(path, file)
     if (upErr) throw upErr
-    const { data: urlData } = supabase.storage.from('new').getPublicUrl(path)
+    const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path)
     return urlData.publicUrl
   }
 

@@ -34,7 +34,7 @@ export default function LoginPage({ onLogin }: Props) {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: 'linear-gradient(160deg, #004d30 0%, #00a86b 60%, #00d47e 100%)' }}>
+    <div className="min-h-dvh flex flex-col" style={{ background: 'linear-gradient(160deg, #003087 0%, #0057a8 50%, #00a040 100%)' }}>
       <div className="flex-1 flex flex-col items-center justify-center px-6 pt-12 pb-8">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
@@ -42,11 +42,13 @@ export default function LoginPage({ onLogin }: Props) {
           transition={{ duration: 0.45 }}
           className="text-center mb-8"
         >
-          <div className="w-20 h-20 bg-white rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl">
-            <Store className="w-10 h-10" style={{ color: '#00a86b' }} />
+          {/* FamilyMart 藍綠色塊 Logo */}
+          <div className="w-20 h-20 rounded-3xl mx-auto mb-4 shadow-xl overflow-hidden flex">
+            <div className="w-1/2 h-full" style={{ background: '#0057a8' }} />
+            <div className="w-1/2 h-full" style={{ background: '#00a040' }} />
           </div>
           <h1 className="text-2xl font-bold text-white tracking-wide">店鋪工作日誌FamilyMart</h1>
-          <p className="text-green-200 text-sm mt-1">便利商店數位化管理平台</p>
+          <p className="text-blue-200 text-sm mt-1">便利商店數位化管理平台</p>
         </motion.div>
 
         <motion.div
@@ -55,6 +57,9 @@ export default function LoginPage({ onLogin }: Props) {
           transition={{ duration: 0.45, delay: 0.15 }}
           className="w-full bg-white rounded-3xl shadow-2xl p-6"
         >
+          {/* 頂部藍色裝飾條 */}
+          <div className="h-1 rounded-full mb-5" style={{ background: 'linear-gradient(90deg, #0057a8, #00a040)' }} />
+
           <h2 className="text-lg font-bold text-gray-800 mb-5">請選擇身份</h2>
 
           {error && (
@@ -66,8 +71,8 @@ export default function LoginPage({ onLogin }: Props) {
           {/* 店號 */}
           <div className="mb-4">
             <label className="text-xs font-semibold text-gray-500 mb-1.5 block">店號</label>
-            <div className="flex items-center border border-gray-200 rounded-2xl px-4 py-3 gap-3 bg-gray-50 focus-within:border-green-400 transition-colors">
-              <Store className="w-4 h-4 text-gray-400 shrink-0" />
+            <div className="flex items-center border border-gray-200 rounded-2xl px-4 py-3 gap-3 bg-gray-50 focus-within:border-blue-400 transition-colors">
+              <Store className="w-4 h-4 shrink-0" style={{ color: '#0057a8' }} />
               <input
                 type="text"
                 className="flex-1 bg-transparent text-sm text-gray-800 outline-none placeholder-gray-300"
@@ -100,14 +105,14 @@ export default function LoginPage({ onLogin }: Props) {
             whileTap={{ scale: 0.97 }}
             onClick={handleLogin}
             className="w-full py-4 rounded-2xl text-white font-bold text-sm"
-            style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)' }}
+            style={{ background: 'linear-gradient(135deg, #0057a8, #00a040)' }}
           >
             進入系統
           </motion.button>
         </motion.div>
       </div>
 
-      <p className="pb-8 text-center text-green-300 text-xs">© 2026 便利商店管理系統 v1.0</p>
+      <p className="pb-8 text-center text-blue-200 text-xs">© 2026 FamilyMart 店鋪工作日誌 v1.0</p>
     </div>
   )
 }

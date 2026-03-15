@@ -220,24 +220,24 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           className="rounded-3xl p-5 text-white overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #004d30 0%, #00a86b 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #003087 0%, #0057a8 50%, #00a040 100%)' }}
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-green-200 text-xs flex items-center gap-1 mb-1">
+              <p className="text-blue-200 text-xs flex items-center gap-1 mb-1">
                 <Clock className="w-3 h-3" /> {dateStr}
               </p>
               <h2 className="text-2xl font-bold">{shiftNow}</h2>
-              <p className="text-green-100 text-sm mt-0.5">歡迎，{user.name}</p>
+              <p className="text-blue-100 text-sm mt-0.5">歡迎，{user.name}</p>
             </div>
             <div className="text-right">
               {loading
                 ? <RefreshCw className="w-5 h-5 text-green-200 animate-spin" />
                 : (
                   <>
-                    <p className="text-green-200 text-xs mb-1">今日完成率</p>
+                    <p className="text-blue-200 text-xs mb-1">今日完成率</p>
                     <p className="text-4xl font-black">{pct}<span className="text-lg font-normal">%</span></p>
-                    <p className="text-green-200 text-xs">{allDoneCount}/{countable.length} 模組完成</p>
+                    <p className="text-blue-200 text-xs">{allDoneCount}/{countable.length} 模組完成</p>
                   </>
                 )
               }

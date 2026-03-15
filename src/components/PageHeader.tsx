@@ -10,7 +10,10 @@ interface Props {
 
 export default function PageHeader({ title, subtitle, onBack, onLogout, rightElement }: Props) {
   return (
-    <div className="flex items-center px-4 py-4 bg-white border-b border-gray-100 sticky top-0 z-10">
+    <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
+      {/* FamilyMart 品牌綠色頂條 */}
+      <div className="h-1" style={{ background: 'linear-gradient(90deg, #00a040, #007d30)' }} />
+    <div className="flex items-center px-4 py-3.5">
       {onBack && (
         <button
           onClick={onBack}
@@ -32,6 +35,7 @@ export default function PageHeader({ title, subtitle, onBack, onLogout, rightEle
           <LogOut className="w-5 h-5 text-gray-500" />
         </button>
       )}
+    </div>
     </div>
   )
 }

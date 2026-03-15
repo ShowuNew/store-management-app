@@ -180,16 +180,16 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   }
 
   const modules: ModuleEntry[] = [
-    { page: 'daily-work', icon: CheckSquare,  label: '每日工作確認', desc: '班次・溫度・清單',   color: '#3b82f6', bg: '#eff6ff', done: counts.dailyWork.done,  total: counts.dailyWork.total  },
-    { page: 'hygiene',    icon: ShieldCheck,  label: '衛生自主管理', desc: '場所・品質・人員',   color: '#10b981', bg: '#ecfdf5', done: counts.hygiene.done,    total: counts.hygiene.total    },
-    { page: 'inspection', icon: ClipboardList,label: '店鋪點檢',     desc: '年度稽查・評分',    color: '#8b5cf6', bg: '#f5f3ff', done: null, total: null },
+    { page: 'daily-work', icon: CheckSquare,  label: '每日工作確認', desc: '班次・溫度・清單',   color: '#00a040', bg: '#e8f7ee', done: counts.dailyWork.done,  total: counts.dailyWork.total  },
+    { page: 'hygiene',    icon: ShieldCheck,  label: '衛生自主管理', desc: '場所・品質・人員',   color: '#007d30', bg: '#d4efdf', done: counts.hygiene.done,    total: counts.hygiene.total    },
+    { page: 'inspection', icon: ClipboardList,label: '店鋪點檢',     desc: '年度稽查・評分',    color: '#00a040', bg: '#e8f7ee', done: null, total: null },
     { page: 'equipment',  icon: Zap,          label: '設備清潔保養', desc: '節電・週期保養',    color: '#f59e0b', bg: '#fffbeb', done: counts.equipment.done,  total: counts.equipment.total  },
     {
       page: 'anomaly', icon: AlertTriangle, label: '異常回報', desc: '事件・追蹤・結案',
       color: '#ef4444', bg: '#fef2f2', done: null, total: null,
       badge: counts.openAnomaly > 0 ? `${counts.openAnomaly} 待處理` : undefined,
     },
-    { page: 'dashboard',  icon: TrendingUp,   label: '月報統計',     desc: '數據・績效分析',    color: '#6366f1', bg: '#eef2ff', done: null, total: null },
+    { page: 'dashboard',  icon: TrendingUp,   label: '月報統計',     desc: '數據・績效分析',    color: '#007d30', bg: '#d4efdf', done: null, total: null },
   ]
 
   const countable    = modules.filter(m => m.done !== null && m.total !== null && (m.total ?? 0) > 0)
@@ -220,24 +220,24 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           className="rounded-3xl p-5 text-white overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #003087 0%, #0057a8 50%, #00a040 100%)' }}
+          style={{ background: 'linear-gradient(135deg, #007d30 0%, #00a040 100%)' }}
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-blue-200 text-xs flex items-center gap-1 mb-1">
+              <p className="text-green-200 text-xs flex items-center gap-1 mb-1">
                 <Clock className="w-3 h-3" /> {dateStr}
               </p>
               <h2 className="text-2xl font-bold">{shiftNow}</h2>
-              <p className="text-blue-100 text-sm mt-0.5">歡迎，{user.name}</p>
+              <p className="text-green-100 text-sm mt-0.5">歡迎，{user.name}</p>
             </div>
             <div className="text-right">
               {loading
                 ? <RefreshCw className="w-5 h-5 text-green-200 animate-spin" />
                 : (
                   <>
-                    <p className="text-blue-200 text-xs mb-1">今日完成率</p>
+                    <p className="text-green-200 text-xs mb-1">今日完成率</p>
                     <p className="text-4xl font-black">{pct}<span className="text-lg font-normal">%</span></p>
-                    <p className="text-blue-200 text-xs">{allDoneCount}/{countable.length} 模組完成</p>
+                    <p className="text-green-200 text-xs">{allDoneCount}/{countable.length} 模組完成</p>
                   </>
                 )
               }
@@ -252,8 +252,8 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
 
         {/* Temperature strip */}
         <div className="bg-white rounded-2xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
-            <Thermometer className="w-4 h-4 text-blue-500" />
+          <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#e8f7ee' }}>
+            <Thermometer className="w-4 h-4" style={{ color: '#00a040' }} />
           </div>
           <div className="flex-1 flex gap-4">
             {tempStatus.map(t => (

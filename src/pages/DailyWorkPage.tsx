@@ -64,6 +64,14 @@ interface WasteState {
 }
 const defaultWaste: WasteState = { foodWasteBags: '', recyclingCount: '', leftoverFoodTime: '', cupCollectionTime: '', verified: false, groundCleaning: false }
 
+interface PersonnelState {
+  manager: string
+  morning: string   // 早班
+  evening: string   // 晚班
+  lateNight: string // 大夜班
+}
+const defaultPersonnel: PersonnelState = { manager: '', morning: '', evening: '', lateNight: '' }
+
 const evalReading = (spec: TempSpec, r: TempReading): boolean | null => {
   if (!r.value.trim()) return null
   const n = parseFloat(r.value)
@@ -125,6 +133,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [cleaning, setCleaning]     = useState<Record<string, string>>({})
   const [friendly, setFriendly]     = useState<Record<string, boolean>>({})
   const [uniform, setUniform]       = useState({ appearance: false, sanitize: false })
+  const [personnel, setPersonnel]   = useState<PersonnelState>(defaultPersonnel)
   const [handoverNote, setHandoverNote] = useState('')
   const [handoverAnomaly, setHandoverAnomaly]       = useState('')
   const [handoverSupply, setHandoverSupply]         = useState('')
@@ -186,6 +195,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       setCleaning(sorted.find((l: any) => l.tasks_done?._cleaning)?.tasks_done._cleaning ?? {})
       setFriendly(sorted.find((l: any) => l.tasks_done?._friendly)?.tasks_done._friendly ?? {})
       setUniform(sorted.find((l: any) => l.tasks_done?._uniform)?.tasks_done._uniform ?? { appearance: false, sanitize: false })
+      setPersonnel(sorted.find((l: any) => l.tasks_done?._personnel)?.tasks_done._personnel ?? defaultPersonnel)
       setLoading(false)
     }
     load()
@@ -226,7 +236,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const payload = {
       store_id: user.storeId, staff_name: user.name, log_date: todayStr,
       shift: shifts[selectedShift], temperatures: temperaturesPayload,
-      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _uniform: uniform },
+      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _uniform: uniform, _personnel: personnel },
       handover_note: handoverNote,
       submitted_at: new Date().toISOString(),
     }
@@ -354,6 +364,31 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 {s.split(' ')[0]}<br />
                 <span className="font-normal text-[10px]">{s.split(' ')[1]}</span>
               </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 當日人員 */}
+        <div className="bg-white rounded-2xl p-4">
+          <p className="text-xs font-semibold text-gray-400 mb-3">當日人員</p>
+          <div className="space-y-2">
+            {[
+              { key: 'manager',  label: '店長',                  placeholder: '姓名' },
+              { key: 'morning',  label: '早班  07:00–15:00',     placeholder: '人員姓名（可多人）' },
+              { key: 'evening',  label: '晚班  15:00–23:00',     placeholder: '人員姓名（可多人）' },
+              { key: 'lateNight',label: '大夜班 23:00–07:00',    placeholder: '人員姓名（可多人）' },
+            ].map(({ key, label, placeholder }) => (
+              <div key={key} className="flex items-center gap-3">
+                <span className="text-xs font-semibold text-gray-500 w-28 shrink-0">{label}</span>
+                <input
+                  type="text"
+                  placeholder={placeholder}
+                  className="flex-1 text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 outline-none"
+                  style={{ borderColor: (personnel as any)[key].trim() ? '#86efac' : undefined }}
+                  value={(personnel as any)[key]}
+                  onChange={e => { setPersonnel(p => ({ ...p, [key]: e.target.value })); setSubmitted(false) }}
+                />
+              </div>
             ))}
           </div>
         </div>

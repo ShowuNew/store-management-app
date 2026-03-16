@@ -1,12 +1,132 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircle2, Circle, Thermometer, Save, AlertCircle,
-  RefreshCw, Clock, Plus, Trash2, Package, Wrench, Leaf, Shirt, MessageSquare, ChevronRight,
+  RefreshCw, Clock, Plus, Trash2, Package, Wrench, Leaf, Shirt, MessageSquare, ChevronRight, PenLine, RotateCcw,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
 import type { User } from '../types'
+
+// ── 電子手簽名元件 ──
+interface SignaturePadProps {
+  value: string        // base64 or ''
+  onChange: (b64: string) => void
+  label: string
+}
+function SignaturePad({ value, onChange, label }: SignaturePadProps) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const drawing = useRef(false)
+  const lastPos = useRef<{ x: number; y: number } | null>(null)
+
+  // Restore saved signature when value changes externally
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+    const ctx = canvas.getContext('2d')!
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    if (value) {
+      const img = new Image()
+      img.onload = () => ctx.drawImage(img, 0, 0)
+      img.src = value
+    }
+  }, [value])
+
+  const getPos = (e: React.TouchEvent | React.MouseEvent, canvas: HTMLCanvasElement) => {
+    const rect = canvas.getBoundingClientRect()
+    const scaleX = canvas.width / rect.width
+    const scaleY = canvas.height / rect.height
+    if ('touches' in e) {
+      return {
+        x: (e.touches[0].clientX - rect.left) * scaleX,
+        y: (e.touches[0].clientY - rect.top) * scaleY,
+      }
+    }
+    return {
+      x: ((e as React.MouseEvent).clientX - rect.left) * scaleX,
+      y: ((e as React.MouseEvent).clientY - rect.top) * scaleY,
+    }
+  }
+
+  const startDraw = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault()
+    drawing.current = true
+    const canvas = canvasRef.current!
+    lastPos.current = getPos(e, canvas)
+  }, [])
+
+  const draw = useCallback((e: React.TouchEvent | React.MouseEvent) => {
+    e.preventDefault()
+    if (!drawing.current || !canvasRef.current) return
+    const canvas = canvasRef.current
+    const ctx = canvas.getContext('2d')!
+    const pos = getPos(e, canvas)
+    ctx.beginPath()
+    ctx.moveTo(lastPos.current!.x, lastPos.current!.y)
+    ctx.lineTo(pos.x, pos.y)
+    ctx.strokeStyle = '#1e293b'
+    ctx.lineWidth = 2.5
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.stroke()
+    lastPos.current = pos
+  }, [])
+
+  const endDraw = useCallback(() => {
+    if (!drawing.current) return
+    drawing.current = false
+    lastPos.current = null
+    const canvas = canvasRef.current!
+    // Only save if canvas has content
+    const ctx = canvas.getContext('2d')!
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height).data
+    const hasContent = data.some((v, i) => i % 4 === 3 && v > 0)
+    onChange(hasContent ? canvas.toDataURL('image/png') : '')
+  }, [onChange])
+
+  const clear = () => {
+    const canvas = canvasRef.current!
+    canvas.getContext('2d')!.clearRect(0, 0, canvas.width, canvas.height)
+    onChange('')
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+          <PenLine className="w-3.5 h-3.5" />{label}
+        </span>
+        {value && (
+          <button onClick={clear} className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-red-400">
+            <RotateCcw className="w-3 h-3" />重簽
+          </button>
+        )}
+      </div>
+      <div className="relative border-2 rounded-xl overflow-hidden"
+        style={{ borderColor: value ? '#86efac' : '#e5e7eb', background: value ? '#f0fdf4' : '#fafafa' }}>
+        <canvas
+          ref={canvasRef}
+          width={600}
+          height={120}
+          className="w-full touch-none"
+          style={{ display: 'block', cursor: 'crosshair' }}
+          onMouseDown={startDraw}
+          onMouseMove={draw}
+          onMouseUp={endDraw}
+          onMouseLeave={endDraw}
+          onTouchStart={startDraw}
+          onTouchMove={draw}
+          onTouchEnd={endDraw}
+        />
+        {!value && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span className="text-xs text-gray-300">請在此簽名</span>
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
 
 interface Props { user: User; onBack: () => void }
 
@@ -368,27 +488,22 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           </div>
         </div>
 
-        {/* 當日人員 */}
+        {/* 當日人員簽名 */}
         <div className="bg-white rounded-2xl p-4">
-          <p className="text-xs font-semibold text-gray-400 mb-3">當日人員</p>
-          <div className="space-y-2">
+          <p className="text-xs font-semibold text-gray-400 mb-4">當日人員簽名</p>
+          <div className="space-y-4">
             {[
-              { key: 'manager',  label: '店長',                  placeholder: '姓名' },
-              { key: 'morning',  label: '早班  07:00–15:00',     placeholder: '人員姓名（可多人）' },
-              { key: 'evening',  label: '晚班  15:00–23:00',     placeholder: '人員姓名（可多人）' },
-              { key: 'lateNight',label: '大夜班 23:00–07:00',    placeholder: '人員姓名（可多人）' },
-            ].map(({ key, label, placeholder }) => (
-              <div key={key} className="flex items-center gap-3">
-                <span className="text-xs font-semibold text-gray-500 w-28 shrink-0">{label}</span>
-                <input
-                  type="text"
-                  placeholder={placeholder}
-                  className="flex-1 text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 outline-none"
-                  style={{ borderColor: (personnel as any)[key].trim() ? '#86efac' : undefined }}
-                  value={(personnel as any)[key]}
-                  onChange={e => { setPersonnel(p => ({ ...p, [key]: e.target.value })); setSubmitted(false) }}
-                />
-              </div>
+              { key: 'manager',   label: '店長' },
+              { key: 'morning',   label: '早班  07:00–15:00' },
+              { key: 'evening',   label: '晚班  15:00–23:00' },
+              { key: 'lateNight', label: '大夜班 23:00–07:00' },
+            ].map(({ key, label }) => (
+              <SignaturePad
+                key={key}
+                label={label}
+                value={(personnel as any)[key]}
+                onChange={sig => { setPersonnel(p => ({ ...p, [key]: sig })); setSubmitted(false) }}
+              />
             ))}
           </div>
         </div>

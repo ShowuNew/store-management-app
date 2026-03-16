@@ -13,8 +13,9 @@ interface SignaturePadProps {
   value: string        // base64 or ''
   onChange: (b64: string) => void
   label: string
+  canvasHeight?: number
 }
-function SignaturePad({ value, onChange, label }: SignaturePadProps) {
+function SignaturePad({ value, onChange, label, canvasHeight = 220 }: SignaturePadProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const drawing = useRef(false)
   const lastPos = useRef<{ x: number; y: number } | null>(null)
@@ -107,9 +108,9 @@ function SignaturePad({ value, onChange, label }: SignaturePadProps) {
         <canvas
           ref={canvasRef}
           width={900}
-          height={220}
+          height={canvasHeight * 3}
           className="w-full touch-none"
-          style={{ display: 'block', cursor: 'crosshair' }}
+          style={{ display: 'block', cursor: 'crosshair', height: canvasHeight }}
           onMouseDown={startDraw}
           onMouseMove={draw}
           onMouseUp={endDraw}
@@ -563,25 +564,25 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             return (
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-end justify-center"
-                style={{ background: 'rgba(0,0,0,0.5)' }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                style={{ background: 'rgba(0,0,0,0.6)' }}
                 onClick={e => { if (e.target === e.currentTarget) setSigModalOpen(false) }}
               >
                 <motion.div
-                  initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                  className="w-full max-w-lg bg-white rounded-t-3xl px-4 pt-4 pb-8 space-y-4"
-                  style={{ maxHeight: '90dvh', overflowY: 'auto' }}
+                  initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }}
+                  transition={{ type: 'spring', damping: 20, stiffness: 300 }}
+                  className="w-full bg-white rounded-3xl p-5 space-y-4"
+                  style={{ maxWidth: 480, maxHeight: '92dvh', overflowY: 'auto' }}
                 >
-                  {/* Handle bar */}
-                  <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-2" />
-                  <p className="text-sm font-bold text-gray-700 text-center">
-                    {isManager ? '班次簽名確認' : `${shifts[selectedShift].split(' ')[0]} 人員簽名`}
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-base font-bold text-gray-800">
+                      {isManager ? '班次簽名確認' : `${shifts[selectedShift].split(' ')[0]} 人員簽名`}
+                    </p>
+                    <button onClick={() => setSigModalOpen(false)} className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 text-gray-400 text-lg font-bold">×</button>
+                  </div>
 
                   {isManager ? (
                     <>
-                      {/* 各班別簽名（唯讀） */}
                       {[
                         { label: '早班  07:00–15:00',  sig: allShiftSigs.morning },
                         { label: '晚班  15:00–23:00',  sig: allShiftSigs.evening },
@@ -591,19 +592,19 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                           <p className="text-xs font-semibold text-gray-400 mb-1 flex items-center gap-1.5">
                             <PenLine className="w-3 h-3" />{label}
                           </p>
-                          <div className="border-2 rounded-xl overflow-hidden"
-                            style={{ borderColor: sig ? '#86efac' : '#e5e7eb', background: sig ? '#f0fdf4' : '#f9fafb', minHeight: 100 }}>
+                          <div className="border-2 rounded-2xl overflow-hidden flex items-center justify-center"
+                            style={{ borderColor: sig ? '#86efac' : '#e5e7eb', background: sig ? '#f0fdf4' : '#f9fafb', height: 80 }}>
                             {sig
-                              ? <img src={sig} alt="簽名" className="w-full object-contain" style={{ maxHeight: 110 }} />
-                              : <p className="text-xs text-gray-300 text-center py-8">尚未簽名</p>}
+                              ? <img src={sig} alt="簽名" className="w-full h-full object-contain" />
+                              : <p className="text-xs text-gray-300">尚未簽名</p>}
                           </div>
                         </div>
                       ))}
-                      {/* 店長簽名 */}
                       <SignaturePad
                         label="店長簽名"
                         value={managerSignature}
                         onChange={sig => { setManagerSignature(sig); setSubmitted(false) }}
+                        canvasHeight={180}
                       />
                     </>
                   ) : (
@@ -611,12 +612,13 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                       label={`${shifts[selectedShift].split(' ')[0]} 人員簽名`}
                       value={shiftSignature}
                       onChange={sig => { setShiftSignature(sig); setSubmitted(false) }}
+                      canvasHeight={280}
                     />
                   )}
 
                   <button
                     onClick={() => setSigModalOpen(false)}
-                    className="w-full py-3.5 rounded-2xl text-white font-bold text-sm"
+                    className="w-full py-4 rounded-2xl text-white font-bold text-sm"
                     style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)' }}
                   >
                     完成

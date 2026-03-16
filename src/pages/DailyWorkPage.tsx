@@ -245,8 +245,11 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [waste, setWaste]           = useState<WasteState>(defaultWaste)
   const [cleaning, setCleaning]     = useState<Record<string, string>>({})
   const [friendly, setFriendly]     = useState<Record<string, boolean>>({})
-  const [uniform, setUniform]       = useState({ appearance: false, sanitize: false })
-  const [shiftSignature, setShiftSignature] = useState('')
+  const [uniform, setUniform]         = useState({ appearance: false, sanitize: false })
+  const [shiftSignature, setShiftSignature]     = useState('')
+  const [managerSignature, setManagerSignature] = useState('')
+  const [allShiftSigs, setAllShiftSigs] = useState({ morning: '', evening: '', lateNight: '' })
+  const [sigModalOpen, setSigModalOpen] = useState(false)
   const [handoverNote, setHandoverNote] = useState('')
   const [handoverAnomaly, setHandoverAnomaly]       = useState('')
   const [handoverSupply, setHandoverSupply]         = useState('')
@@ -310,6 +313,12 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       setCleaning(sorted.find((l: any) => l.tasks_done?._cleaning)?.tasks_done._cleaning ?? {})
       setFriendly(sorted.find((l: any) => l.tasks_done?._friendly)?.tasks_done._friendly ?? {})
       setUniform(sorted.find((l: any) => l.tasks_done?._uniform)?.tasks_done._uniform ?? { appearance: false, sanitize: false })
+      setManagerSignature(sorted.find((l: any) => l.tasks_done?._manager_signature)?.tasks_done._manager_signature ?? '')
+      setAllShiftSigs({
+        morning:   allLogs.find((l: any) => l.shift === shifts[0])?.tasks_done?._signature ?? '',
+        evening:   allLogs.find((l: any) => l.shift === shifts[1])?.tasks_done?._signature ?? '',
+        lateNight: allLogs.find((l: any) => l.shift === shifts[2])?.tasks_done?._signature ?? '',
+      })
       setLoading(false)
     }
     load()
@@ -350,7 +359,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const payload = {
       store_id: user.storeId, staff_name: user.name, log_date: todayStr,
       shift: shifts[selectedShift], temperatures: temperaturesPayload,
-      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _uniform: uniform, _signature: shiftSignature },
+      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _uniform: uniform, _signature: shiftSignature, _manager_signature: managerSignature },
       handover_note: handoverNote,
       submitted_at: new Date().toISOString(),
     }
@@ -502,14 +511,29 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           ))}
         </div>
 
-        {/* 當班簽名 */}
-        <div className="bg-white rounded-2xl p-4">
-          <SignaturePad
-            label={`當班人員簽名　${shifts[selectedShift]}`}
-            value={shiftSignature}
-            onChange={sig => { setShiftSignature(sig); setSubmitted(false) }}
-          />
-        </div>
+        {/* 簽名按鈕 */}
+        {(() => {
+          const isManager = user.role === 'manager' || user.role === 'supervisor' || user.role === 'admin'
+          const hasSig = isManager ? !!managerSignature : !!shiftSignature
+          return (
+            <motion.button whileTap={{ scale: 0.97 }} onClick={() => setSigModalOpen(true)}
+              className="w-full flex items-center justify-between px-4 py-3.5 rounded-2xl border-2 transition-all"
+              style={{
+                borderColor: hasSig ? '#86efac' : '#d1d5db',
+                background:  hasSig ? '#f0fdf4' : '#ffffff',
+              }}>
+              <div className="flex items-center gap-2">
+                <PenLine className="w-4 h-4" style={{ color: hasSig ? '#16a34a' : '#9ca3af' }} />
+                <span className="text-sm font-bold" style={{ color: hasSig ? '#16a34a' : '#374151' }}>
+                  {hasSig ? '已完成簽名' : '點此進行簽名'}
+                </span>
+              </div>
+              {hasSig
+                ? <span className="text-xs text-green-500 font-semibold">重新簽名</span>
+                : <ChevronRight className="w-4 h-4 text-gray-300" />}
+            </motion.button>
+          )
+        })()}
 
         {/* Submit */}
         {saveError && (
@@ -531,6 +555,77 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             <button onClick={() => setSubmitted(false)} className="mt-2 text-xs text-green-500 underline">繼續編輯</button>
           </div>
         )}
+
+        {/* 簽名 Modal */}
+        <AnimatePresence>
+          {sigModalOpen && (() => {
+            const isManager = user.role === 'manager' || user.role === 'supervisor' || user.role === 'admin'
+            return (
+              <motion.div
+                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-end justify-center"
+                style={{ background: 'rgba(0,0,0,0.5)' }}
+                onClick={e => { if (e.target === e.currentTarget) setSigModalOpen(false) }}
+              >
+                <motion.div
+                  initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 300 }}
+                  className="w-full max-w-lg bg-white rounded-t-3xl px-4 pt-4 pb-8 space-y-4"
+                  style={{ maxHeight: '90dvh', overflowY: 'auto' }}
+                >
+                  {/* Handle bar */}
+                  <div className="w-10 h-1 rounded-full bg-gray-200 mx-auto mb-2" />
+                  <p className="text-sm font-bold text-gray-700 text-center">
+                    {isManager ? '班次簽名確認' : `${shifts[selectedShift].split(' ')[0]} 人員簽名`}
+                  </p>
+
+                  {isManager ? (
+                    <>
+                      {/* 各班別簽名（唯讀） */}
+                      {[
+                        { label: '早班  07:00–15:00',  sig: allShiftSigs.morning },
+                        { label: '晚班  15:00–23:00',  sig: allShiftSigs.evening },
+                        { label: '大夜班 23:00–07:00', sig: allShiftSigs.lateNight },
+                      ].map(({ label, sig }) => (
+                        <div key={label}>
+                          <p className="text-xs font-semibold text-gray-400 mb-1 flex items-center gap-1.5">
+                            <PenLine className="w-3 h-3" />{label}
+                          </p>
+                          <div className="border-2 rounded-xl overflow-hidden"
+                            style={{ borderColor: sig ? '#86efac' : '#e5e7eb', background: sig ? '#f0fdf4' : '#f9fafb', minHeight: 72 }}>
+                            {sig
+                              ? <img src={sig} alt="簽名" className="w-full object-contain" style={{ maxHeight: 80 }} />
+                              : <p className="text-xs text-gray-300 text-center py-5">尚未簽名</p>}
+                          </div>
+                        </div>
+                      ))}
+                      {/* 店長簽名 */}
+                      <SignaturePad
+                        label="店長簽名"
+                        value={managerSignature}
+                        onChange={sig => { setManagerSignature(sig); setSubmitted(false) }}
+                      />
+                    </>
+                  ) : (
+                    <SignaturePad
+                      label={`${shifts[selectedShift].split(' ')[0]} 人員簽名`}
+                      value={shiftSignature}
+                      onChange={sig => { setShiftSignature(sig); setSubmitted(false) }}
+                    />
+                  )}
+
+                  <button
+                    onClick={() => setSigModalOpen(false)}
+                    className="w-full py-3.5 rounded-2xl text-white font-bold text-sm"
+                    style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)' }}
+                  >
+                    完成
+                  </button>
+                </motion.div>
+              </motion.div>
+            )
+          })()}
+        </AnimatePresence>
       </div>
     )
   }

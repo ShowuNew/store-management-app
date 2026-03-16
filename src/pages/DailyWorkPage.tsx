@@ -106,8 +106,8 @@ function SignaturePad({ value, onChange, label }: SignaturePadProps) {
         style={{ borderColor: value ? '#86efac' : '#e5e7eb', background: value ? '#f0fdf4' : '#fafafa' }}>
         <canvas
           ref={canvasRef}
-          width={600}
-          height={120}
+          width={900}
+          height={220}
           className="w-full touch-none"
           style={{ display: 'block', cursor: 'crosshair' }}
           onMouseDown={startDraw}
@@ -592,10 +592,10 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                             <PenLine className="w-3 h-3" />{label}
                           </p>
                           <div className="border-2 rounded-xl overflow-hidden"
-                            style={{ borderColor: sig ? '#86efac' : '#e5e7eb', background: sig ? '#f0fdf4' : '#f9fafb', minHeight: 72 }}>
+                            style={{ borderColor: sig ? '#86efac' : '#e5e7eb', background: sig ? '#f0fdf4' : '#f9fafb', minHeight: 100 }}>
                             {sig
-                              ? <img src={sig} alt="簽名" className="w-full object-contain" style={{ maxHeight: 80 }} />
-                              : <p className="text-xs text-gray-300 text-center py-5">尚未簽名</p>}
+                              ? <img src={sig} alt="簽名" className="w-full object-contain" style={{ maxHeight: 110 }} />
+                              : <p className="text-xs text-gray-300 text-center py-8">尚未簽名</p>}
                           </div>
                         </div>
                       ))}

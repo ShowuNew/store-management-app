@@ -184,13 +184,6 @@ interface WasteState {
 }
 const defaultWaste: WasteState = { foodWasteBags: '', recyclingCount: '', leftoverFoodTime: '', cupCollectionTime: '', verified: false, groundCleaning: false }
 
-interface PersonnelState {
-  manager: string
-  morning: string   // 早班
-  evening: string   // 晚班
-  lateNight: string // 大夜班
-}
-const defaultPersonnel: PersonnelState = { manager: '', morning: '', evening: '', lateNight: '' }
 
 const evalReading = (spec: TempSpec, r: TempReading): boolean | null => {
   if (!r.value.trim()) return null
@@ -253,7 +246,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [cleaning, setCleaning]     = useState<Record<string, string>>({})
   const [friendly, setFriendly]     = useState<Record<string, boolean>>({})
   const [uniform, setUniform]       = useState({ appearance: false, sanitize: false })
-  const [personnel, setPersonnel]   = useState<PersonnelState>(defaultPersonnel)
+  const [shiftSignature, setShiftSignature] = useState('')
   const [handoverNote, setHandoverNote] = useState('')
   const [handoverAnomaly, setHandoverAnomaly]       = useState('')
   const [handoverSupply, setHandoverSupply]         = useState('')
@@ -291,6 +284,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         setHandoverComplaint(parsed['客訴記錄'])
         setHandoverOther(parsed['其他事項'])
         setSubmitted(!!shiftLog.submitted_at)
+        setShiftSignature(shiftLog.tasks_done?._signature ?? '')
         if (Array.isArray(shiftLog.temperatures)) {
           const restored: TempData = {}
           shiftLog.temperatures.forEach((item: { readings?: { time: string; value: number | null }[] }, i: number) => {
@@ -306,6 +300,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       } else {
         setExistingId(null); setHandoverNote(''); setTempData({}); setSubmitted(false)
         setHandoverAnomaly(''); setHandoverSupply(''); setHandoverComplaint(''); setHandoverOther('')
+        setShiftSignature('')
       }
 
       const sorted = [...allLogs].sort((a: any, b: any) =>
@@ -315,7 +310,6 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       setCleaning(sorted.find((l: any) => l.tasks_done?._cleaning)?.tasks_done._cleaning ?? {})
       setFriendly(sorted.find((l: any) => l.tasks_done?._friendly)?.tasks_done._friendly ?? {})
       setUniform(sorted.find((l: any) => l.tasks_done?._uniform)?.tasks_done._uniform ?? { appearance: false, sanitize: false })
-      setPersonnel(sorted.find((l: any) => l.tasks_done?._personnel)?.tasks_done._personnel ?? defaultPersonnel)
       setLoading(false)
     }
     load()
@@ -356,7 +350,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const payload = {
       store_id: user.storeId, staff_name: user.name, log_date: todayStr,
       shift: shifts[selectedShift], temperatures: temperaturesPayload,
-      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _uniform: uniform, _personnel: personnel },
+      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _uniform: uniform, _signature: shiftSignature },
       handover_note: handoverNote,
       submitted_at: new Date().toISOString(),
     }
@@ -488,26 +482,6 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           </div>
         </div>
 
-        {/* 當日人員簽名 */}
-        <div className="bg-white rounded-2xl p-4">
-          <p className="text-xs font-semibold text-gray-400 mb-4">當日人員簽名</p>
-          <div className="space-y-4">
-            {[
-              { key: 'manager',   label: '店長' },
-              { key: 'morning',   label: '早班  07:00–15:00' },
-              { key: 'evening',   label: '晚班  15:00–23:00' },
-              { key: 'lateNight', label: '大夜班 23:00–07:00' },
-            ].map(({ key, label }) => (
-              <SignaturePad
-                key={key}
-                label={label}
-                value={(personnel as any)[key]}
-                onChange={sig => { setPersonnel(p => ({ ...p, [key]: sig })); setSubmitted(false) }}
-              />
-            ))}
-          </div>
-        </div>
-
         {/* 區塊卡片 */}
         <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-50">
           {cards.map(card => (
@@ -526,6 +500,15 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
             </motion.button>
           ))}
+        </div>
+
+        {/* 當班簽名 */}
+        <div className="bg-white rounded-2xl p-4">
+          <SignaturePad
+            label={`當班人員簽名　${shifts[selectedShift]}`}
+            value={shiftSignature}
+            onChange={sig => { setShiftSignature(sig); setSubmitted(false) }}
+          />
         </div>
 
         {/* Submit */}

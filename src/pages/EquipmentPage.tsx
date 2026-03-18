@@ -208,7 +208,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
           {/* Progress bar */}
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div className="h-2 rounded-full transition-all"
-              style={{ width: `${items.length ? doneThisMonth / items.length * 100 : 0}%`, background: '#00a86b' }} />
+              style={{ width: `${items.length ? doneThisMonth / items.length * 100 : 0}%`, background: '#00a040' }} />
           </div>
           <p className="text-base text-gray-400 mt-1.5 text-right">{doneThisMonth}/{items.length} 項完成</p>
         </div>

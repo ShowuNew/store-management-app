@@ -481,9 +481,9 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               <button key={i} onClick={() => { setSelectedShift(i); setSubmitted(false) }}
                 className="flex-1 py-2.5 rounded-xl text-base font-bold border-2 transition-all"
                 style={{
-                  borderColor: selectedShift === i ? '#00a86b' : '#f3f4f6',
+                  borderColor: selectedShift === i ? '#005f3b' : '#f3f4f6',
                   background:  selectedShift === i ? '#ecfdf5' : '#fafafa',
-                  color:       selectedShift === i ? '#00a86b' : '#9ca3af',
+                  color:       selectedShift === i ? '#005f3b' : '#9ca3af',
                 }}>
                 {s.split(' ')[0]}<br />
                 <span className="font-normal text-base">{s.split(' ')[1]}</span>
@@ -545,7 +545,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         {!submitted ? (
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleSubmit} disabled={saving}
             className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition-opacity"
-            style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)', opacity: saving ? 0.7 : 1 }}>
+            style={{ background: 'linear-gradient(135deg, #00a040, #007d30)', opacity: saving ? 0.7 : 1 }}>
             <Save className="w-4 h-4" />
             {saving ? '儲存中...' : `確認送出（${user.name} 簽署）`}
           </motion.button>
@@ -619,7 +619,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                   <button
                     onClick={() => setSigModalOpen(false)}
                     className="w-full py-4 rounded-2xl text-white font-bold text-base"
-                    style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)' }}
+                    style={{ background: 'linear-gradient(135deg, #00a040, #007d30)' }}
                   >
                     完成
                   </button>
@@ -853,7 +853,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               }
             }}
             className="flex-1 py-3 rounded-2xl text-base font-bold text-white transition-all"
-            style={{ background: isLast ? 'linear-gradient(135deg, #00a86b, #00d47e)' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}
+            style={{ background: isLast ? 'linear-gradient(135deg, #00a040, #007d30)' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}
           >
             {isLast ? '完成 ✓' : '確認，下一台 →'}
           </button>
@@ -898,7 +898,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 onClick={() => setSwipeMode(m => !m)}
                 className="px-3 py-1.5 rounded-xl text-base font-bold transition-all"
                 style={{
-                  background: swipeMode ? '#00a86b' : '#f3f4f6',
+                  background: swipeMode ? '#005f3b' : '#f3f4f6',
                   color: swipeMode ? 'white' : '#6b7280',
                 }}
               >

@@ -192,7 +192,7 @@ export default function InspectionPage({ user, onBack }: Props) {
             background: criticalFailed
               ? 'linear-gradient(135deg,#1f2937,#374151)'
               : pass
-              ? 'linear-gradient(135deg,#004d30,#00a86b)'
+              ? 'linear-gradient(135deg,#007d30,#00a040)'
               : 'linear-gradient(135deg,#7f1d1d,#dc2626)',
           }}
         >

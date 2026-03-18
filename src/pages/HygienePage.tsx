@@ -203,7 +203,7 @@ export default function HygienePage({ user, onBack }: Props) {
               className="h-2 rounded-full transition-all"
               style={{
                 width: `${Math.round((allPassCount + allFailCount) / totalItems * 100)}%`,
-                background: 'linear-gradient(90deg, #00a86b, #00d47e)',
+                background: 'linear-gradient(90deg, #00a040, #007d30)',
               }}
             />
           </div>
@@ -240,7 +240,7 @@ export default function HygienePage({ user, onBack }: Props) {
                 onClick={() => { setActiveShift(i); setSaved(false) }}
                 className="flex-1 py-2.5 rounded-xl text-base font-bold transition-all"
                 style={{
-                  background: activeShift === i ? '#00a86b' : '#f3f4f6',
+                  background: activeShift === i ? '#005f3b' : '#f3f4f6',
                   color:      activeShift === i ? 'white'   : '#9ca3af',
                 }}
               >
@@ -382,7 +382,7 @@ export default function HygienePage({ user, onBack }: Props) {
                 onClick={handleSave}
                 disabled={saving}
                 className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition-opacity"
-                style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)', opacity: saving ? 0.7 : 1 }}
+                style={{ background: 'linear-gradient(135deg, #00a040, #007d30)', opacity: saving ? 0.7 : 1 }}
               >
                 <Save className="w-4 h-4" />
                 {saving ? '儲存中...' : `儲存 ${shifts[activeShift]} 衛生紀錄（${user.name}）`}

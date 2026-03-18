@@ -52,6 +52,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
   const [loading, setLoading]       = useState(true)
   const [showForm, setShowForm]     = useState(false)
   const [saving, setSaving]         = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
   const [lightboxUrl, setLightboxUrl] = useState<string | null>(null)
 
   // ── 通用異常表單 ──
@@ -103,7 +104,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
     setAnomalies(p => p.map(a => a.id === id ? { ...a, status } : a))
   }
 
-  const closeForm = () => setShowForm(false)
+  const closeForm = () => { setShowForm(false); setUploadError(null) }
 
   // ── Photo upload helper ──
   const uploadPhoto = async (file: File, storeId: string): Promise<string> => {
@@ -125,7 +126,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
         photoUrl = await uploadPhoto(photoFile, user.storeId)
       } catch (err: any) {
         setSaving(false)
-        alert(`照片上傳失敗：${err?.message ?? JSON.stringify(err)}`)
+        setUploadError(`照片上傳失敗：${err?.message ?? JSON.stringify(err)}`)
         return
       }
     }
@@ -159,7 +160,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
         photoUrl = await uploadPhoto(repairPhotoFile, user.storeId)
       } catch (err: any) {
         setSaving(false)
-        alert(`照片上傳失敗：${err?.message ?? JSON.stringify(err)}`)
+        setUploadError(`照片上傳失敗：${err?.message ?? JSON.stringify(err)}`)
         return
       }
     }
@@ -410,10 +411,19 @@ export default function AnomalyPage({ user, onBack }: Props) {
                   <span style={{ color: activeTabCfg.color }}>{activeTabCfg.icon}</span>
                   新增{activeTabCfg.label}
                 </h2>
-                <button onClick={closeForm} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                <button onClick={() => { closeForm(); setUploadError(null) }} aria-label="關閉" className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
                   <X className="w-4 h-4 text-gray-500" />
                 </button>
               </div>
+              {uploadError && (
+                <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl px-4 py-3 mb-4">
+                  <AlertTriangle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
+                  <p className="text-base text-red-600 flex-1">{uploadError}</p>
+                  <button onClick={() => setUploadError(null)} aria-label="關閉錯誤" className="w-5 h-5 flex items-center justify-center shrink-0">
+                    <X className="w-3.5 h-3.5 text-red-400" />
+                  </button>
+                </div>
+              )}
 
               {/* ── 通用異常 ── */}
               {activeTab === 'general' && (

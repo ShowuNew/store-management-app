@@ -25,14 +25,14 @@ export default function BottomNav({ currentPage, onNavigate }: Props) {
             <button
               key={page}
               onClick={() => onNavigate(page)}
-              className="flex flex-col items-center gap-0.5 flex-1 py-2 rounded-xl transition-all min-h-[52px] justify-center"
-              style={{ color: active ? '#00a86b' : '#9ca3af' }}
+              className="flex flex-col items-center gap-0.5 flex-1 py-2.5 transition-all min-h-[52px] justify-center relative"
+              style={{ color: active ? '#005f3b' : '#9ca3af' }}
             >
-              <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
-              <span className="text-[9px] font-medium leading-tight">{label}</span>
               {active && (
-                <span className="w-1 h-1 rounded-full" style={{ background: '#00a86b' }} />
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-green-700" />
               )}
+              <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
+              <span className="text-[11px] font-medium leading-tight">{label}</span>
             </button>
           )
         })}

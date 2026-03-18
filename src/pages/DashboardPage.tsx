@@ -201,7 +201,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   return (
     <div className="min-h-dvh bg-gray-50">
       <PageHeader
-        title="店鋪工作日誌FamilyMart"
+        title="店鋪工作日誌"
         subtitle={`${user.storeName}・${user.name}（${roleLabel}）`}
         onLogout={onLogout}
       />
@@ -267,7 +267,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
 
         {/* Alerts */}
         <div className="space-y-2">
-          <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide">最新通知</p>
+          <p className="text-[13px] font-bold text-gray-400 px-1 uppercase tracking-[0.08em]">最新通知</p>
 
           {loading ? (
             <div className="flex items-center justify-center py-6 gap-2 text-gray-300">
@@ -307,7 +307,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         {/* Module grid */}
         <div>
           <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
-          <div className="grid grid-cols-1 gap-3">
+          <div className="grid grid-cols-2 gap-3">
             {modules.map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (
               <motion.button
                 key={page + i}
@@ -316,20 +316,20 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 transition={{ delay: i * 0.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => onNavigate(page)}
-                className="bg-white rounded-2xl p-5 text-left shadow-sm relative"
+                className="bg-white rounded-2xl p-4 text-left shadow-sm relative"
               >
                 {badge && (
-                  <span className="absolute top-3 right-3 text-base font-bold px-2 py-0.5 rounded-lg bg-red-500 text-white">
+                  <span className="absolute top-3 right-3 text-[11px] font-bold px-1.5 py-0.5 rounded-lg bg-red-500 text-white">
                     {badge}
                   </span>
                 )}
-                <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: bg }}>
-                    <Icon className="w-7 h-7" style={{ color }} />
+                <div className="flex flex-col gap-3">
+                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" style={{ background: bg }}>
+                    <Icon className="w-5 h-5" style={{ color }} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-lg font-bold text-gray-800 leading-tight">{label}</p>
-                    <p className="text-base text-gray-400 mt-0.5">{desc}</p>
+                    <p className="text-base font-bold text-gray-800 leading-tight">{label}</p>
+                    <p className="text-[13px] text-gray-400 mt-0.5">{desc}</p>
                     {done !== null && total !== null ? (
                       <div className="mt-2">
                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">

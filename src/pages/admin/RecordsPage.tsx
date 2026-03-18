@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { RefreshCw, ChevronDown, ChevronUp, Store } from 'lucide-react'
+import { RefreshCw, ChevronDown, ChevronUp, Store, ArrowLeft } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type { User } from '../../types'
 
@@ -78,8 +78,8 @@ export default function RecordsPage({ onBack }: Props) {
       {/* Header */}
       <div className="bg-white px-4 pt-10 pb-4 shadow-sm">
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={onBack} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center text-gray-500">
-            ←
+          <button onClick={onBack} aria-label="返回" className="w-11 h-11 rounded-xl bg-gray-100 flex items-center justify-center text-gray-600 shrink-0">
+            <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <h1 className="text-lg font-black text-gray-900">紀錄查閱</h1>

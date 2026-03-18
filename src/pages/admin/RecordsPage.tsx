@@ -8,9 +8,8 @@ interface Props { user: User; onBack: () => void }
 
 type Tab = 'daily-work' | 'hygiene' | 'equipment'
 
-const todayStr = new Date().toISOString().split('T')[0]
-
 export default function RecordsPage({ onBack }: Props) {
+  const todayStr = new Date().toISOString().split('T')[0]
   const [tab, setTab]           = useState<Tab>('daily-work')
   const [date, setDate]         = useState(todayStr)
   const [storeFilter, setStoreFilter] = useState('')

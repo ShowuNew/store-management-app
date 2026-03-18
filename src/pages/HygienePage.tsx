@@ -54,9 +54,8 @@ const categories = [
 ]
 
 const shifts = ['07:00', '15:00', '23:00']
-const todayStr = new Date().toISOString().split('T')[0]
-
 export default function HygienePage({ user, onBack }: Props) {
+  const todayStr = new Date().toISOString().split('T')[0]
   const [activeCategory, setActiveCategory] = useState(0)
   const [activeShift, setActiveShift]       = useState(0)
   const [results, setResults]               = useState<Record<string, Result>>({})
@@ -187,7 +186,7 @@ export default function HygienePage({ user, onBack }: Props) {
     <div className="min-h-dvh bg-gray-50">
       <PageHeader
         title="衛生自主管理"
-        subtitle={`${new Date().getMonth() + 1}月 ${new Date().getDate()}日・共21項`}
+        subtitle={`${new Date().getMonth() + 1}月 ${new Date().getDate()}日・共${totalItems}項`}
         onBack={onBack}
       />
 

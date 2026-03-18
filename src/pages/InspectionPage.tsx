@@ -80,10 +80,10 @@ const initCategories: CategoryData[] = [
   },
 ]
 
-const todayStr = new Date().toISOString().split('T')[0]
-const draftKey = (storeId: string) => `inspection_${storeId}_${todayStr}`
+const draftKey = (storeId: string) => `inspection_${storeId}_${new Date().toISOString().split('T')[0]}`
 
 export default function InspectionPage({ user, onBack }: Props) {
+  const todayStr = new Date().toISOString().split('T')[0]
   const [cats, setCats] = useState<CategoryData[]>(initCategories)
   const [openCat, setOpenCat] = useState<number | null>(0)
   const [saving, setSaving] = useState(false)
@@ -100,7 +100,7 @@ export default function InspectionPage({ user, onBack }: Props) {
         .select('*')
         .eq('store_id', user.storeId)
         .eq('inspect_date', todayStr)
-        .single()
+        .maybeSingle()
       if (data) {
         setExistingId(data.id)
         setCats(data.categories)

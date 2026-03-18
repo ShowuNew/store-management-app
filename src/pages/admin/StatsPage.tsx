@@ -95,8 +95,8 @@ export default function StatsPage({ user, onBack }: Props) {
 
       const q = (table: string, select: string) => {
         const base = supabase.from(table).select(select)
-        return isSupervisor ? base.gte(table === 'anomaly_reports' ? 'created_at' : (table === 'hygiene_records' ? 'record_date' : 'log_date'), fromDate)
-          : base.eq('store_id', user.storeId).gte(table === 'anomaly_reports' ? 'created_at' : (table === 'hygiene_records' ? 'record_date' : 'log_date'), fromDate)
+        return isSupervisor ? base.gte(table === 'anomaly_reports' ? 'reported_at' : (table === 'hygiene_records' ? 'record_date' : 'log_date'), fromDate)
+          : base.eq('store_id', user.storeId).gte(table === 'anomaly_reports' ? 'reported_at' : (table === 'hygiene_records' ? 'record_date' : 'log_date'), fromDate)
       }
 
       const [dwRes, hyRes, eqRes, anRes] = await Promise.all([
@@ -104,7 +104,7 @@ export default function StatsPage({ user, onBack }: Props) {
         q('hygiene_records', 'record_date, results'),
         q('equipment_logs', 'log_date'),
         isSupervisor
-          ? supabase.from('anomaly_reports').select('category, created_at').gte('created_at', fromDate)
+          ? supabase.from('anomaly_reports').select('category, reported_at').gte('reported_at', fromDate)
           : supabase.from('anomaly_reports').select('category, created_at').eq('store_id', user.storeId).gte('created_at', fromDate),
       ])
 

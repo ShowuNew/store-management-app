@@ -23,9 +23,8 @@ interface AlertItem {
 interface TempReading { time: string; value: number | null; isNormal: boolean | null }
 interface TempEntry { location: string; required: string; zone: string; readings?: TempReading[]; value?: number | null; isNormal?: boolean | null }
 
-const todayStr = new Date().toISOString().split('T')[0]
-
 export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
+  const todayStr = new Date().toISOString().split('T')[0]
   const now      = new Date()
   const dateStr  = `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
   const hour     = now.getHours()

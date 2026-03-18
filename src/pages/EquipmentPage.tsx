@@ -41,9 +41,6 @@ const data: Record<Zone, EqItem[]> = {
   ],
 }
 
-const todayStr   = new Date().toISOString().split('T')[0]
-const dayOfMonth = new Date().getDate()
-
 const getMonthStart = () => {
   const d = new Date()
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
@@ -62,11 +59,13 @@ const calBadge: Record<CalStatus, { text: string; bg: string; color: string }> =
   'done':          { text: '✓ 已完成',    bg: '#ecfdf5', color: '#059669' },
   'pending-today': { text: '今日待執行',  bg: '#fffbeb', color: '#d97706' },
   'pending-week':  { text: '本週待執行',  bg: '#eff6ff', color: '#2563eb' },
-  'pending-month': { text: `本月5日到期`, bg: '#eff6ff', color: '#2563eb' },
+  'pending-month': { text: `本月7日到期`, bg: '#eff6ff', color: '#2563eb' },
   'overdue':       { text: '⚠ 逾期未執行', bg: '#fef2f2', color: '#dc2626' },
 }
 
 export default function EquipmentPage({ user, onBack }: Props) {
+  const todayStr   = new Date().toISOString().split('T')[0]
+  const dayOfMonth = new Date().getDate()
   const [activeZone, setActiveZone]       = useState<Zone>('FF區')
   const [doneMap, setDoneMap]             = useState<Record<string, boolean>>({})
   const [historicalDone, setHistoricalDone] = useState<Set<string>>(new Set())

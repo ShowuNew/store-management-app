@@ -169,7 +169,6 @@ const friendlyTasks = [
 ]
 
 const zones = ['全部', '賣場', '咖啡', 'FF區']
-const todayStr = new Date().toISOString().split('T')[0]
 const nowTimeStr = () => {
   const n = new Date()
   return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`
@@ -240,6 +239,7 @@ function serializeHandover(fields: Record<HandoverKey, string>): string {
 }
 
 export default function DailyWorkPage({ user, onBack }: Props) {
+  const todayStr = new Date().toISOString().split('T')[0]
   const [view, setView]             = useState<ViewType>('overview')
   const [selectedShift, setSelectedShift] = useState(0)
   const [tempData, setTempData]     = useState<TempData>({})

@@ -10,9 +10,8 @@ interface Props {
   onLogout: () => void
 }
 
-const todayStr = new Date().toISOString().split('T')[0]
-
 export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
+  const todayStr = new Date().toISOString().split('T')[0]
   const [stats, setStats] = useState({ dailyWork: 0, hygiene: 0, equipment: 0, openAnomalies: 0 })
   const [loading, setLoading] = useState(true)
 

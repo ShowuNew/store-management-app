@@ -174,9 +174,11 @@ export default function HygienePage({ user, onBack }: Props) {
     let saveErr: any = null
     if (existingId) {
       const { error } = await supabase.from('hygiene_records').update(payload).eq('id', existingId)
+      if (error) console.error('[HygienePage] UPDATE error:', error)
       saveErr = error
     } else {
       const { error: insertError } = await supabase.from('hygiene_records').insert(payload)
+      if (insertError) console.error('[HygienePage] INSERT error:', insertError)
       saveErr = insertError
       if (!insertError) {
         // Fetch the ID separately — avoids PGRST116 from RLS blocking chained .select().single()
@@ -193,7 +195,7 @@ export default function HygienePage({ user, onBack }: Props) {
 
     if (saveErr) {
       // BUG-002: show error, preserve draft, do NOT mark as saved
-      setSaveError('儲存失敗，請稍後再試')
+      setSaveError(`儲存失敗：${saveErr.message ?? saveErr.code ?? '請稍後再試'}`)
       setSaving(false)
       return
     }

@@ -224,7 +224,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-green-200 text-sm flex items-center gap-1 mb-1">
+              <p className="text-green-200 text-base flex items-center gap-1 mb-1">
                 <Clock className="w-4 h-4" /> {dateStr}
               </p>
               <h2 className="text-3xl font-bold">{shiftNow}</h2>
@@ -235,9 +235,9 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 ? <RefreshCw className="w-6 h-6 text-green-200 animate-spin" />
                 : (
                   <>
-                    <p className="text-green-200 text-sm mb-1">今日完成率</p>
+                    <p className="text-green-200 text-base mb-1">今日完成率</p>
                     <p className="text-5xl font-black">{pct}<span className="text-xl font-normal">%</span></p>
-                    <p className="text-green-200 text-sm">{allDoneCount}/{countable.length} 模組完成</p>
+                    <p className="text-green-200 text-base">{allDoneCount}/{countable.length} 模組完成</p>
                   </>
                 )
               }
@@ -258,7 +258,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           <div className="flex-1 flex gap-4">
             {tempStatus.map(t => (
               <div key={t.label} className="flex flex-col items-center">
-                <span className="text-sm text-gray-400">{t.label}</span>
+                <span className="text-base text-gray-400">{t.label}</span>
                 <span className="text-base font-bold" style={{ color: t.ok ? '#10b981' : '#ef4444' }}>{t.value}</span>
               </div>
             ))}
@@ -266,7 +266,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           {loading
             ? <RefreshCw className="w-5 h-5 text-gray-300 animate-spin shrink-0" />
             : (
-              <span className={`text-sm font-semibold px-3 py-1.5 rounded-lg shrink-0 ${tempAllOk ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+              <span className={`text-base font-semibold px-3 py-1.5 rounded-lg shrink-0 ${tempAllOk ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
                 {tempAllOk ? '全部正常' : '有異常'}
               </span>
             )
@@ -275,7 +275,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
 
         {/* Alerts */}
         <div className="space-y-2">
-          <p className="text-sm font-bold text-gray-400 px-1 uppercase tracking-wide">最新通知</p>
+          <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide">最新通知</p>
 
           {loading ? (
             <div className="flex items-center justify-center py-6 gap-2 text-gray-300">
@@ -303,9 +303,9 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                   className="flex items-start gap-3 px-4 py-4 rounded-2xl"
                   style={{ background: s.bg }}
                 >
-                  <span className="text-xs font-bold px-2 py-1 rounded shrink-0 mt-0.5" style={{ background: s.color, color: '#fff' }}>{s.label}</span>
+                  <span className="text-base font-bold px-2 py-1 rounded shrink-0 mt-0.5" style={{ background: s.color, color: '#fff' }}>{s.label}</span>
                   <p className="flex-1 text-base font-medium" style={{ color: s.color }}>{a.msg}</p>
-                  {a.time && <span className="text-sm text-gray-400 shrink-0">{a.time}</span>}
+                  {a.time && <span className="text-base text-gray-400 shrink-0">{a.time}</span>}
                 </motion.div>
               )
             })
@@ -314,7 +314,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
 
         {/* Module grid */}
         <div>
-          <p className="text-sm font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
+          <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
           <div className="grid grid-cols-1 gap-3">
             {modules.map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (
               <motion.button
@@ -327,7 +327,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 className="bg-white rounded-2xl p-5 text-left shadow-sm relative"
               >
                 {badge && (
-                  <span className="absolute top-3 right-3 text-xs font-bold px-2 py-0.5 rounded-lg bg-red-500 text-white">
+                  <span className="absolute top-3 right-3 text-base font-bold px-2 py-0.5 rounded-lg bg-red-500 text-white">
                     {badge}
                   </span>
                 )}
@@ -337,19 +337,19 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-lg font-bold text-gray-800 leading-tight">{label}</p>
-                    <p className="text-sm text-gray-400 mt-0.5">{desc}</p>
+                    <p className="text-base text-gray-400 mt-0.5">{desc}</p>
                     {done !== null && total !== null ? (
                       <div className="mt-2">
                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
                           <div className="h-1.5 rounded-full transition-all" style={{ width: `${(total ?? 0) > 0 ? (done ?? 0) / (total ?? 1) * 100 : 0}%`, background: color }} />
                         </div>
-                        <p className="text-xs mt-1 font-semibold" style={{ color }}>{done}/{total} 完成</p>
+                        <p className="text-base mt-1 font-semibold" style={{ color }}>{done}/{total} 完成</p>
                       </div>
                     ) : (
                       !badge && (
                         <div className="mt-2 flex items-center gap-1">
                           <ChevronRight className="w-4 h-4" style={{ color }} />
-                          <p className="text-xs font-semibold" style={{ color }}>查看報表</p>
+                          <p className="text-base font-semibold" style={{ color }}>查看報表</p>
                         </div>
                       )
                     )}

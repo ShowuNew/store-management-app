@@ -57,16 +57,16 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
           <div>
             <div className="flex items-center gap-2 mb-1">
               <ShieldCheck className="w-5 h-5 text-green-600" />
-              <span className="text-xs font-bold text-green-600 uppercase tracking-wide">管理後台</span>
+              <span className="text-base font-bold text-green-600 uppercase tracking-wide">管理後台</span>
             </div>
             <h1 className="text-xl font-black text-gray-900">{user.name}</h1>
-            <p className="text-sm text-gray-400 mt-0.5">
+            <p className="text-base text-gray-400 mt-0.5">
               {new Date().toLocaleDateString('zh-TW', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
             </p>
           </div>
           <button
             onClick={onLogout}
-            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-100 text-gray-500 text-xs font-semibold"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-gray-100 text-gray-500 text-base font-semibold"
           >
             <LogOut className="w-3.5 h-3.5" /> 登出
           </button>
@@ -76,11 +76,11 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
       <div className="px-4 py-4 space-y-4 pb-24">
         {/* Stats */}
         <div>
-          <p className="text-xs font-bold text-gray-400 mb-2">今日統計</p>
+          <p className="text-base font-bold text-gray-400 mb-2">今日統計</p>
           {loading ? (
             <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
               <RefreshCw className="w-4 h-4 animate-spin" />
-              <span className="text-sm">載入中...</span>
+              <span className="text-base">載入中...</span>
             </div>
           ) : (
             <div className="grid grid-cols-2 gap-2">
@@ -94,7 +94,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
                   style={{ background: s.bg }}
                 >
                   <p className="text-3xl font-black" style={{ color: s.color }}>{s.value}</p>
-                  <p className="text-xs font-semibold mt-0.5" style={{ color: s.color }}>
+                  <p className="text-base font-semibold mt-0.5" style={{ color: s.color }}>
                     {s.label} <span className="font-normal opacity-70">({s.unit})</span>
                   </p>
                 </motion.div>
@@ -105,7 +105,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
 
         {/* Quick links */}
         <div>
-          <p className="text-xs font-bold text-gray-400 mb-2">功能入口</p>
+          <p className="text-base font-bold text-gray-400 mb-2">功能入口</p>
           <div className="space-y-2">
             {quickLinks.map(({ page, label, desc, icon, color, bg }, i) => (
               <motion.button
@@ -121,8 +121,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
                   {icon}
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-gray-800">{label}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{desc}</p>
+                  <p className="text-base font-bold text-gray-800">{label}</p>
+                  <p className="text-base text-gray-400 mt-0.5">{desc}</p>
                 </div>
               </motion.button>
             ))}

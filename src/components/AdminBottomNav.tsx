@@ -31,7 +31,7 @@ export default function AdminBottomNav({ currentPage, onNavigate }: Props) {
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-green-600" />
               )}
               {icon}
-              <span className="text-[10px] font-semibold">{label}</span>
+              <span className="text-base font-semibold">{label}</span>
             </button>
           )
         })}

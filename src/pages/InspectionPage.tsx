@@ -198,13 +198,13 @@ export default function InspectionPage({ user, onBack }: Props) {
         >
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/70 text-xs mb-1">
+              <p className="text-white/70 text-base mb-1">
                 {criticalFailed ? '⚠ 重點項目缺失' : '目前得分'}
               </p>
               <p className="text-5xl font-black">
                 {totalScore}<span className="text-xl font-normal">/100</span>
               </p>
-              <p className="text-white/80 text-sm mt-1">
+              <p className="text-white/80 text-base mt-1">
                 {criticalFailed
                   ? '★ 第33項（過期品）缺失 → 總分歸零'
                   : pass ? '✓ 合格（80分以上）' : '✗ 不合格（未達80分）'}
@@ -223,24 +223,24 @@ export default function InspectionPage({ user, onBack }: Props) {
 
           {/* 勾選進度 & 缺失數 */}
           <div className="mt-3 flex items-center justify-between">
-            <p className="text-white/70 text-[11px]">
+            <p className="text-white/70 text-base">
               已確認 <span className="font-bold text-white">{answeredCount}</span> / {totalItems} 項
             </p>
             {failCount > 0 && (
-              <p className="text-[11px] font-bold bg-white/20 px-2 py-0.5 rounded-full">
+              <p className="text-base font-bold bg-white/20 px-2 py-0.5 rounded-full">
                 缺失 {failCount} 項，扣 {totalDeducted} 分
               </p>
             )}
           </div>
-          <p className="text-white/40 text-[10px] mt-1">倒扣制：點「缺失」才扣分；點「符合」確認無缺失</p>
+          <p className="text-white/40 text-base mt-1">倒扣制：點「缺失」才扣分；點「符合」確認無缺失</p>
         </motion.div>
 
         {criticalFailed && (
           <div className="bg-red-50 border border-red-200 rounded-2xl p-4 flex gap-3">
             <AlertTriangle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-bold text-red-700">★ 重點項目缺失警告</p>
-              <p className="text-xs text-red-500 mt-0.5">第 33 項「過期品」標記為缺失，依規定本次點檢總分歸零。</p>
+              <p className="text-base font-bold text-red-700">★ 重點項目缺失警告</p>
+              <p className="text-base text-red-500 mt-0.5">第 33 項「過期品」標記為缺失，依規定本次點檢總分歸零。</p>
             </div>
           </div>
         )}
@@ -248,14 +248,14 @@ export default function InspectionPage({ user, onBack }: Props) {
         {/* Draft restored banner */}
         {draftRestored && (
           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-3 flex items-center justify-between gap-3">
-            <p className="text-sm font-semibold text-blue-700">已還原上次未儲存的草稿</p>
+            <p className="text-base font-semibold text-blue-700">已還原上次未儲存的草稿</p>
             <button
               onClick={() => {
                 try { localStorage.removeItem(draftKey(user.storeId)) } catch { /* ignore */ }
                 setCats(initCategories)
                 setDraftRestored(false)
               }}
-              className="shrink-0 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 text-xs font-bold"
+              className="shrink-0 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 text-base font-bold"
             >
               重新開始
             </button>
@@ -275,12 +275,12 @@ export default function InspectionPage({ user, onBack }: Props) {
                 className="w-full flex items-center px-4 py-4 gap-3"
               >
                 <div className="flex-1 text-left">
-                  <p className="text-sm font-bold text-gray-800">{cat.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">
+                  <p className="text-base font-bold text-gray-800">{cat.name}</p>
+                  <p className="text-base text-gray-400 mt-0.5">
                     {catDeducted > 0 ? `扣 ${catDeducted} 分` : '無扣分'} ／ 配分共 {catMax} 分
                   </p>
                 </div>
-                <span className="text-sm font-black shrink-0" style={{ color: catDeducted > 0 ? '#ef4444' : '#10b981' }}>
+                <span className="text-base font-black shrink-0" style={{ color: catDeducted > 0 ? '#ef4444' : '#10b981' }}>
                   {catDeducted > 0 ? `-${catDeducted}分` : '全符合'}
                 </span>
                 {isOpen ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
@@ -304,7 +304,7 @@ export default function InspectionPage({ user, onBack }: Props) {
                         >
                           <div className="flex gap-2 mb-3">
                             <span
-                              className={`w-6 h-6 rounded-full text-[10px] font-bold flex items-center justify-center shrink-0 mt-0.5 ${
+                              className={`w-6 h-6 rounded-full text-base font-bold flex items-center justify-center shrink-0 mt-0.5 ${
                                 item.isCritical
                                   ? 'bg-red-100 text-red-600'
                                   : item.isImportant
@@ -316,16 +316,16 @@ export default function InspectionPage({ user, onBack }: Props) {
                             </span>
                             <div className="flex-1">
                               {item.isCritical && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md mr-1 bg-red-100 text-red-600">
+                                <span className="text-base font-bold px-1.5 py-0.5 rounded-md mr-1 bg-red-100 text-red-600">
                                   ★重點（缺失→總分歸零）
                                 </span>
                               )}
                               {item.isImportant && (
-                                <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md mr-1 bg-amber-100 text-amber-600">
+                                <span className="text-base font-bold px-1.5 py-0.5 rounded-md mr-1 bg-amber-100 text-amber-600">
                                   ★重點
                                 </span>
                               )}
-                              <p className="text-sm text-gray-600 leading-relaxed mt-0.5">{item.description}</p>
+                              <p className="text-base text-gray-600 leading-relaxed mt-0.5">{item.description}</p>
                             </div>
                           </div>
 
@@ -360,7 +360,7 @@ export default function InspectionPage({ user, onBack }: Props) {
                             <div className="flex items-center justify-between">
                               <button
                                 onClick={() => setResult(ci, ii, 'na')}
-                                className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                                className="px-3 py-1.5 rounded-xl text-base font-bold transition-all"
                                 style={{
                                   background: item.result === 'na' ? '#6b7280' : '#f9fafb',
                                   color: item.result === 'na' ? 'white' : '#9ca3af',
@@ -368,7 +368,7 @@ export default function InspectionPage({ user, onBack }: Props) {
                               >
                                 N/A 不適用
                               </button>
-                              <span className="text-sm text-amber-500 font-black">{item.maxScore}分</span>
+                              <span className="text-base text-amber-500 font-black">{item.maxScore}分</span>
                             </div>
                           </div>
                         </div>
@@ -382,7 +382,7 @@ export default function InspectionPage({ user, onBack }: Props) {
         })}
 
         {saveError && (
-          <div className="px-4 py-3 bg-red-50 text-red-600 text-sm rounded-2xl border border-red-100">
+          <div className="px-4 py-3 bg-red-50 text-red-600 text-base rounded-2xl border border-red-100">
             ⚠️ 儲存失敗：{saveError}
           </div>
         )}
@@ -390,7 +390,7 @@ export default function InspectionPage({ user, onBack }: Props) {
         <button
           onClick={handleSave}
           disabled={saving}
-          className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60"
+          className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 disabled:opacity-60"
           style={{ background: saved ? 'linear-gradient(135deg,#00a040,#007d30)' : 'linear-gradient(135deg,#8b5cf6,#a78bfa)' }}
         >
           <Save className="w-4 h-4" />

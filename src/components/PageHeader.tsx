@@ -24,7 +24,7 @@ export default function PageHeader({ title, subtitle, onBack, onLogout, rightEle
       )}
       <div className="flex-1 min-w-0">
         <h1 className="text-base font-bold text-gray-800 leading-tight truncate">{title}</h1>
-        {subtitle && <p className="text-xs text-gray-400 mt-0.5 truncate">{subtitle}</p>}
+        {subtitle && <p className="text-base text-gray-400 mt-0.5 truncate">{subtitle}</p>}
       </div>
       {rightElement}
       {onLogout && (

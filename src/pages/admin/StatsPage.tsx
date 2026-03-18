@@ -164,7 +164,7 @@ export default function StatsPage({ user, onBack }: Props) {
           </button>
           <div>
             <h1 className="text-lg font-black text-gray-900">數據統計</h1>
-            <p className="text-xs text-gray-400">趨勢分析與績效評估</p>
+            <p className="text-base text-gray-400">趨勢分析與績效評估</p>
           </div>
         </div>
 
@@ -174,7 +174,7 @@ export default function StatsPage({ user, onBack }: Props) {
             <button
               key={t}
               onClick={() => setTab(t)}
-              className="flex-1 py-1.5 rounded-lg text-sm font-semibold transition-all"
+              className="flex-1 py-1.5 rounded-lg text-base font-semibold transition-all"
               style={{
                 background: tab === t ? '#ffffff' : 'transparent',
                 color: tab === t ? '#111827' : '#6b7280',
@@ -191,7 +191,7 @@ export default function StatsPage({ user, onBack }: Props) {
         {loading ? (
           <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
             <RefreshCw className="w-4 h-4 animate-spin" />
-            <span className="text-sm">計算中...</span>
+            <span className="text-base">計算中...</span>
           </div>
         ) : (
           <>
@@ -209,11 +209,11 @@ export default function StatsPage({ user, onBack }: Props) {
                   <Award className="w-7 h-7" style={{ color: score >= 80 ? '#16a34a' : score >= 60 ? '#ca8a04' : '#dc2626' }} />
                 </div>
                 <div className="flex-1">
-                  <p className="text-xs text-gray-400 mb-0.5">本月綜合評分</p>
+                  <p className="text-base text-gray-400 mb-0.5">本月綜合評分</p>
                   <p className="text-3xl font-black" style={{ color: score >= 80 ? '#16a34a' : score >= 60 ? '#ca8a04' : '#dc2626' }}>
                     {score} <span className="text-base font-normal text-gray-400">/ 100</span>
                   </p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">全勤日 {monthCompletion.full}/{monthCompletion.total} 天 · 衛生合格率 {hygieneRate.total > 0 ? Math.round(hygieneRate.pass / hygieneRate.total * 100) : 0}%</p>
+                  <p className="text-base text-gray-400 mt-0.5">全勤日 {monthCompletion.full}/{monthCompletion.total} 天 · 衛生合格率 {hygieneRate.total > 0 ? Math.round(hygieneRate.pass / hygieneRate.total * 100) : 0}%</p>
                 </div>
               </motion.div>
             )}
@@ -223,13 +223,13 @@ export default function StatsPage({ user, onBack }: Props) {
               <div className="bg-white rounded-2xl p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <TrendingUp className="w-4 h-4 text-blue-500" />
-                  <p className="text-sm font-bold text-gray-800">本月全勤完成率</p>
+                  <p className="text-base font-bold text-gray-800">本月全勤完成率</p>
                 </div>
                 <div className="flex items-end gap-2 mb-2">
                   <span className="text-3xl font-black text-blue-600">
                     {monthCompletion.total > 0 ? Math.round(monthCompletion.full / monthCompletion.total * 100) : 0}%
                   </span>
-                  <span className="text-sm text-gray-400 mb-1">{monthCompletion.full} / {monthCompletion.total} 天三項全填</span>
+                  <span className="text-base text-gray-400 mb-1">{monthCompletion.full} / {monthCompletion.total} 天三項全填</span>
                 </div>
                 <div className="h-2.5 bg-blue-50 rounded-full overflow-hidden">
                   <motion.div
@@ -239,13 +239,13 @@ export default function StatsPage({ user, onBack }: Props) {
                     className="h-2.5 bg-blue-500 rounded-full"
                   />
                 </div>
-                <p className="text-[10px] text-gray-400 mt-1">每日工作、衛生記錄、設備保養均填寫計為全勤</p>
+                <p className="text-base text-gray-400 mt-1">每日工作、衛生記錄、設備保養均填寫計為全勤</p>
               </div>
             )}
 
             {/* Bar chart */}
             <div className="bg-white rounded-2xl p-4">
-              <p className="text-sm font-bold text-gray-800 mb-1">{tab === '7d' ? '近 7 天' : '本月'}提交量</p>
+              <p className="text-base font-bold text-gray-800 mb-1">{tab === '7d' ? '近 7 天' : '本月'}提交量</p>
               <div className="flex items-center gap-3 mb-4">
                 {[
                   { label: '每日工作', color: '#3b82f6' },
@@ -254,7 +254,7 @@ export default function StatsPage({ user, onBack }: Props) {
                 ].map(l => (
                   <div key={l.label} className="flex items-center gap-1">
                     <span className="w-2 h-2 rounded-full shrink-0" style={{ background: l.color }} />
-                    <span className="text-[10px] text-gray-400">{l.label}</span>
+                    <span className="text-base text-gray-400">{l.label}</span>
                   </div>
                 ))}
               </div>
@@ -292,9 +292,9 @@ export default function StatsPage({ user, onBack }: Props) {
 
             {/* Hygiene pass rate */}
             <div className="bg-white rounded-2xl p-4">
-              <p className="text-sm font-bold text-gray-800 mb-3">衛生檢查合格率（{tab === '7d' ? '近 7 天' : '本月'}）</p>
+              <p className="text-base font-bold text-gray-800 mb-3">衛生檢查合格率（{tab === '7d' ? '近 7 天' : '本月'}）</p>
               {hygieneRate.total === 0 ? (
-                <p className="text-xs text-gray-400">暫無資料</p>
+                <p className="text-base text-gray-400">暫無資料</p>
               ) : (
                 <>
                   <div className="flex items-center gap-3 mb-2">
@@ -302,8 +302,8 @@ export default function StatsPage({ user, onBack }: Props) {
                       {Math.round(hygieneRate.pass / hygieneRate.total * 100)}%
                     </span>
                     <div>
-                      <p className="text-xs text-gray-400">符合 <span className="font-bold text-green-600">{hygieneRate.pass}</span> 項</p>
-                      <p className="text-xs text-gray-400">缺失 <span className="font-bold text-red-500">{hygieneRate.fail}</span> 項</p>
+                      <p className="text-base text-gray-400">符合 <span className="font-bold text-green-600">{hygieneRate.pass}</span> 項</p>
+                      <p className="text-base text-gray-400">缺失 <span className="font-bold text-red-500">{hygieneRate.fail}</span> 項</p>
                     </div>
                   </div>
                   <div className="h-3 bg-red-100 rounded-full overflow-hidden">
@@ -314,7 +314,7 @@ export default function StatsPage({ user, onBack }: Props) {
                       className="h-3 bg-green-500 rounded-full"
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] text-gray-400 mt-1">
+                  <div className="flex justify-between text-base text-gray-400 mt-1">
                     <span>合格</span>
                     <span>缺失</span>
                   </div>
@@ -324,9 +324,9 @@ export default function StatsPage({ user, onBack }: Props) {
 
             {/* Anomaly category distribution */}
             <div className="bg-white rounded-2xl p-4">
-              <p className="text-sm font-bold text-gray-800 mb-3">異常類別分布（{tab === '7d' ? '近 7 天' : '本月'}）</p>
+              <p className="text-base font-bold text-gray-800 mb-3">異常類別分布（{tab === '7d' ? '近 7 天' : '本月'}）</p>
               {anomalyStats.length === 0 ? (
-                <p className="text-xs text-gray-400">暫無資料</p>
+                <p className="text-base text-gray-400">暫無資料</p>
               ) : (
                 <div className="space-y-2.5">
                   {anomalyStats.map((cat, i) => {
@@ -339,7 +339,7 @@ export default function StatsPage({ user, onBack }: Props) {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: i * 0.05 }}
                       >
-                        <div className="flex justify-between text-xs mb-1">
+                        <div className="flex justify-between text-base mb-1">
                           <span className="font-semibold text-gray-700">{cat.category}</span>
                           <span className="text-gray-400">{cat.count} 件 ({pct}%)</span>
                         </div>

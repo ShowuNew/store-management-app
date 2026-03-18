@@ -72,7 +72,7 @@ export default function LoginPage({ onLogin }: Props) {
             style={{ background: FM_GREEN_DARK }}>
             <FamilyMartIcon size={52} />
           </div>
-          <p className="text-white/70 text-xs font-semibold tracking-[0.2em] uppercase mb-1">FamilyMart</p>
+          <p className="text-white/70 text-base font-semibold tracking-[0.2em] uppercase mb-1">FamilyMart</p>
           <h1 className="text-2xl font-bold text-white">店鋪工作日誌</h1>
         </motion.div>
       </div>
@@ -90,14 +90,14 @@ export default function LoginPage({ onLogin }: Props) {
           <h2 className="text-lg font-bold text-gray-800 mb-5">登入帳號</h2>
 
           {error && (
-            <div className="mb-4 px-4 py-3 bg-red-50 text-red-600 text-sm rounded-xl border border-red-100 flex items-center gap-2">
+            <div className="mb-4 px-4 py-3 bg-red-50 text-red-600 text-base rounded-xl border border-red-100 flex items-center gap-2">
               <span>⚠️</span> {error}
             </div>
           )}
 
           {/* 店號 */}
           <div className="mb-4">
-            <label className="text-sm font-semibold text-gray-600 mb-2 block">店號</label>
+            <label className="text-base font-semibold text-gray-600 mb-2 block">店號</label>
             <div className="flex items-center border-2 border-gray-100 rounded-2xl px-4 bg-gray-50 focus-within:border-green-400 transition-colors" style={{ minHeight: '52px' }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={FM_GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mr-3">
                 <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
@@ -116,7 +116,7 @@ export default function LoginPage({ onLogin }: Props) {
 
           {/* 身份 */}
           <div className="mb-4">
-            <label className="text-sm font-semibold text-gray-600 mb-2 block">身份</label>
+            <label className="text-base font-semibold text-gray-600 mb-2 block">身份</label>
             <div className="relative border-2 border-gray-100 rounded-2xl px-4 bg-gray-50 focus-within:border-green-400 transition-colors" style={{ minHeight: '52px' }}>
               <select
                 className="w-full bg-transparent text-base text-gray-800 outline-none appearance-none py-3 h-full"
@@ -134,7 +134,7 @@ export default function LoginPage({ onLogin }: Props) {
 
           {/* PIN 碼 */}
           <div className="mb-7">
-            <label className="text-sm font-semibold text-gray-600 mb-2 block">PIN 碼</label>
+            <label className="text-base font-semibold text-gray-600 mb-2 block">PIN 碼</label>
             <div className="flex items-center border-2 border-gray-100 rounded-2xl px-4 bg-gray-50 focus-within:border-green-400 transition-colors" style={{ minHeight: '52px' }}>
               <Lock className="w-[18px] h-[18px] shrink-0 mr-3" style={{ color: FM_GREEN }} />
               <input
@@ -147,7 +147,7 @@ export default function LoginPage({ onLogin }: Props) {
                 onChange={e => { setPin(e.target.value.replace(/\D/g, '').slice(0, 4)); setError('') }}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
               />
-              <span className="text-xs text-gray-300 shrink-0">{pin.length}/4</span>
+              <span className="text-base text-gray-300 shrink-0">{pin.length}/4</span>
             </div>
           </div>
 
@@ -165,7 +165,7 @@ export default function LoginPage({ onLogin }: Props) {
         </motion.div>
       </div>
 
-      <p className="py-8 text-center text-gray-400 text-xs">© 2026 FamilyMart 店鋪工作日誌 v1.0</p>
+      <p className="py-8 text-center text-gray-400 text-base">© 2026 FamilyMart 店鋪工作日誌 v1.0</p>
     </div>
   )
 }

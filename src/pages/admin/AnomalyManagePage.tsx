@@ -74,7 +74,7 @@ export default function AnomalyManagePage({ onBack }: Props) {
           </button>
           <div>
             <h1 className="text-lg font-black text-gray-900">異常管理</h1>
-            <p className="text-xs text-gray-400">跨門市異常集中管理</p>
+            <p className="text-base text-gray-400">跨門市異常集中管理</p>
           </div>
         </div>
 
@@ -95,7 +95,7 @@ export default function AnomalyManagePage({ onBack }: Props) {
                 <p className="text-xl font-black" style={{ color: statusFilter === s ? 'white' : c.color }}>
                   {anomalies.filter(a => a.status === s).length}
                 </p>
-                <p className="text-[10px] font-semibold" style={{ color: statusFilter === s ? 'white' : c.color }}>{c.label}</p>
+                <p className="text-base font-semibold" style={{ color: statusFilter === s ? 'white' : c.color }}>{c.label}</p>
               </button>
             )
           })}
@@ -106,12 +106,12 @@ export default function AnomalyManagePage({ onBack }: Props) {
         {loading ? (
           <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
             <RefreshCw className="w-4 h-4 animate-spin" />
-            <span className="text-sm">載入中...</span>
+            <span className="text-base">載入中...</span>
           </div>
         ) : filtered.length === 0 ? (
           <div className="text-center py-16 text-gray-300">
             <AlertTriangle className="w-12 h-12 mx-auto mb-3" />
-            <p className="text-sm">查無異常紀錄</p>
+            <p className="text-base">查無異常紀錄</p>
           </div>
         ) : (
           filtered.map((a, i) => {
@@ -132,15 +132,15 @@ export default function AnomalyManagePage({ onBack }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                      <span className="text-xs font-bold text-gray-700">{a.category}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold" style={{ background: sev.bg, color: sev.color }}>{sev.label}</span>
-                      <span className="text-[10px] px-1.5 py-0.5 rounded-md font-semibold" style={{ background: sta.bg, color: sta.color }}>{sta.label}</span>
+                      <span className="text-base font-bold text-gray-700">{a.category}</span>
+                      <span className="text-base px-1.5 py-0.5 rounded-md font-semibold" style={{ background: sev.bg, color: sev.color }}>{sev.label}</span>
+                      <span className="text-base px-1.5 py-0.5 rounded-md font-semibold" style={{ background: sta.bg, color: sta.color }}>{sta.label}</span>
                     </div>
-                    {text && <p className="text-sm text-gray-700 leading-relaxed">{text}</p>}
+                    {text && <p className="text-base text-gray-700 leading-relaxed">{text}</p>}
                     {photoUrl && (
                       <button
                         onClick={() => setLightboxUrl(photoUrl)}
-                        className="mt-2 flex items-center gap-1.5 text-blue-600 text-xs font-semibold"
+                        className="mt-2 flex items-center gap-1.5 text-blue-600 text-base font-semibold"
                       >
                         <img
                           src={photoUrl}
@@ -151,15 +151,15 @@ export default function AnomalyManagePage({ onBack }: Props) {
                       </button>
                     )}
                     <div className="flex flex-wrap items-center gap-3 mt-2">
-                      <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                      <span className="text-base text-gray-400 flex items-center gap-1">
                         <Store className="w-3 h-3" /> {a.store_id}
                       </span>
-                      <span className="text-[10px] text-gray-400 flex items-center gap-1">
+                      <span className="text-base text-gray-400 flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {new Date(a.reported_at).toLocaleString('zh-TW', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
                       </span>
-                      <span className="text-[10px] text-gray-400">回報：{a.reporter_name}</span>
-                      {photoUrl && <span className="text-[10px] text-blue-400 flex items-center gap-0.5"><Image className="w-3 h-3" />有附照</span>}
+                      <span className="text-base text-gray-400">回報：{a.reporter_name}</span>
+                      {photoUrl && <span className="text-base text-blue-400 flex items-center gap-0.5"><Image className="w-3 h-3" />有附照</span>}
                     </div>
                   </div>
                 </div>
@@ -169,14 +169,14 @@ export default function AnomalyManagePage({ onBack }: Props) {
                     {a.status === 'open' && (
                       <button
                         onClick={() => updateStatus(a.id, 'in_progress')}
-                        className="flex-1 py-2 rounded-xl text-xs font-bold bg-amber-50 text-amber-600"
+                        className="flex-1 py-2 rounded-xl text-base font-bold bg-amber-50 text-amber-600"
                       >
                         標記處理中
                       </button>
                     )}
                     <button
                       onClick={() => updateStatus(a.id, 'resolved')}
-                      className="flex-1 py-2 rounded-xl text-xs font-bold bg-green-50 text-green-600 flex items-center justify-center gap-1"
+                      className="flex-1 py-2 rounded-xl text-base font-bold bg-green-50 text-green-600 flex items-center justify-center gap-1"
                     >
                       <CheckCircle2 className="w-3.5 h-3.5" /> 結案
                     </button>

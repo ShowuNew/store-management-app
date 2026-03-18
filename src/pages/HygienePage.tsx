@@ -195,8 +195,8 @@ export default function HygienePage({ user, onBack }: Props) {
         {/* Overall progress */}
         <div className="bg-white rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">
-            <p className="text-sm font-semibold text-gray-600">全部查核進度</p>
-            <p className="text-sm font-bold text-gray-700">{allPassCount + allFailCount}/{totalItems} 已填</p>
+            <p className="text-base font-semibold text-gray-600">全部查核進度</p>
+            <p className="text-base font-bold text-gray-700">{allPassCount + allFailCount}/{totalItems} 已填</p>
           </div>
           <div className="bg-gray-100 rounded-full h-2 overflow-hidden">
             <div
@@ -208,9 +208,9 @@ export default function HygienePage({ user, onBack }: Props) {
             />
           </div>
           <div className="flex gap-3 mt-2">
-            <span className="text-[11px] text-green-600 font-semibold">✓ 符合 {allPassCount}</span>
-            <span className="text-[11px] text-red-500 font-semibold">✗ 缺失 {allFailCount}</span>
-            <span className="text-[11px] text-gray-400 font-semibold">― 未填 {totalItems - allPassCount - allFailCount}</span>
+            <span className="text-base text-green-600 font-semibold">✓ 符合 {allPassCount}</span>
+            <span className="text-base text-red-500 font-semibold">✗ 缺失 {allFailCount}</span>
+            <span className="text-base text-gray-400 font-semibold">― 未填 {totalItems - allPassCount - allFailCount}</span>
           </div>
         </div>
 
@@ -218,12 +218,12 @@ export default function HygienePage({ user, onBack }: Props) {
         {draftRestored && (
           <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4 flex items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-bold text-blue-700">已還原草稿</p>
-              <p className="text-xs text-blue-500 mt-0.5">上次自動儲存於 {draftRestored.at}</p>
+              <p className="text-base font-bold text-blue-700">已還原草稿</p>
+              <p className="text-base text-blue-500 mt-0.5">上次自動儲存於 {draftRestored.at}</p>
             </div>
             <button
               onClick={handleRestartDraft}
-              className="shrink-0 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 text-xs font-bold"
+              className="shrink-0 px-3 py-1.5 rounded-xl bg-blue-100 text-blue-700 text-base font-bold"
             >
               重新開始
             </button>
@@ -232,13 +232,13 @@ export default function HygienePage({ user, onBack }: Props) {
 
         {/* Shift */}
         <div className="bg-white rounded-2xl p-4">
-          <p className="text-sm font-semibold text-gray-600 mb-2">班次時段</p>
+          <p className="text-base font-semibold text-gray-600 mb-2">班次時段</p>
           <div className="flex gap-2">
             {shifts.map((s, i) => (
               <button
                 key={s}
                 onClick={() => { setActiveShift(i); setSaved(false) }}
-                className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+                className="flex-1 py-2.5 rounded-xl text-base font-bold transition-all"
                 style={{
                   background: activeShift === i ? '#00a86b' : '#f3f4f6',
                   color:      activeShift === i ? 'white'   : '#9ca3af',
@@ -258,7 +258,7 @@ export default function HygienePage({ user, onBack }: Props) {
               <button
                 key={i}
                 onClick={() => setActiveCategory(i)}
-                className="shrink-0 px-3 py-2 rounded-xl text-sm font-bold transition-all whitespace-nowrap"
+                className="shrink-0 px-3 py-2 rounded-xl text-base font-bold transition-all whitespace-nowrap"
                 style={{
                   background: activeCategory === i ? '#005f3b' : 'white',
                   color:      activeCategory === i ? 'white'   : '#6b7280',
@@ -278,7 +278,7 @@ export default function HygienePage({ user, onBack }: Props) {
         {loading ? (
           <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
             <RefreshCw className="w-4 h-4 animate-spin" />
-            <span className="text-sm">載入紀錄...</span>
+            <span className="text-base">載入紀錄...</span>
           </div>
         ) : (
           <>
@@ -291,7 +291,7 @@ export default function HygienePage({ user, onBack }: Props) {
               ].map(s => (
                 <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: s.bg }}>
                   <p className="text-2xl font-black" style={{ color: s.color }}>{s.count}</p>
-                  <p className="text-xs font-semibold" style={{ color: s.color }}>{s.label}</p>
+                  <p className="text-base font-semibold" style={{ color: s.color }}>{s.label}</p>
                 </div>
               ))}
             </div>
@@ -312,10 +312,10 @@ export default function HygienePage({ user, onBack }: Props) {
                     className="bg-white rounded-2xl p-4"
                   >
                     <div className="flex gap-2 mb-3">
-                      <span className="w-5 h-5 rounded-full bg-gray-100 text-[10px] font-bold text-gray-500 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="w-5 h-5 rounded-full bg-gray-100 text-base font-bold text-gray-500 flex items-center justify-center shrink-0 mt-0.5">
                         {itemNo}
                       </span>
-                      <p className="text-sm text-gray-700 leading-relaxed flex-1">{item}</p>
+                      <p className="text-base text-gray-700 leading-relaxed flex-1">{item}</p>
                     </div>
                     {/* Full-width buttons, no ml-7 indent */}
                     <div className="flex gap-2">
@@ -361,7 +361,7 @@ export default function HygienePage({ user, onBack }: Props) {
                           className="overflow-hidden"
                         >
                           <textarea
-                            className="w-full mt-3 border border-red-200 rounded-xl px-3 py-2.5 text-sm text-gray-700 bg-red-50 outline-none resize-none leading-relaxed"
+                            className="w-full mt-3 border border-red-200 rounded-xl px-3 py-2.5 text-base text-gray-700 bg-red-50 outline-none resize-none leading-relaxed"
                             rows={2}
                             placeholder="請記錄缺失說明（選填）..."
                             value={note}
@@ -381,7 +381,7 @@ export default function HygienePage({ user, onBack }: Props) {
                 whileTap={{ scale: 0.97 }}
                 onClick={handleSave}
                 disabled={saving}
-                className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-opacity"
+                className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition-opacity"
                 style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)', opacity: saving ? 0.7 : 1 }}
               >
                 <Save className="w-4 h-4" />
@@ -389,15 +389,15 @@ export default function HygienePage({ user, onBack }: Props) {
               </motion.button>
             ) : (
               <div className="w-full py-4 rounded-2xl bg-green-50 border border-green-100 text-center">
-                <p className="text-green-600 font-bold text-sm">✓ {shifts[activeShift]} 紀錄已儲存至資料庫</p>
-                <p className="text-green-400 text-xs mt-0.5">{new Date().toLocaleTimeString('zh-TW')}・{user.name}</p>
-                <button onClick={() => setSaved(false)} className="mt-2 text-xs text-green-500 underline">繼續編輯</button>
+                <p className="text-green-600 font-bold text-base">✓ {shifts[activeShift]} 紀錄已儲存至資料庫</p>
+                <p className="text-green-400 text-base mt-0.5">{new Date().toLocaleTimeString('zh-TW')}・{user.name}</p>
+                <button onClick={() => setSaved(false)} className="mt-2 text-base text-green-500 underline">繼續編輯</button>
               </div>
             )}
 
             {/* Draft auto-save indicator */}
             {!saved && draftSavedAt && (
-              <p className="text-center text-xs text-gray-400">
+              <p className="text-center text-base text-gray-400">
                 🗒 自動儲存草稿 {draftSavedAt}
               </p>
             )}

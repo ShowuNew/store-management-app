@@ -177,7 +177,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
         <div className="flex gap-2 overflow-x-auto pb-1">
           {zones.map(z => (
             <button key={z} onClick={() => setActiveZone(z)}
-              className="shrink-0 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+              className="shrink-0 px-4 py-2.5 rounded-xl text-base font-bold transition-all"
               style={{ background: activeZone === z ? '#005f3b' : 'white', color: activeZone === z ? 'white' : '#6b7280' }}>
               {z}
             </button>
@@ -189,9 +189,9 @@ export default function EquipmentPage({ user, onBack }: Props) {
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-amber-500" />
-              <span className="text-sm font-bold text-gray-700">{activeZone} 保養概覽</span>
+              <span className="text-base font-bold text-gray-700">{activeZone} 保養概覽</span>
             </div>
-            <span className="text-xs text-gray-400">{new Date().getMonth() + 1}月</span>
+            <span className="text-base text-gray-400">{new Date().getMonth() + 1}月</span>
           </div>
           <div className="grid grid-cols-3 gap-2 mb-3">
             {[
@@ -201,7 +201,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
             ].map(s => (
               <div key={s.label} className="rounded-xl p-2.5 text-center" style={{ background: s.bg }}>
                 <p className="text-xl font-black" style={{ color: s.color }}>{s.value}</p>
-                <p className="text-[10px] font-semibold" style={{ color: s.color }}>{s.label}</p>
+                <p className="text-base font-semibold" style={{ color: s.color }}>{s.label}</p>
               </div>
             ))}
           </div>
@@ -210,7 +210,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
             <div className="h-2 rounded-full transition-all"
               style={{ width: `${items.length ? doneThisMonth / items.length * 100 : 0}%`, background: '#00a86b' }} />
           </div>
-          <p className="text-xs text-gray-400 mt-1.5 text-right">{doneThisMonth}/{items.length} 項完成</p>
+          <p className="text-base text-gray-400 mt-1.5 text-right">{doneThisMonth}/{items.length} 項完成</p>
         </div>
 
         {/* Overdue alert */}
@@ -218,7 +218,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}
             className="flex items-center gap-3 bg-red-50 border border-red-100 rounded-2xl px-4 py-3">
             <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
-            <p className="text-sm font-semibold text-red-600">
+            <p className="text-base font-semibold text-red-600">
               {activeZone} 有 {overdueCount} 項每月保養已逾期（月份過7日未完成）
             </p>
           </motion.div>
@@ -227,7 +227,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
         {loading ? (
           <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
             <RefreshCw className="w-4 h-4 animate-spin" />
-            <span className="text-sm">載入紀錄...</span>
+            <span className="text-base">載入紀錄...</span>
           </div>
         ) : (
           <>
@@ -256,31 +256,31 @@ export default function EquipmentPage({ user, onBack }: Props) {
                         }
                       </button>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-bold"
+                        <p className="text-base font-bold"
                           style={{ color: done ? '#9ca3af' : '#111827', textDecoration: done ? 'line-through' : 'none' }}>
                           {eq.equipment}
                         </p>
                         {/* Calendar status badge */}
-                        <span className="inline-flex items-center gap-1 text-xs font-semibold mt-1 px-2 py-0.5 rounded-lg"
+                        <span className="inline-flex items-center gap-1 text-base font-semibold mt-1 px-2 py-0.5 rounded-lg"
                           style={{ background: badge.bg, color: badge.color }}>
                           <Clock className="w-3 h-3" />
                           {badge.text}
                         </span>
                       </div>
-                      <span className="text-xs px-2 py-1 rounded-lg font-bold shrink-0"
+                      <span className="text-base px-2 py-1 rounded-lg font-bold shrink-0"
                         style={{ background: freqBg[eq.freq], color: freqColor[eq.freq] }}>
                         {freqLabel[eq.freq]}
                       </span>
                     </div>
                     <div className="px-4 py-3 space-y-1.5">
                       {eq.items.map((item, ii) => (
-                        <p key={ii} className="text-sm text-gray-500 flex items-start gap-2">
+                        <p key={ii} className="text-base text-gray-500 flex items-start gap-2">
                           <span className="mt-2 w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
                           {item}
                         </p>
                       ))}
                       {done && (
-                        <p className="text-sm text-green-500 font-semibold mt-1">
+                        <p className="text-base text-green-500 font-semibold mt-1">
                           ✓ {new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })} 完成（{user.name}）
                         </p>
                       )}
@@ -300,8 +300,8 @@ export default function EquipmentPage({ user, onBack }: Props) {
             ) : (
               <div className="w-full py-4 rounded-2xl bg-amber-50 border border-amber-100 text-center">
                 <p className="text-amber-600 font-bold text-base">✓ {activeZone} 保養紀錄已儲存至資料庫</p>
-                <p className="text-amber-400 text-sm mt-0.5">{new Date().toLocaleTimeString('zh-TW')}・{user.name}</p>
-                <button onClick={() => setSaved(false)} className="mt-2 text-sm text-amber-500 underline">繼續編輯</button>
+                <p className="text-amber-400 text-base mt-0.5">{new Date().toLocaleTimeString('zh-TW')}・{user.name}</p>
+                <button onClick={() => setSaved(false)} className="mt-2 text-base text-amber-500 underline">繼續編輯</button>
               </div>
             )}
           </>

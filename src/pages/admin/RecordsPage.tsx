@@ -83,7 +83,7 @@ export default function RecordsPage({ onBack }: Props) {
           </button>
           <div>
             <h1 className="text-lg font-black text-gray-900">紀錄查閱</h1>
-            <p className="text-xs text-gray-400">跨門市提交紀錄</p>
+            <p className="text-base text-gray-400">跨門市提交紀錄</p>
           </div>
         </div>
 
@@ -93,7 +93,7 @@ export default function RecordsPage({ onBack }: Props) {
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className="flex-1 py-2 rounded-xl text-xs font-bold transition-all"
+              className="flex-1 py-2 rounded-xl text-base font-bold transition-all"
               style={{ background: tab === t.key ? '#005f3b' : '#f3f4f6', color: tab === t.key ? 'white' : '#6b7280' }}
             >
               {t.label}
@@ -107,14 +107,14 @@ export default function RecordsPage({ onBack }: Props) {
             type="date"
             value={date}
             onChange={e => setDate(e.target.value)}
-            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-gray-50 outline-none"
+            className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-base text-gray-700 bg-gray-50 outline-none"
           />
           <input
             type="text"
             placeholder="門市代號"
             value={storeFilter}
             onChange={e => setStoreFilter(e.target.value)}
-            className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-gray-50 outline-none"
+            className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-base text-gray-700 bg-gray-50 outline-none"
           />
         </div>
       </div>
@@ -123,12 +123,12 @@ export default function RecordsPage({ onBack }: Props) {
         {loading ? (
           <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
             <RefreshCw className="w-4 h-4 animate-spin" />
-            <span className="text-sm">載入中...</span>
+            <span className="text-base">載入中...</span>
           </div>
         ) : records.length === 0 ? (
           <div className="text-center py-16 text-gray-300">
             <ClipboardListIcon />
-            <p className="text-sm mt-3">查無資料</p>
+            <p className="text-base mt-3">查無資料</p>
           </div>
         ) : (
           records.map((r, i) => (
@@ -148,12 +148,12 @@ export default function RecordsPage({ onBack }: Props) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-bold text-gray-800 truncate">{r.store_id}</span>
-                    <span className="text-xs text-gray-400 shrink-0">{getSubtitle(r)}</span>
+                    <span className="text-base font-bold text-gray-800 truncate">{r.store_id}</span>
+                    <span className="text-base text-gray-400 shrink-0">{getSubtitle(r)}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs text-green-600 font-semibold">{getDoneCount(r)}</span>
-                    <span className="text-[10px] text-gray-400">・{r.staff_name} ・{getTimestamp(r)}</span>
+                    <span className="text-base text-green-600 font-semibold">{getDoneCount(r)}</span>
+                    <span className="text-base text-gray-400">・{r.staff_name} ・{getTimestamp(r)}</span>
                   </div>
                 </div>
                 {expanded === r.id
@@ -211,7 +211,7 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
       <div className="px-4 py-3 space-y-3">
         {tasksByTime.map(({ time, tasks }) => (
           <div key={time}>
-            <p className="text-[10px] font-bold text-gray-400 mb-1.5">{time}</p>
+            <p className="text-base font-bold text-gray-400 mb-1.5">{time}</p>
             <div className="space-y-1">
               {tasks.map((task, i) => {
                 const key  = `${time}-${i}`
@@ -221,7 +221,7 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
                     <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${done ? 'bg-green-500 border-green-500' : 'border-gray-200'}`}>
                       {done && <span className="text-white text-[8px]">✓</span>}
                     </span>
-                    <span className="text-xs text-gray-600">{task}</span>
+                    <span className="text-base text-gray-600">{task}</span>
                   </div>
                 )
               })}
@@ -237,15 +237,15 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
       <div className="px-4 py-3 space-y-3">
         {hygieneCategories.map((cat, ci) => (
           <div key={ci}>
-            <p className="text-[10px] font-bold text-gray-400 mb-1.5">{cat.name}</p>
+            <p className="text-base font-bold text-gray-400 mb-1.5">{cat.name}</p>
             <div className="space-y-1">
               {cat.items.map((item, ii) => {
                 const key = `${ci}-${ii}`
                 const result = record.results?.[key]
                 return (
                   <div key={key} className="flex items-center justify-between">
-                    <span className="text-xs text-gray-600 flex-1 truncate">{item}</span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ml-2 shrink-0 ${
+                    <span className="text-base text-gray-600 flex-1 truncate">{item}</span>
+                    <span className={`text-base font-bold px-2 py-0.5 rounded-md ml-2 shrink-0 ${
                       result === 'pass' ? 'bg-green-50 text-green-600' :
                       result === 'fail' ? 'bg-red-50 text-red-500' : 'text-gray-300'
                     }`}>
@@ -266,9 +266,9 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
   const allKeys = Object.keys(doneItems)
   return (
     <div className="px-4 py-3">
-      <p className="text-[10px] font-bold text-gray-400 mb-2">區域：{record.zone}</p>
+      <p className="text-base font-bold text-gray-400 mb-2">區域：{record.zone}</p>
       {allKeys.length === 0 ? (
-        <p className="text-xs text-gray-400">無項目記錄</p>
+        <p className="text-base text-gray-400">無項目記錄</p>
       ) : (
         <div className="space-y-1">
           {allKeys.map(key => (
@@ -276,7 +276,7 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
               <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${doneItems[key] ? 'bg-green-500 border-green-500' : 'border-gray-200'}`}>
                 {doneItems[key] && <span className="text-white text-[8px]">✓</span>}
               </span>
-              <span className="text-xs text-gray-600">{key}</span>
+              <span className="text-base text-gray-600">{key}</span>
             </div>
           ))}
         </div>

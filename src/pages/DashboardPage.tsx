@@ -204,14 +204,6 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         title="店鋪工作日誌FamilyMart"
         subtitle={`${user.storeName}・${user.name}（${roleLabel}）`}
         onLogout={onLogout}
-        rightElement={
-          <button className="relative w-9 h-9 flex items-center justify-center rounded-xl bg-gray-100 mr-1">
-            <Bell className="w-5 h-5 text-gray-500" />
-            {alerts.some(a => a.type !== 'info') && (
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full" />
-            )}
-          </button>
-        }
       />
 
       <div className="px-4 py-4 space-y-4 pb-20">
@@ -275,6 +267,45 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
 
         {/* Module grid */}
         <div>
+        {/* Alerts */}
+        <div className="space-y-2">
+          <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide">最新通知</p>
+
+          {loading ? (
+            <div className="flex items-center justify-center py-6 gap-2 text-gray-300">
+              <RefreshCw className="w-5 h-5 animate-spin" />
+              <span className="text-base">載入中...</span>
+            </div>
+          ) : alerts.length === 0 ? (
+            <div className="px-4 py-5 rounded-2xl bg-green-50 text-center">
+              <p className="text-base font-semibold text-green-600">✓ 今日一切正常，無待處理事項</p>
+            </div>
+          ) : (
+            alerts.map((a, i) => {
+              const styleMap = {
+                error: { bg: '#fef2f2', color: '#dc2626', label: '警示' },
+                warn:  { bg: '#fffbeb', color: '#d97706', label: '注意' },
+                info:  { bg: '#eff6ff', color: '#2563eb', label: '待辦' },
+              } as const
+              const s = styleMap[a.type]
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -8 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.06 }}
+                  className="flex items-start gap-3 px-4 py-4 rounded-2xl"
+                  style={{ background: s.bg }}
+                >
+                  <span className="text-base font-bold px-2 py-1 rounded shrink-0 mt-0.5" style={{ background: s.color, color: '#fff' }}>{s.label}</span>
+                  <p className="flex-1 text-base font-medium" style={{ color: s.color }}>{a.msg}</p>
+                  {a.time && <span className="text-base text-gray-400 shrink-0">{a.time}</span>}
+                </motion.div>
+              )
+            })
+          )}
+        </div>
+
           <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
           <div className="grid grid-cols-1 gap-3">
             {modules.map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (

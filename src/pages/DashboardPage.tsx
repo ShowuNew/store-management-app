@@ -219,25 +219,25 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl p-5 text-white overflow-hidden"
+          className="rounded-3xl p-6 text-white overflow-hidden"
           style={{ background: 'linear-gradient(135deg, #007d30 0%, #00a040 100%)' }}
         >
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-green-200 text-xs flex items-center gap-1 mb-1">
-                <Clock className="w-3 h-3" /> {dateStr}
+              <p className="text-green-200 text-sm flex items-center gap-1 mb-1">
+                <Clock className="w-4 h-4" /> {dateStr}
               </p>
-              <h2 className="text-2xl font-bold">{shiftNow}</h2>
-              <p className="text-green-100 text-sm mt-0.5">歡迎，{user.name}</p>
+              <h2 className="text-3xl font-bold">{shiftNow}</h2>
+              <p className="text-green-100 text-base mt-1">歡迎，{user.name}</p>
             </div>
             <div className="text-right">
               {loading
-                ? <RefreshCw className="w-5 h-5 text-green-200 animate-spin" />
+                ? <RefreshCw className="w-6 h-6 text-green-200 animate-spin" />
                 : (
                   <>
-                    <p className="text-green-200 text-xs mb-1">今日完成率</p>
-                    <p className="text-4xl font-black">{pct}<span className="text-lg font-normal">%</span></p>
-                    <p className="text-green-200 text-xs">{allDoneCount}/{countable.length} 模組完成</p>
+                    <p className="text-green-200 text-sm mb-1">今日完成率</p>
+                    <p className="text-5xl font-black">{pct}<span className="text-xl font-normal">%</span></p>
+                    <p className="text-green-200 text-sm">{allDoneCount}/{countable.length} 模組完成</p>
                   </>
                 )
               }
@@ -251,22 +251,22 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         </motion.div>
 
         {/* Temperature strip */}
-        <div className="bg-white rounded-2xl px-4 py-3 flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#e8f7ee' }}>
-            <Thermometer className="w-4 h-4" style={{ color: '#00a040' }} />
+        <div className="bg-white rounded-2xl px-4 py-4 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#e8f7ee' }}>
+            <Thermometer className="w-5 h-5" style={{ color: '#00a040' }} />
           </div>
           <div className="flex-1 flex gap-4">
             {tempStatus.map(t => (
               <div key={t.label} className="flex flex-col items-center">
-                <span className="text-xs text-gray-400">{t.label}</span>
-                <span className="text-sm font-bold" style={{ color: t.ok ? '#10b981' : '#ef4444' }}>{t.value}</span>
+                <span className="text-sm text-gray-400">{t.label}</span>
+                <span className="text-base font-bold" style={{ color: t.ok ? '#10b981' : '#ef4444' }}>{t.value}</span>
               </div>
             ))}
           </div>
           {loading
-            ? <RefreshCw className="w-4 h-4 text-gray-300 animate-spin shrink-0" />
+            ? <RefreshCw className="w-5 h-5 text-gray-300 animate-spin shrink-0" />
             : (
-              <span className={`text-xs font-semibold px-2 py-1 rounded-lg shrink-0 ${tempAllOk ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+              <span className={`text-sm font-semibold px-3 py-1.5 rounded-lg shrink-0 ${tempAllOk ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
                 {tempAllOk ? '全部正常' : '有異常'}
               </span>
             )
@@ -275,16 +275,16 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
 
         {/* Alerts */}
         <div className="space-y-2">
-          <p className="text-xs font-bold text-gray-400 px-1 uppercase tracking-wide">最新通知</p>
+          <p className="text-sm font-bold text-gray-400 px-1 uppercase tracking-wide">最新通知</p>
 
           {loading ? (
             <div className="flex items-center justify-center py-6 gap-2 text-gray-300">
-              <RefreshCw className="w-4 h-4 animate-spin" />
-              <span className="text-sm">載入中...</span>
+              <RefreshCw className="w-5 h-5 animate-spin" />
+              <span className="text-base">載入中...</span>
             </div>
           ) : alerts.length === 0 ? (
-            <div className="px-4 py-4 rounded-2xl bg-green-50 text-center">
-              <p className="text-sm font-semibold text-green-600">✓ 今日一切正常，無待處理事項</p>
+            <div className="px-4 py-5 rounded-2xl bg-green-50 text-center">
+              <p className="text-base font-semibold text-green-600">✓ 今日一切正常，無待處理事項</p>
             </div>
           ) : (
             alerts.map((a, i) => {
@@ -300,12 +300,12 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  className="flex items-start gap-3 px-4 py-3 rounded-2xl"
+                  className="flex items-start gap-3 px-4 py-4 rounded-2xl"
                   style={{ background: s.bg }}
                 >
-                  <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0 mt-0.5" style={{ background: s.color, color: '#fff', fontSize: '10px' }}>{s.label}</span>
-                  <p className="flex-1 text-sm font-medium" style={{ color: s.color }}>{a.msg}</p>
-                  {a.time && <span className="text-xs text-gray-400 shrink-0">{a.time}</span>}
+                  <span className="text-xs font-bold px-2 py-1 rounded shrink-0 mt-0.5" style={{ background: s.color, color: '#fff' }}>{s.label}</span>
+                  <p className="flex-1 text-base font-medium" style={{ color: s.color }}>{a.msg}</p>
+                  {a.time && <span className="text-sm text-gray-400 shrink-0">{a.time}</span>}
                 </motion.div>
               )
             })
@@ -314,7 +314,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
 
         {/* Module grid */}
         <div>
-          <p className="text-xs font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
+          <p className="text-sm font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
           <div className="grid grid-cols-2 gap-3">
             {modules.map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (
               <motion.button
@@ -324,30 +324,30 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 transition={{ delay: i * 0.04 }}
                 whileTap={{ scale: 0.96 }}
                 onClick={() => onNavigate(page)}
-                className="bg-white rounded-2xl p-4 text-left shadow-sm relative"
+                className="bg-white rounded-2xl p-5 text-left shadow-sm relative"
               >
                 {badge && (
-                  <span className="absolute top-2.5 right-2.5 text-[10px] font-bold px-1.5 py-0.5 rounded-lg bg-red-500 text-white">
+                  <span className="absolute top-3 right-3 text-xs font-bold px-2 py-0.5 rounded-lg bg-red-500 text-white">
                     {badge}
                   </span>
                 )}
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center mb-3" style={{ background: bg }}>
-                  <Icon className="w-5 h-5" style={{ color }} />
+                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: bg }}>
+                  <Icon className="w-6 h-6" style={{ color }} />
                 </div>
-                <p className="text-sm font-bold text-gray-800 leading-tight">{label}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">{desc}</p>
+                <p className="text-base font-bold text-gray-800 leading-tight">{label}</p>
+                <p className="text-xs text-gray-400 mt-1">{desc}</p>
                 {done !== null && total !== null ? (
                   <div className="mt-3">
-                    <div className="h-1 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-1 rounded-full transition-all" style={{ width: `${(total ?? 0) > 0 ? (done ?? 0) / (total ?? 1) * 100 : 0}%`, background: color }} />
+                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                      <div className="h-1.5 rounded-full transition-all" style={{ width: `${(total ?? 0) > 0 ? (done ?? 0) / (total ?? 1) * 100 : 0}%`, background: color }} />
                     </div>
-                    <p className="text-[10px] mt-1 font-semibold" style={{ color }}>{done}/{total} 完成</p>
+                    <p className="text-xs mt-1 font-semibold" style={{ color }}>{done}/{total} 完成</p>
                   </div>
                 ) : (
                   !badge && (
                     <div className="mt-3 flex items-center gap-1">
-                      <ChevronRight className="w-3 h-3" style={{ color }} />
-                      <p className="text-[10px] font-semibold" style={{ color }}>查看報表</p>
+                      <ChevronRight className="w-4 h-4" style={{ color }} />
+                      <p className="text-xs font-semibold" style={{ color }}>查看報表</p>
                     </div>
                   )
                 )}

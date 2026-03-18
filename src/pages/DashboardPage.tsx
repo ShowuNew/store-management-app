@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   ClipboardList, ShieldCheck, Zap, AlertTriangle, CheckSquare,
-  Bell, Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw,
+  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'

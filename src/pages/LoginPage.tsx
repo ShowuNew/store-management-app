@@ -59,7 +59,7 @@ export default function LoginPage({ onLogin }: Props) {
 
       {/* 頂部品牌區 */}
       <div
-        className="flex flex-col items-center justify-center px-6 pt-16 pb-16 rounded-b-[40px]"
+        className="flex flex-col items-center justify-center px-6 pt-8 pb-8 rounded-b-[40px]"
         style={{ background: FM_GREEN }}
       >
         <motion.div
@@ -68,9 +68,9 @@ export default function LoginPage({ onLogin }: Props) {
           transition={{ duration: 0.4 }}
           className="text-center"
         >
-          <div className="w-20 h-20 rounded-3xl mx-auto mb-4 shadow-xl flex items-center justify-center"
+          <div className="w-14 h-14 rounded-2xl mx-auto mb-3 shadow-xl flex items-center justify-center"
             style={{ background: FM_GREEN_DARK }}>
-            <FamilyMartIcon size={52} />
+            <FamilyMartIcon size={38} />
           </div>
           <p className="text-white/70 text-base font-semibold tracking-[0.2em] uppercase mb-1">FamilyMart</p>
           <h1 className="text-2xl font-bold text-white">店鋪工作日誌</h1>

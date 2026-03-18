@@ -251,7 +251,9 @@ export default function HygienePage({ user, onBack }: Props) {
         </div>
 
         {/* Category tabs */}
+        <div className="relative">
         <div className="flex gap-2 overflow-x-auto pb-1">
+
           {categories.map((c, i) => {
             const cFail = c.items.filter((_, j) => results[`${i}-${j}`] === 'fail').length
             return (
@@ -273,6 +275,8 @@ export default function HygienePage({ user, onBack }: Props) {
               </button>
             )
           })}
+        </div>
+        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none" />
         </div>
 
         {loading ? (
@@ -361,7 +365,7 @@ export default function HygienePage({ user, onBack }: Props) {
                           className="overflow-hidden"
                         >
                           <textarea
-                            className="w-full mt-3 border border-red-200 rounded-xl px-3 py-2.5 text-base text-gray-700 bg-red-50 outline-none resize-none leading-relaxed"
+                            className="w-full mt-3 border border-red-200 rounded-xl px-3 py-2.5 text-base text-gray-700 bg-red-50 outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 resize-none leading-relaxed"
                             rows={2}
                             placeholder="請記錄缺失說明（選填）..."
                             value={note}

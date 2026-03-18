@@ -1087,7 +1087,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             <textarea
               rows={3}
               placeholder={placeholder}
-              className="w-full text-base text-gray-700 border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 outline-none resize-none leading-relaxed"
+              className="w-full text-base text-gray-700 border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1 resize-none leading-relaxed"
               style={{ borderColor: hasContent ? '#86efac' : undefined }}
               value={value}
               onChange={e => updateHandoverField(key, e.target.value)}

@@ -88,7 +88,7 @@ export default function HygienePage({ user, onBack }: Props) {
         .eq('shift', shifts[activeShift])
         .maybeSingle()
 
-      if (cancelled) return  // BUG-004: discard stale response
+      if (cancelled) { setLoading(false); return }  // BUG-004 + BUG-H02: discard stale response, reset spinner
 
       if (error) {
         // BUG-001: show error instead of silently falling to draft path
@@ -280,6 +280,8 @@ export default function HygienePage({ user, onBack }: Props) {
                   setExistingId(null)
                   setSaveError(null)
                   setLoadError(null)
+                  setSaved(false)    // BUG-H01: clear prior shift's saved flag
+                  setLoading(true)   // BUG-H01: show spinner immediately before useEffect fires
                 }}
                 className="flex-1 py-2.5 rounded-xl text-base font-bold transition-all"
                 style={{

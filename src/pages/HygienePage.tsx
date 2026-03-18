@@ -66,21 +66,36 @@ export default function HygienePage({ user, onBack }: Props) {
   const [existingId, setExistingId]         = useState<string | null>(null)
   const [draftRestored, setDraftRestored]   = useState<{ at: string } | null>(null)
   const [draftSavedAt, setDraftSavedAt]     = useState<string | null>(null)
+  const [loadError, setLoadError]           = useState<string | null>(null)
+  const [saveError, setSaveError]           = useState<string | null>(null)
+  const [savedAt, setSavedAt]               = useState<string>('')
 
-  const draftKey = `hygiene_${user.storeId}_${todayStr}_${activeShift}`
+  // BUG-003: use shift string not index so draft keys survive array reorder
+  const draftKey = `hygiene_${user.storeId}_${todayStr}_${shifts[activeShift]}`
 
   // Load from Supabase (or restore draft)
   useEffect(() => {
+    let cancelled = false  // BUG-004: prevent stale async response from overwriting state
     const load = async () => {
       setLoading(true)
       setDraftRestored(null)
-      const { data } = await supabase
+      setLoadError(null)
+      const { data, error } = await supabase  // BUG-001: capture error
         .from('hygiene_records')
         .select('*')
         .eq('store_id', user.storeId)
         .eq('record_date', todayStr)
         .eq('shift', shifts[activeShift])
         .maybeSingle()
+
+      if (cancelled) return  // BUG-004: discard stale response
+
+      if (error) {
+        // BUG-001: show error instead of silently falling to draft path
+        setLoadError('資料載入失敗，請檢查網路連線後重試')
+        setLoading(false)
+        return
+      }
 
       if (data) {
         setExistingId(data.id)
@@ -112,6 +127,7 @@ export default function HygienePage({ user, onBack }: Props) {
       setLoading(false)
     }
     load()
+    return () => { cancelled = true }  // BUG-004: cleanup cancels in-flight request
   }, [activeShift]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save draft to localStorage whenever results or failNotes change
@@ -127,7 +143,12 @@ export default function HygienePage({ user, onBack }: Props) {
   }, [results, failNotes]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const setResult = (key: string, val: Result) => {
-    setResults(p => ({ ...p, [key]: p[key] === val ? null : val }))
+    const newVal = results[key] === val ? null : val
+    setResults(p => ({ ...p, [key]: newVal }))
+    // BUG-008: clear orphaned fail note when item is no longer 'fail'
+    if (newVal !== 'fail') {
+      setFailNotes(p => { const n = { ...p }; delete n[key]; return n })
+    }
     setSaved(false)
   }
 
@@ -137,7 +158,9 @@ export default function HygienePage({ user, onBack }: Props) {
   }
 
   const handleSave = async () => {
+    if (saving) return  // BUG-007: prevent double-submit
     setSaving(true)
+    setSaveError(null)
     const payload = {
       store_id:    user.storeId,
       staff_name:  user.name,
@@ -148,13 +171,26 @@ export default function HygienePage({ user, onBack }: Props) {
       saved_at:    new Date().toISOString(),
     }
 
+    let saveErr: any = null
     if (existingId) {
-      await supabase.from('hygiene_records').update(payload).eq('id', existingId)
+      const { error } = await supabase.from('hygiene_records').update(payload).eq('id', existingId)
+      saveErr = error
     } else {
-      const { data } = await supabase.from('hygiene_records').insert(payload).select().single()
-      if (data) setExistingId(data.id)
+      const { data, error } = await supabase.from('hygiene_records').insert(payload).select().single()
+      saveErr = error
+      if (!error && data) setExistingId(data.id)
     }
 
+    if (saveErr) {
+      // BUG-002: show error, preserve draft, do NOT mark as saved
+      setSaveError('儲存失敗，請稍後再試')
+      setSaving(false)
+      return
+    }
+
+    // BUG-010: capture actual save time
+    const now = new Date().toLocaleTimeString('zh-TW')
+    setSavedAt(now)
     // Clear draft after successful save
     try { localStorage.removeItem(draftKey) } catch { /* ignore */ }
     setDraftRestored(null)
@@ -201,7 +237,7 @@ export default function HygienePage({ user, onBack }: Props) {
             <div
               className="h-2 rounded-full transition-all"
               style={{
-                width: `${Math.round((allPassCount + allFailCount) / totalItems * 100)}%`,
+                width: `${totalItems > 0 ? Math.round((allPassCount + allFailCount) / totalItems * 100) : 0}%`,
                 background: 'linear-gradient(90deg, #00a040, #007d30)',
               }}
             />
@@ -236,7 +272,15 @@ export default function HygienePage({ user, onBack }: Props) {
             {shifts.map((s, i) => (
               <button
                 key={s}
-                onClick={() => { setActiveShift(i); setSaved(false) }}
+                onClick={() => {
+                  setActiveShift(i)
+                  // BUG-005/BUG-009: clear stale state immediately, let load() manage saved flag
+                  setResults({})
+                  setFailNotes({})
+                  setExistingId(null)
+                  setSaveError(null)
+                  setLoadError(null)
+                }}
                 className="flex-1 py-2.5 rounded-xl text-base font-bold transition-all"
                 style={{
                   background: activeShift === i ? '#005f3b' : '#f3f4f6',
@@ -277,6 +321,22 @@ export default function HygienePage({ user, onBack }: Props) {
         </div>
         <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none" />
         </div>
+
+        {/* BUG-001: load error banner */}
+        {loadError && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+            <p className="text-base text-red-600 flex-1">{loadError}</p>
+          </div>
+        )}
+
+        {/* BUG-002: save error banner */}
+        {saveError && (
+          <div className="bg-red-50 border border-red-200 rounded-2xl px-4 py-3 flex items-center gap-2">
+            <XCircle className="w-4 h-4 text-red-500 shrink-0" />
+            <p className="text-base text-red-600 flex-1">{saveError}</p>
+          </div>
+        )}
 
         {loading ? (
           <div className="flex items-center justify-center py-12 gap-2 text-gray-400">
@@ -393,7 +453,7 @@ export default function HygienePage({ user, onBack }: Props) {
             ) : (
               <div className="w-full py-4 rounded-2xl bg-green-50 border border-green-100 text-center">
                 <p className="text-green-600 font-bold text-base">✓ {shifts[activeShift]} 紀錄已儲存至資料庫</p>
-                <p className="text-green-400 text-base mt-0.5">{new Date().toLocaleTimeString('zh-TW')}・{user.name}</p>
+                <p className="text-green-400 text-base mt-0.5">{savedAt}・{user.name}</p>
                 <button onClick={() => setSaved(false)} className="mt-2 text-base text-green-500 underline">繼續編輯</button>
               </div>
             )}

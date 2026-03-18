@@ -94,11 +94,11 @@ function SignaturePad({ value, onChange, label, canvasHeight = 220 }: SignatureP
   return (
     <div className="space-y-1.5">
       <div className="flex items-center justify-between">
-        <span className="text-xs font-semibold text-gray-500 flex items-center gap-1.5">
+        <span className="text-base font-semibold text-gray-500 flex items-center gap-1.5">
           <PenLine className="w-3.5 h-3.5" />{label}
         </span>
         {value && (
-          <button onClick={clear} className="flex items-center gap-1 text-[10px] text-gray-400 hover:text-red-400">
+          <button onClick={clear} className="flex items-center gap-1 text-base text-gray-400 hover:text-red-400">
             <RotateCcw className="w-3 h-3" />重簽
           </button>
         )}
@@ -121,7 +121,7 @@ function SignaturePad({ value, onChange, label, canvasHeight = 220 }: SignatureP
         />
         {!value && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span className="text-xs text-gray-300">請在此簽名</span>
+            <span className="text-base text-gray-300">請在此簽名</span>
           </div>
         )}
       </div>
@@ -475,18 +475,18 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       <div className="space-y-4">
         {/* 班次選擇 */}
         <div className="bg-white rounded-2xl p-4">
-          <p className="text-xs font-semibold text-gray-400 mb-3">選擇班次</p>
+          <p className="text-base font-semibold text-gray-400 mb-3">選擇班次</p>
           <div className="flex gap-2">
             {shifts.map((s, i) => (
               <button key={i} onClick={() => { setSelectedShift(i); setSubmitted(false) }}
-                className="flex-1 py-2.5 rounded-xl text-xs font-bold border-2 transition-all"
+                className="flex-1 py-2.5 rounded-xl text-base font-bold border-2 transition-all"
                 style={{
                   borderColor: selectedShift === i ? '#00a86b' : '#f3f4f6',
                   background:  selectedShift === i ? '#ecfdf5' : '#fafafa',
                   color:       selectedShift === i ? '#00a86b' : '#9ca3af',
                 }}>
                 {s.split(' ')[0]}<br />
-                <span className="font-normal text-[10px]">{s.split(' ')[1]}</span>
+                <span className="font-normal text-base">{s.split(' ')[1]}</span>
               </button>
             ))}
           </div>
@@ -504,8 +504,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 {card.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-800">{card.title}</p>
-                <p className="text-xs mt-0.5 font-medium" style={{ color: statusColor[card.status] }}>{card.sub}</p>
+                <p className="text-base font-bold text-gray-800">{card.title}</p>
+                <p className="text-base mt-0.5 font-medium" style={{ color: statusColor[card.status] }}>{card.sub}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
             </motion.button>
@@ -525,12 +525,12 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               }}>
               <div className="flex items-center gap-2">
                 <PenLine className="w-4 h-4" style={{ color: hasSig ? '#16a34a' : '#9ca3af' }} />
-                <span className="text-sm font-bold" style={{ color: hasSig ? '#16a34a' : '#374151' }}>
+                <span className="text-base font-bold" style={{ color: hasSig ? '#16a34a' : '#374151' }}>
                   {hasSig ? '已完成簽名' : '點此進行簽名'}
                 </span>
               </div>
               {hasSig
-                ? <span className="text-xs text-green-500 font-semibold">重新簽名</span>
+                ? <span className="text-base text-green-500 font-semibold">重新簽名</span>
                 : <ChevronRight className="w-4 h-4 text-gray-300" />}
             </motion.button>
           )
@@ -539,21 +539,21 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         {/* Submit */}
         {saveError && (
           <div className="w-full px-4 py-3 rounded-2xl bg-red-50 border border-red-100">
-            <p className="text-red-600 text-xs font-semibold">{saveError}</p>
+            <p className="text-red-600 text-base font-semibold">{saveError}</p>
           </div>
         )}
         {!submitted ? (
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleSubmit} disabled={saving}
-            className="w-full py-4 rounded-2xl text-white font-bold text-sm flex items-center justify-center gap-2 transition-opacity"
+            className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition-opacity"
             style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)', opacity: saving ? 0.7 : 1 }}>
             <Save className="w-4 h-4" />
             {saving ? '儲存中...' : `確認送出（${user.name} 簽署）`}
           </motion.button>
         ) : (
           <div className="w-full py-4 rounded-2xl bg-green-50 border border-green-100 text-center">
-            <p className="text-green-600 font-bold text-sm">✓ 已完成班次確認並簽署</p>
-            <p className="text-green-400 text-xs mt-0.5">{new Date().toLocaleTimeString('zh-TW')} 已儲存至資料庫</p>
-            <button onClick={() => setSubmitted(false)} className="mt-2 text-xs text-green-500 underline">繼續編輯</button>
+            <p className="text-green-600 font-bold text-base">✓ 已完成班次確認並簽署</p>
+            <p className="text-green-400 text-base mt-0.5">{new Date().toLocaleTimeString('zh-TW')} 已儲存至資料庫</p>
+            <button onClick={() => setSubmitted(false)} className="mt-2 text-base text-green-500 underline">繼續編輯</button>
           </div>
         )}
 
@@ -589,14 +589,14 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                         { label: '大夜班 23:00–07:00', sig: allShiftSigs.lateNight },
                       ].map(({ label, sig }) => (
                         <div key={label}>
-                          <p className="text-xs font-semibold text-gray-400 mb-1 flex items-center gap-1.5">
+                          <p className="text-base font-semibold text-gray-400 mb-1 flex items-center gap-1.5">
                             <PenLine className="w-3 h-3" />{label}
                           </p>
                           <div className="border-2 rounded-2xl overflow-hidden flex items-center justify-center"
                             style={{ borderColor: sig ? '#86efac' : '#e5e7eb', background: sig ? '#f0fdf4' : '#f9fafb', height: 80 }}>
                             {sig
                               ? <img src={sig} alt="簽名" className="w-full h-full object-contain" />
-                              : <p className="text-xs text-gray-300">尚未簽名</p>}
+                              : <p className="text-base text-gray-300">尚未簽名</p>}
                           </div>
                         </div>
                       ))}
@@ -618,7 +618,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
                   <button
                     onClick={() => setSigModalOpen(false)}
-                    className="w-full py-4 rounded-2xl text-white font-bold text-sm"
+                    className="w-full py-4 rounded-2xl text-white font-bold text-base"
                     style={{ background: 'linear-gradient(135deg, #00a86b, #00d47e)' }}
                   >
                     完成
@@ -640,7 +640,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       <div className="flex gap-1.5 mb-3 overflow-x-auto pb-0.5">
         {zones.map(z => (
           <button key={z} onClick={() => setTempZone(z)}
-            className="shrink-0 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
+            className="shrink-0 px-3 py-1.5 rounded-lg text-base font-bold transition-all"
             style={{ background: tempZone === z ? '#1e40af' : '#f3f4f6', color: tempZone === z ? 'white' : '#6b7280' }}>
             {z}
           </button>
@@ -662,20 +662,20 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 style={{ background: bgHeader }}
                 onClick={() => setExpandedIdx(isExpanded ? null : specIdx)}>
                 <div className="text-left">
-                  <p className="text-xs font-semibold text-gray-700">{spec.location}</p>
-                  <p className="text-[10px] text-gray-400">標準：{spec.required}</p>
+                  <p className="text-base font-semibold text-gray-700">{spec.location}</p>
+                  <p className="text-base text-gray-400">標準：{spec.required}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {status === 'recheck'  && <span className="text-[10px] font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">需複核</span>}
-                  {status === 'repair'   && <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">需報修</span>}
-                  {status === 'resolved' && <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">已正常</span>}
+                  {status === 'recheck'  && <span className="text-base font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">需複核</span>}
+                  {status === 'repair'   && <span className="text-base font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">需報修</span>}
+                  {status === 'resolved' && <span className="text-base font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">已正常</span>}
                   {lastFilled
-                    ? <span className="text-sm font-bold" style={{ color: lastNormal === false ? '#ef4444' : '#10b981' }}>
+                    ? <span className="text-base font-bold" style={{ color: lastNormal === false ? '#ef4444' : '#10b981' }}>
                         {parseFloat(lastFilled.value) > 0 ? '+' : ''}{parseFloat(lastFilled.value)}°C
                       </span>
-                    : <span className="text-xs text-gray-300">未填</span>
+                    : <span className="text-base text-gray-300">未填</span>
                   }
-                  {readings.length > 0 && <span className="text-[10px] bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded-md">{readings.length}筆</span>}
+                  {readings.length > 0 && <span className="text-base bg-blue-100 text-blue-600 font-bold px-1.5 py-0.5 rounded-md">{readings.length}筆</span>}
                 </div>
               </button>
               <AnimatePresence>
@@ -683,26 +683,26 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                   <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
                     <div className="px-3 pb-3 pt-2 space-y-2 border-t border-gray-100">
-                      {readings.length === 0 && <p className="text-xs text-gray-300 text-center py-1">尚無量測紀錄</p>}
+                      {readings.length === 0 && <p className="text-base text-gray-300 text-center py-1">尚無量測紀錄</p>}
                       {readings.map((r, rIdx) => {
                         const normal = evalReading(spec, r)
                         return (
                           <div key={rIdx} className="flex items-center gap-2">
                             <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50">
                               <Clock className="w-3 h-3 text-gray-300 shrink-0" />
-                              <input type="time" className="text-xs font-medium text-gray-700 outline-none bg-transparent w-16"
+                              <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-16"
                                 value={r.time} onChange={e => updateReading(specIdx, rIdx, 'time', e.target.value)} />
                             </div>
                             <div className="flex items-center border rounded-lg overflow-hidden flex-1"
                               style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
                               <input type="number" inputMode="decimal"
-                                className="flex-1 text-center text-sm font-bold outline-none bg-transparent py-1.5 px-2"
+                                className="flex-1 text-center text-base font-bold outline-none bg-transparent py-1.5 px-2"
                                 style={{ color: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151' }}
                                 placeholder="溫度" value={r.value}
                                 onChange={e => updateReading(specIdx, rIdx, 'value', e.target.value)} />
-                              <span className="text-xs text-gray-400 pr-2">°C</span>
+                              <span className="text-base text-gray-400 pr-2">°C</span>
                             </div>
-                            {r.value.trim() && <span className="text-[10px] font-bold w-7 text-center shrink-0" style={{ color: normal === false ? '#ef4444' : '#10b981' }}>{normal === false ? '異常' : 'OK'}</span>}
+                            {r.value.trim() && <span className="text-base font-bold w-7 text-center shrink-0" style={{ color: normal === false ? '#ef4444' : '#10b981' }}>{normal === false ? '異常' : 'OK'}</span>}
                             <button onClick={() => removeReading(specIdx, rIdx)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 shrink-0">
                               <Trash2 className="w-3 h-3 text-gray-400" />
                             </button>
@@ -710,11 +710,11 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                         )
                       })}
                       <button onClick={() => addReading(specIdx)}
-                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-blue-300 text-xs font-semibold text-blue-500">
+                        className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-blue-300 text-base font-semibold text-blue-500">
                         <Plus className="w-3.5 h-3.5" /> 新增量測
                       </button>
-                      {status === 'recheck' && <p className="text-[11px] text-yellow-600 bg-yellow-50 rounded-lg px-3 py-2">⏱ 請於 30 分鐘後再次量測確認</p>}
-                      {status === 'repair'  && <p className="text-[11px] text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複核後仍異常，請至「異常回報」提交報修申請</p>}
+                      {status === 'recheck' && <p className="text-base text-yellow-600 bg-yellow-50 rounded-lg px-3 py-2">⏱ 請於 30 分鐘後再次量測確認</p>}
+                      {status === 'repair'  && <p className="text-base text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複核後仍異常，請至「異常回報」提交報修申請</p>}
                     </div>
                   </motion.div>
                 )}
@@ -761,8 +761,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       <div>
         {/* Progress header */}
         <div className="flex items-center justify-between mb-4">
-          <span className="text-sm font-bold text-gray-500">{cardIdx + 1} / {tempSpecs.length}</span>
-          <span className="px-2 py-1 rounded-lg text-xs font-bold"
+          <span className="text-base font-bold text-gray-500">{cardIdx + 1} / {tempSpecs.length}</span>
+          <span className="px-2 py-1 rounded-lg text-base font-bold"
             style={{
               background: spec.zone === '賣場' ? '#eff6ff' : spec.zone === '咖啡' ? '#fdf4ff' : '#fff7ed',
               color: spec.zone === '賣場' ? '#1d4ed8' : spec.zone === '咖啡' ? '#7c3aed' : '#c2410c',
@@ -773,7 +773,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
         {/* Device name */}
         <p className="text-lg font-bold text-gray-800 mb-1">{spec.location}</p>
-        <p className="text-sm text-gray-400 mb-4">標準：{spec.required}</p>
+        <p className="text-base text-gray-400 mb-4">標準：{spec.required}</p>
 
         {/* Large input */}
         <div className="flex items-end justify-center gap-2 mb-2">
@@ -796,18 +796,18 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
         {/* Status line */}
         <div className="text-center mb-3 h-6">
-          {cardNormal === true && <span className="text-sm font-semibold text-green-600">✅ 在標準範圍內</span>}
-          {cardNormal === false && <span className="text-sm font-semibold text-red-500">⚠️ 超出標準範圍</span>}
+          {cardNormal === true && <span className="text-base font-semibold text-green-600">✅ 在標準範圍內</span>}
+          {cardNormal === false && <span className="text-base font-semibold text-red-500">⚠️ 超出標準範圍</span>}
         </div>
 
         {/* Anomaly banners */}
         {status === 'recheck' && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 mb-3 text-xs font-semibold text-yellow-700">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 mb-3 text-base font-semibold text-yellow-700">
             ⏱ 請於 30 分鐘後再次量測確認
           </div>
         )}
         {status === 'repair' && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3 text-xs font-semibold text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3 text-base font-semibold text-red-700">
             ⚠ 複核後仍異常，請至「異常回報」提交報修申請
           </div>
         )}
@@ -839,7 +839,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           <button
             onClick={() => goCard(cardIdx - 1)}
             disabled={cardIdx === 0}
-            className="flex-1 py-3 rounded-2xl text-sm font-bold transition-all disabled:opacity-40"
+            className="flex-1 py-3 rounded-2xl text-base font-bold transition-all disabled:opacity-40"
             style={{ background: '#f3f4f6', color: '#374151' }}
           >
             ← 上一台
@@ -852,7 +852,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 goCard(cardIdx + 1)
               }
             }}
-            className="flex-1 py-3 rounded-2xl text-sm font-bold text-white transition-all"
+            className="flex-1 py-3 rounded-2xl text-base font-bold text-white transition-all"
             style={{ background: isLast ? 'linear-gradient(135deg, #00a86b, #00d47e)' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}
           >
             {isLast ? '完成 ✓' : '確認，下一台 →'}
@@ -863,7 +863,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         <div className="text-center mt-3">
           <button
             onClick={() => setSwipeMode(false)}
-            className="text-xs text-gray-400 underline"
+            className="text-base text-gray-400 underline"
           >
             切換為列表模式
           </button>
@@ -887,16 +887,16 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         <div className="bg-white rounded-2xl p-4">
           {/* Header with toggle */}
           <div className="flex items-center justify-between mb-3">
-            <span className="text-sm text-gray-500">{totalReadings} 筆已填</span>
+            <span className="text-base text-gray-500">{totalReadings} 筆已填</span>
             <div className="flex items-center gap-2">
               {hasAbnormal && (
-                <span className="text-xs text-red-500 font-semibold flex items-center gap-1">
+                <span className="text-base text-red-500 font-semibold flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5" /> 有異常
                 </span>
               )}
               <button
                 onClick={() => setSwipeMode(m => !m)}
-                className="px-3 py-1.5 rounded-xl text-xs font-bold transition-all"
+                className="px-3 py-1.5 rounded-xl text-base font-bold transition-all"
                 style={{
                   background: swipeMode ? '#00a86b' : '#f3f4f6',
                   color: swipeMode ? 'white' : '#6b7280',
@@ -921,8 +921,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       <div className="bg-white rounded-2xl p-4">
         <div className="flex items-center gap-2 mb-3">
           <Shirt className="w-3.5 h-3.5 text-purple-500" />
-          <p className="text-xs font-bold text-gray-700">制服 / 服裝儀容確認</p>
-          <span className="ml-auto text-[10px] text-gray-300">不分班次</span>
+          <p className="text-base font-bold text-gray-700">制服 / 服裝儀容確認</p>
+          <span className="ml-auto text-base text-gray-300">不分班次</span>
         </div>
         <div className="space-y-2">
           {[
@@ -935,7 +935,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               {(uniform as any)[key]
                 ? <CheckCircle2 className="w-5 h-5 shrink-0 text-purple-500" />
                 : <Circle className="w-5 h-5 shrink-0 text-gray-200" />}
-              <span className="text-sm" style={{ color: (uniform as any)[key] ? '#7c3aed' : '#374151' }}>{label}</span>
+              <span className="text-base" style={{ color: (uniform as any)[key] ? '#7c3aed' : '#374151' }}>{label}</span>
             </button>
           ))}
         </div>
@@ -944,8 +944,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       <div className="bg-white rounded-2xl p-4">
         <div className="flex items-center gap-2 mb-3">
           <Package className="w-3.5 h-3.5 text-orange-500" />
-          <p className="text-xs font-bold text-gray-700">廢棄物管理</p>
-          <span className="ml-auto text-[10px] text-gray-300">不分班次</span>
+          <p className="text-base font-bold text-gray-700">廢棄物管理</p>
+          <span className="ml-auto text-base text-gray-300">不分班次</span>
         </div>
         <div className="grid grid-cols-2 gap-3 mb-3">
           {[
@@ -955,14 +955,14 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             { label: '鋼環杯交付',   key: 'cupCollectionTime',unit: '',   type: 'time'   },
           ].map(({ label, key, unit, type }) => (
             <div key={key}>
-              <label className="text-[10px] font-semibold text-gray-400 mb-1 block">{label}</label>
+              <label className="text-base font-semibold text-gray-400 mb-1 block">{label}</label>
               <div className="flex items-center border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 gap-1">
                 <input type={type} inputMode={type === 'number' ? 'numeric' : undefined}
-                  className="flex-1 text-sm font-medium text-gray-700 outline-none bg-transparent"
+                  className="flex-1 text-base font-medium text-gray-700 outline-none bg-transparent"
                   placeholder={type === 'time' ? '--:--' : '0'}
                   value={(waste as any)[key]}
                   onChange={e => { setWaste(p => ({ ...p, [key]: e.target.value })); setSubmitted(false) }} />
-                {unit && <span className="text-xs text-gray-400">{unit}</span>}
+                {unit && <span className="text-base text-gray-400">{unit}</span>}
               </div>
             </div>
           ))}
@@ -978,7 +978,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               {(waste as any)[key]
                 ? <CheckCircle2 className="w-5 h-5 shrink-0 text-green-500" />
                 : <Circle className="w-5 h-5 shrink-0 text-gray-200" />}
-              <span className="text-sm" style={{ color: (waste as any)[key] ? '#059669' : '#374151' }}>{label}</span>
+              <span className="text-base" style={{ color: (waste as any)[key] ? '#059669' : '#374151' }}>{label}</span>
             </button>
           ))}
         </div>
@@ -991,15 +991,15 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // ────────────────────────────────────────────────
   const renderCleaning = () => (
     <div className="bg-white rounded-2xl p-4">
-      <p className="text-[10px] text-gray-300 text-right mb-3">不分班次</p>
+      <p className="text-base text-gray-300 text-right mb-3">不分班次</p>
       <div className="space-y-2">
         {cleaningMachines.map(machine => (
           <div key={machine} className="flex items-center gap-3">
-            <p className="flex-1 text-xs text-gray-700 font-medium">{machine}</p>
+            <p className="flex-1 text-base text-gray-700 font-medium">{machine}</p>
             <div className="flex items-center border border-gray-200 rounded-xl px-3 py-1.5 bg-gray-50 gap-1 shrink-0"
               style={{ borderColor: cleaning[machine]?.trim() ? '#6ee7b7' : '#e5e7eb' }}>
               <Clock className="w-3 h-3 text-gray-300" />
-              <input type="time" className="text-xs font-medium text-gray-700 outline-none bg-transparent w-16"
+              <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-16"
                 value={cleaning[machine] ?? ''}
                 onChange={e => { setCleaning(p => ({ ...p, [machine]: e.target.value })); setSubmitted(false) }} />
             </div>
@@ -1015,8 +1015,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const renderFriendly = () => (
     <div className="bg-white rounded-2xl p-4">
       <div className="flex items-center justify-between mb-3">
-        <span className="text-xs font-bold text-gray-500">{friendlyDone}/{friendlyTasks.length} 完成</span>
-        <span className="text-[10px] text-gray-300">不分班次</span>
+        <span className="text-base font-bold text-gray-500">{friendlyDone}/{friendlyTasks.length} 完成</span>
+        <span className="text-base text-gray-300">不分班次</span>
       </div>
       <div className="space-y-2">
         {friendlyTasks.map(t => {
@@ -1027,10 +1027,10 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               style={{ background: done ? '#ecfdf5' : '#f9fafb' }}>
               {done ? <CheckCircle2 className="w-5 h-5 shrink-0 text-green-500" /> : <Circle className="w-5 h-5 shrink-0 text-gray-200" />}
               <div>
-                <p className="text-xs font-bold" style={{ color: done ? '#059669' : '#374151' }}>
+                <p className="text-base font-bold" style={{ color: done ? '#059669' : '#374151' }}>
                   <span className="text-gray-400 mr-1">{t.time}</span>{t.label}
                 </p>
-                <p className="text-[10px] text-gray-400">{t.detail}</p>
+                <p className="text-base text-gray-400">{t.detail}</p>
               </div>
             </button>
           )
@@ -1077,17 +1077,17 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           <div key={key} className="bg-white rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-2">
               <span
-                className="text-xs font-bold px-2 py-0.5 rounded-full"
+                className="text-base font-bold px-2 py-0.5 rounded-full"
                 style={{ background: hasContent ? '#dcfce7' : '#f3f4f6', color: hasContent ? '#16a34a' : '#6b7280' }}
               >
                 {key}
               </span>
-              {hint && <span className="text-[10px] text-gray-400">{hint}</span>}
+              {hint && <span className="text-base text-gray-400">{hint}</span>}
             </div>
             <textarea
               rows={3}
               placeholder={placeholder}
-              className="w-full text-sm text-gray-700 border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 outline-none resize-none leading-relaxed"
+              className="w-full text-base text-gray-700 border border-gray-200 rounded-xl px-3 py-2.5 bg-gray-50 outline-none resize-none leading-relaxed"
               style={{ borderColor: hasContent ? '#86efac' : undefined }}
               value={value}
               onChange={e => updateHandoverField(key, e.target.value)}
@@ -1122,7 +1122,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       <div className="px-4 py-4 pb-8">
         {loading ? (
           <div className="flex items-center justify-center py-20 gap-2 text-gray-400">
-            <RefreshCw className="w-4 h-4 animate-spin" /><span className="text-sm">載入紀錄...</span>
+            <RefreshCw className="w-4 h-4 animate-spin" /><span className="text-base">載入紀錄...</span>
           </div>
         ) : view === 'overview' ? renderOverview() : renderSection()}
       </div>

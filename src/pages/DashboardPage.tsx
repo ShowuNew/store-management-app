@@ -315,7 +315,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         {/* Module grid */}
         <div>
           <p className="text-sm font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3">
             {modules.map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (
               <motion.button
                 key={page + i}
@@ -331,26 +331,30 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                     {badge}
                   </span>
                 )}
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-3" style={{ background: bg }}>
-                  <Icon className="w-6 h-6" style={{ color }} />
-                </div>
-                <p className="text-base font-bold text-gray-800 leading-tight">{label}</p>
-                <p className="text-xs text-gray-400 mt-1">{desc}</p>
-                {done !== null && total !== null ? (
-                  <div className="mt-3">
-                    <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                      <div className="h-1.5 rounded-full transition-all" style={{ width: `${(total ?? 0) > 0 ? (done ?? 0) / (total ?? 1) * 100 : 0}%`, background: color }} />
-                    </div>
-                    <p className="text-xs mt-1 font-semibold" style={{ color }}>{done}/{total} 完成</p>
+                <div className="flex items-center gap-4">
+                  <div className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0" style={{ background: bg }}>
+                    <Icon className="w-7 h-7" style={{ color }} />
                   </div>
-                ) : (
-                  !badge && (
-                    <div className="mt-3 flex items-center gap-1">
-                      <ChevronRight className="w-4 h-4" style={{ color }} />
-                      <p className="text-xs font-semibold" style={{ color }}>查看報表</p>
-                    </div>
-                  )
-                )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-lg font-bold text-gray-800 leading-tight">{label}</p>
+                    <p className="text-sm text-gray-400 mt-0.5">{desc}</p>
+                    {done !== null && total !== null ? (
+                      <div className="mt-2">
+                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                          <div className="h-1.5 rounded-full transition-all" style={{ width: `${(total ?? 0) > 0 ? (done ?? 0) / (total ?? 1) * 100 : 0}%`, background: color }} />
+                        </div>
+                        <p className="text-xs mt-1 font-semibold" style={{ color }}>{done}/{total} 完成</p>
+                      </div>
+                    ) : (
+                      !badge && (
+                        <div className="mt-2 flex items-center gap-1">
+                          <ChevronRight className="w-4 h-4" style={{ color }} />
+                          <p className="text-xs font-semibold" style={{ color }}>查看報表</p>
+                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
               </motion.button>
             ))}
           </div>

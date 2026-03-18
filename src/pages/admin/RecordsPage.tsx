@@ -191,43 +191,155 @@ function ClipboardListIcon() {
   )
 }
 
-const tasksByTime = [
-  { time: '07:00', tasks: ['確認鮮食上架日期標籤', '確認熱食區設備電源', '清潔咖啡機出水口', '確認冷藏/冷凍溫度記錄'] },
-  { time: '10:00', tasks: ['補充貨架缺貨商品', '整理收銀台環境', '確認外送訂單處理完畢'] },
-  { time: '12:00', tasks: ['確認午餐鮮食補充狀況', '清潔微波爐內部'] },
-  { time: '14:30', tasks: ['準備班次交接事項', '確認交接清單完整', '核對收銀機帳目'] },
+const hygieneCategories = [
+  {
+    name: '場所衛生環境',
+    items: [
+      '營業場所保持清潔，不得有納垢、剝落、積灰、積水等情形',
+      '出入口應通風良好、保持清潔無異味，並設置防蟲設施，無病媒出沒痕跡',
+      '廁所應保持清潔、無不良氣味，並備有洗潔劑、乾手器或擦手紙巾',
+      '洗手接觸面應保持平滑、無凹陷或裂縫，並保持清潔',
+    ],
+  },
+  {
+    name: '衛生品質管理',
+    items: [
+      '食品接觸面應保持平滑、無凹陷或裂縫，並保持清潔',
+      '清洗、清潔和消毒機具應專用器具妥善保管',
+      '使用之原料應符合相關食品衛生標準或規定，並可追溯來源',
+      '食品應分開貯放，不得直接置於地面，並依先進先出使用，且在有效日期內使用',
+      '冷凍 -18°C 以下；冷藏 7°C 以下；溫藏 65°C 以上（溫度計功能正常）',
+      '食品設備、器具及抹布等，使用前後應確認其清潔，並定期有效消毒',
+    ],
+  },
+  {
+    name: '從業人員衛生管理',
+    items: [
+      '從業人員每年定期健康檢查（含工讀生）',
+      '從業人員應穿戴整潔之工作衣，與食品直接接觸者，手部不得佩戴飾物或留指甲，或配戴清潔之手套',
+      '從業人員手部應保持清潔，並應於進入食品作業場所前、如廁後正確洗手或消毒',
+      '作業人員工作中不得有吸菸、嚼檳榔或飲食及其他可能污染食品之行為',
+      '私人及清潔用具等以明標（區）統一收置',
+    ],
+  },
+  {
+    name: '菸害防制',
+    items: [
+      '所有入口處應設置明顯禁菸標示，且不得供應與菸品相關聯物，無吸菸行為人',
+      '不供應菸品予未滿 20 歲者，且不得販售菸品形狀之糖果、點心、玩具或其他任何物品',
+      '不促銷菸品或菸品廣告',
+      '不可將菸盒代替隔熱紙夾付消費者使用，違反者店鋪將處 10～50 萬不等罰鍰',
+      '菸品或菸品容器之展示，應以使消費者獲知菸品品牌及價格之必要者為限',
+      '應於明顯處標示「吸菸有害健康」、「免費戒菸專線 0800-636363」等法定警示圖文',
+    ],
+  },
 ]
 
-const hygieneCategories = [
-  { name: '場所衛生', items: ['營業場所清潔', '出入口防蟲', '廁所清潔', '洗手台備品', '倉庫後場'] },
-  { name: '衛生品質', items: ['食品分類存放', '冷凍冷藏溫度', '設備器具清潔', '消毒規定', '包材收納'] },
-  { name: '從業人員', items: ['定期健康檢查', '整齊工作服', '手部清潔', '禁菸嚼檳規定'] },
-  { name: '菸害防制', items: ['未成年禁菸', '禁售糖果玩具', '禁促銷廣告', '禁菸盒交付', '法定標示'] },
-]
+function CheckDot({ done }: { done: boolean }) {
+  return (
+    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${done ? 'bg-green-500 border-green-500' : 'border-gray-200'}`}>
+      {done && <span className="text-white text-[8px]">✓</span>}
+    </span>
+  )
+}
 
 function DetailView({ record, tab }: { record: any; tab: Tab }) {
   if (tab === 'daily-work') {
+    const td       = record.tasks_done || {}
+    const waste    = td._waste    || {}
+    const cleaning = td._cleaning || {}
+    const friendly = td._friendly || {}
+    const uniform  = td._uniform  || {}
+    const signed   = !!td._signature
+    const mgrSigned = !!td._manager_signature
+
+    const friendlyKeys: { key: string; label: string }[] = [
+      { key: 't0930', label: '友善食光貼標（09:30）' },
+      { key: 't1600', label: '過期品下架（16:00）' },
+      { key: 't2000', label: '鮮食效期確認（20:00）' },
+    ]
+
     return (
-      <div className="px-4 py-3 space-y-3">
-        {tasksByTime.map(({ time, tasks }) => (
-          <div key={time}>
-            <p className="text-base font-bold text-gray-400 mb-1.5">{time}</p>
-            <div className="space-y-1">
-              {tasks.map((task, i) => {
-                const key  = `${time}-${i}`
-                const done = record.tasks_done?.[key]
-                return (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${done ? 'bg-green-500 border-green-500' : 'border-gray-200'}`}>
-                      {done && <span className="text-white text-[8px]">✓</span>}
-                    </span>
-                    <span className="text-base text-gray-600">{task}</span>
-                  </div>
-                )
-              })}
+      <div className="px-4 py-3 space-y-4">
+        {/* 廢棄物 */}
+        <div>
+          <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">廢棄物處理</p>
+          <div className="space-y-1">
+            {[
+              { label: '廚餘袋數', value: waste.foodWasteBags ?? '—' },
+              { label: '資源回收箱數', value: waste.recyclingCount ?? '—' },
+              { label: '廚餘完成時間', value: waste.leftoverFoodTime || '—' },
+              { label: '集杯完成時間', value: waste.cupCollectionTime || '—' },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between">
+                <span className="text-base text-gray-500">{label}</span>
+                <span className="text-base font-semibold text-gray-700">{value}</span>
+              </div>
+            ))}
+            <div className="flex items-center gap-2 pt-1">
+              <CheckDot done={!!waste.verified} />
+              <span className="text-base text-gray-600">確認廢棄物數量</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <CheckDot done={!!waste.groundCleaning} />
+              <span className="text-base text-gray-600">戶外地面清潔</span>
             </div>
           </div>
-        ))}
+        </div>
+
+        {/* 設備清潔 */}
+        {Object.keys(cleaning).length > 0 && (
+          <div>
+            <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">設備清潔</p>
+            <div className="space-y-1">
+              {Object.entries(cleaning).map(([machine, time]) => (
+                <div key={machine} className="flex items-center justify-between">
+                  <span className="text-base text-gray-500">{machine}</span>
+                  <span className="text-base font-semibold text-gray-700">{(time as string) || '—'}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* 友善食光 */}
+        <div>
+          <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">友善食光 / 過期品下架</p>
+          <div className="space-y-1">
+            {friendlyKeys.map(({ key, label }) => (
+              <div key={key} className="flex items-center gap-2">
+                <CheckDot done={!!friendly[key]} />
+                <span className="text-base text-gray-600">{label}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* 儀容衛生 */}
+        <div>
+          <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">儀容與衛生</p>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2"><CheckDot done={!!uniform.appearance} /><span className="text-base text-gray-600">服裝儀容合規</span></div>
+            <div className="flex items-center gap-2"><CheckDot done={!!uniform.sanitize} /><span className="text-base text-gray-600">手部清潔消毒</span></div>
+          </div>
+        </div>
+
+        {/* 簽名 */}
+        <div>
+          <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">簽名確認</p>
+          <div className="space-y-1">
+            <div className="flex items-center gap-2"><CheckDot done={signed} /><span className="text-base text-gray-600">班次員工簽名</span></div>
+            <div className="flex items-center gap-2"><CheckDot done={mgrSigned} /><span className="text-base text-gray-600">店長簽名</span></div>
+          </div>
+        </div>
+
+        {/* 交接備注 */}
+        {record.handover_note && (
+          <div>
+            <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1">交接備注</p>
+            <p className="text-base text-gray-600 whitespace-pre-line">{record.handover_note}</p>
+          </div>
+        )}
       </div>
     )
   }

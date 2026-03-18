@@ -640,6 +640,56 @@ export default function AnomalyPage({ user, onBack }: Props) {
                     </div>
                   </div>
                   <div>
+                    <label className="text-base font-semibold text-gray-600 mb-1.5 block">商品保留方式</label>
+                    <div className="flex gap-2">
+                      {[
+                        { v: 'store'    as const, label: '店鋪保留' },
+                        { v: 'consumer' as const, label: '消費者帶走' },
+                        { v: 'no'       as const, label: '無法保留' },
+                        { v: 'other'    as const, label: '其他' },
+                      ].map(({ v, label }) => (
+                        <button key={v} onClick={() => setQualityForm(p => ({ ...p, productRetained: v }))}
+                          className="flex-1 py-2 rounded-xl text-base font-bold transition-all"
+                          style={{ background: qualityForm.productRetained === v ? '#8b5cf6' : '#f3f4f6', color: qualityForm.productRetained === v ? 'white' : '#6b7280' }}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-base font-semibold text-gray-600 mb-1.5 block">廠商聯繫意願</label>
+                    <div className="flex gap-2">
+                      {[
+                        { v: 'agreed'    as const, label: '同意聯繫' },
+                        { v: 'disagreed' as const, label: '不同意' },
+                      ].map(({ v, label }) => (
+                        <button key={v} onClick={() => setQualityForm(p => ({ ...p, consumerContact: v }))}
+                          className="flex-1 py-2.5 rounded-xl text-base font-bold transition-all"
+                          style={{ background: qualityForm.consumerContact === v ? '#8b5cf6' : '#f3f4f6', color: qualityForm.consumerContact === v ? 'white' : '#6b7280' }}>
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {qualityForm.consumerContact === 'agreed' && (
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="text-base font-semibold text-gray-600 mb-1.5 block">消費者姓名</label>
+                        <input className="w-full border border-gray-200 rounded-2xl px-3 py-3 text-base text-gray-700 bg-gray-50 outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
+                          placeholder="姓名"
+                          value={qualityForm.consumerName}
+                          onChange={e => setQualityForm(p => ({ ...p, consumerName: e.target.value }))} />
+                      </div>
+                      <div>
+                        <label className="text-base font-semibold text-gray-600 mb-1.5 block">聯絡電話</label>
+                        <input type="tel" className="w-full border border-gray-200 rounded-2xl px-3 py-3 text-base text-gray-700 bg-gray-50 outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
+                          placeholder="電話"
+                          value={qualityForm.consumerPhone}
+                          onChange={e => setQualityForm(p => ({ ...p, consumerPhone: e.target.value }))} />
+                      </div>
+                    </div>
+                  )}
+                  <div>
                     <label className="text-base font-semibold text-gray-600 mb-1.5 block">特殊說明</label>
                     <input className="w-full border border-gray-200 rounded-2xl px-4 py-3 text-base text-gray-700 bg-gray-50 outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-1"
                       placeholder="（選填）"

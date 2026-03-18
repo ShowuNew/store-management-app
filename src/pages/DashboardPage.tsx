@@ -135,6 +135,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
       }
 
       // ── 衛生管理 ──
+      if (hygieneRes.error) console.error('[Dashboard] hygiene_records SELECT error:', hygieneRes.error)
       const hygieneDone = (hygieneRes.data || []).length   // 每時段一筆
 
       // ── 設備保養 ──

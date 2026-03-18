@@ -176,9 +176,19 @@ export default function HygienePage({ user, onBack }: Props) {
       const { error } = await supabase.from('hygiene_records').update(payload).eq('id', existingId)
       saveErr = error
     } else {
-      const { data, error } = await supabase.from('hygiene_records').insert(payload).select().single()
-      saveErr = error
-      if (!error && data) setExistingId(data.id)
+      const { error: insertError } = await supabase.from('hygiene_records').insert(payload)
+      saveErr = insertError
+      if (!insertError) {
+        // Fetch the ID separately — avoids PGRST116 from RLS blocking chained .select().single()
+        const { data: inserted } = await supabase
+          .from('hygiene_records')
+          .select('id')
+          .eq('store_id', user.storeId)
+          .eq('record_date', todayStr)
+          .eq('shift', shifts[activeShift])
+          .maybeSingle()
+        if (inserted) setExistingId(inserted.id)
+      }
     }
 
     if (saveErr) {

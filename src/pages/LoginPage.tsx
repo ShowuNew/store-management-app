@@ -106,7 +106,7 @@ export default function LoginPage({ onLogin }: Props) {
                 type="text"
                 inputMode="numeric"
                 className="flex-1 bg-transparent text-base text-gray-800 outline-none placeholder-gray-300 py-3"
-                placeholder="請輸入店號（如 101234）"
+                placeholder="請輸入店號"
                 value={storeCode}
                 onChange={e => { setStoreCode(e.target.value); setError('') }}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}

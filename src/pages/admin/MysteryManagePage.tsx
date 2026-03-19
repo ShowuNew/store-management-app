@@ -93,12 +93,6 @@ export default function MysteryManagePage({ user, onBack }: Props) {
     return { text: '待填寫', color: '#f59e0b', bg: '#fffbeb', icon: <Clock className="w-4 h-4" /> }
   }
 
-  const sectionTotal = (key: string, formData: MysterySession['form_data']) => {
-    const sec = SCORE_SECTIONS.find(s => s.items.some(it => it.key === key))
-    if (!sec || !formData) return null
-    return sec.items.reduce((sum, it) => sum + (formData[it.key]?.score ?? 0), 0)
-  }
-
   return (
     <div className="min-h-dvh bg-gray-50">
       <PageHeader title="神秘客稽查" subtitle="Mystery Shopper" onBack={onBack} />

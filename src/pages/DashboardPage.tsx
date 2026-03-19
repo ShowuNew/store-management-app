@@ -307,46 +307,36 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         {/* Module grid */}
         <div>
           <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+          <div className="flex flex-col gap-2">
             {modules.map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (
               <motion.button
                 key={page + i}
-                initial={{ opacity: 0, scale: 0.94 }}
-                animate={{ opacity: 1, scale: 1 }}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
-                whileTap={{ scale: 0.96 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => onNavigate(page)}
-                className="bg-white rounded-2xl p-4 text-left shadow-sm relative"
+                className="bg-white rounded-2xl p-4 text-left shadow-sm flex items-center gap-4"
               >
-                {badge && (
-                  <span className="absolute top-3 right-3 text-xs font-bold px-1.5 py-0.5 rounded-lg bg-red-500 text-white">
-                    {badge}
-                  </span>
-                )}
-                <div className="flex flex-col gap-3">
-                  <div className="w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" style={{ background: bg }}>
-                    <Icon className="w-5 h-5" style={{ color }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-base font-bold text-gray-800 leading-tight">{label}</p>
-                    <p className="text-sm text-gray-400 mt-0.5">{desc}</p>
-                    {done !== null && total !== null ? (
-                      <div className="mt-2">
-                        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                          <div className="h-1.5 rounded-full transition-all" style={{ width: `${(total ?? 0) > 0 ? (done ?? 0) / (total ?? 1) * 100 : 0}%`, background: color }} />
-                        </div>
-                        <p className="text-base mt-1 font-semibold" style={{ color }}>{done}/{total} 完成</p>
-                      </div>
-                    ) : (
-                      !badge && (
-                        <div className="mt-2 flex items-center gap-1">
-                          <ChevronRight className="w-4 h-4" style={{ color }} />
-                          <p className="text-base font-semibold" style={{ color }}>查看報表</p>
-                        </div>
-                      )
-                    )}
-                  </div>
+                <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: bg }}>
+                  <Icon className="w-6 h-6" style={{ color }} />
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-base font-bold text-gray-800 leading-tight">{label}</p>
+                  <p className="text-sm text-gray-400 mt-0.5">{desc}</p>
+                  {done !== null && total !== null && (
+                    <div className="mt-1.5">
+                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-1.5 rounded-full transition-all" style={{ width: `${(total ?? 0) > 0 ? (done ?? 0) / (total ?? 1) * 100 : 0}%`, background: color }} />
+                      </div>
+                      <p className="text-sm mt-0.5 font-semibold" style={{ color }}>{done}/{total} 完成</p>
+                    </div>
+                  )}
+                </div>
+                {badge
+                  ? <span className="text-xs font-bold px-2 py-1 rounded-lg bg-red-500 text-white shrink-0">{badge}</span>
+                  : <ChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
+                }
               </motion.button>
             ))}
           </div>

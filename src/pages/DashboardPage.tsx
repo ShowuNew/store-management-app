@@ -307,7 +307,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         {/* Module grid */}
         <div>
           <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
             {modules.map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (
               <motion.button
                 key={page + i}

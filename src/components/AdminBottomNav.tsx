@@ -16,7 +16,7 @@ const tabs: { page: Page; label: string; icon: ReactNode }[] = [
 
 export default function AdminBottomNav({ currentPage, onNavigate }: Props) {
   return (
-    <nav className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] bg-white border-t border-gray-100 z-30">
+    <nav className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-100 z-30">
       <div className="flex">
         {tabs.map(({ page, label, icon }) => {
           const active = currentPage === page

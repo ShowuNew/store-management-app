@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import {
+  Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench,
+  ClipboardList, LayoutDashboard, BarChart2,
+} from 'lucide-react'
 import LoginPage           from './pages/LoginPage'
 import DashboardPage       from './pages/DashboardPage'
 import DailyWorkPage       from './pages/DailyWorkPage'
@@ -16,6 +20,22 @@ import type { User, Page } from './types'
 
 const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats']
 const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats']
+
+const staffTabs = [
+  { page: 'dashboard'  as Page, icon: Home,          label: '首頁'   },
+  { page: 'daily-work' as Page, icon: ClipboardCheck, label: '每日確認' },
+  { page: 'hygiene'    as Page, icon: ShieldCheck,    label: '衛生管理' },
+  { page: 'inspection' as Page, icon: ClipboardList,  label: '店鋪點檢' },
+  { page: 'anomaly'    as Page, icon: AlertTriangle,  label: '異常回報' },
+  { page: 'equipment'  as Page, icon: Wrench,         label: '設備保養' },
+]
+
+const adminTabs = [
+  { page: 'admin-dashboard' as Page, icon: LayoutDashboard, label: '總覽'   },
+  { page: 'admin-records'   as Page, icon: ClipboardList,   label: '紀錄查閱' },
+  { page: 'admin-anomaly'   as Page, icon: AlertTriangle,   label: '異常管理' },
+  { page: 'admin-stats'     as Page, icon: BarChart2,       label: '數據統計' },
+]
 
 function App() {
   const [user, setUser]               = useState<User | null>(null)
@@ -51,12 +71,45 @@ function App() {
 
   const showBottomNav      = NAV_PAGES.includes(currentPage)
   const showAdminBottomNav = ADMIN_NAV_PAGES.includes(currentPage)
+  const activeTabs         = showBottomNav ? staffTabs : showAdminBottomNav ? adminTabs : []
 
   return (
-    <div className="flex flex-col min-h-dvh">
-      <div className={showBottomNav || showAdminBottomNav ? 'pb-16' : ''}>
-        {renderPage()}
-      </div>
+    <div className="flex min-h-dvh bg-gray-50">
+      {/* Desktop sidebar */}
+      {activeTabs.length > 0 && (
+        <aside className="hidden md:flex flex-col w-56 fixed inset-y-0 left-0 bg-white border-r border-gray-100 z-20">
+          <div className="h-1 w-full shrink-0" style={{ background: 'linear-gradient(90deg, #00a040, #007d30)' }} />
+          <div className="px-2 py-4 flex-1 flex flex-col gap-0.5 overflow-y-auto">
+            {activeTabs.map(({ page, icon: Icon, label }) => {
+              const active = currentPage === page
+              return (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-left w-full transition-all ${
+                    active
+                      ? 'bg-green-50 text-green-700 font-semibold'
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-700'
+                  }`}
+                >
+                  <Icon className="w-5 h-5 shrink-0" strokeWidth={active ? 2.5 : 1.8} />
+                  <span className="text-sm">{label}</span>
+                  {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-green-600" />}
+                </button>
+              )
+            })}
+          </div>
+        </aside>
+      )}
+
+      {/* Main content */}
+      <main className={`flex-1 min-w-0 ${activeTabs.length > 0 ? 'md:ml-56' : ''}`}>
+        <div className={activeTabs.length > 0 ? 'pb-16 md:pb-0' : ''}>
+          {renderPage()}
+        </div>
+      </main>
+
+      {/* Mobile bottom nav */}
       {showBottomNav      && <BottomNav      currentPage={currentPage} onNavigate={setCurrentPage} />}
       {showAdminBottomNav && <AdminBottomNav currentPage={currentPage} onNavigate={setCurrentPage} />}
     </div>

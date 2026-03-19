@@ -82,7 +82,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
               <span className="text-base">載入中...</span>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
               {statCards.map((s, i) => (
                 <motion.div
                   key={s.label}
@@ -105,7 +105,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
         {/* Quick links */}
         <div>
           <p className="text-base font-bold text-gray-400 mb-2">功能入口</p>
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             {quickLinks.map(({ page, label, desc, icon, color, bg }, i) => (
               <motion.button
                 key={page}

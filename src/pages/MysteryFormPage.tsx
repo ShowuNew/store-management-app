@@ -52,6 +52,7 @@ export default function MysteryFormPage({ token }: Props) {
     const input = document.createElement('input')
     input.type = 'file'
     input.accept = 'image/*'
+    input.setAttribute('capture', 'environment')
     input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file || !session) return

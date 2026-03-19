@@ -14,12 +14,17 @@ import AdminDashboard      from './pages/admin/AdminDashboard'
 import RecordsPage         from './pages/admin/RecordsPage'
 import AnomalyManagePage   from './pages/admin/AnomalyManagePage'
 import StatsPage           from './pages/admin/StatsPage'
+import MysteryManagePage   from './pages/admin/MysteryManagePage'
+import MysteryFormPage     from './pages/MysteryFormPage'
 import BottomNav           from './components/BottomNav'
 import AdminBottomNav      from './components/AdminBottomNav'
 import type { User, Page } from './types'
 
+// 若 URL 帶有 token 參數，直接顯示神秘客表單（無需登入）
+const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
+
 const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats']
-const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats']
+const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage']
 
 const staffTabs = [
   { page: 'dashboard'  as Page, icon: Home,          label: '首頁'   },
@@ -50,6 +55,9 @@ function App() {
     ADMIN_NAV_PAGES.includes(currentPage) ? 'admin-dashboard' : 'dashboard'
   )
 
+  // 神秘客公開表單（無需登入）
+  if (URL_TOKEN) return <MysteryFormPage token={URL_TOKEN} />
+
   if (!user) return <LoginPage onLogin={handleLogin} />
 
   const renderPage = () => {
@@ -65,6 +73,7 @@ function App() {
       case 'admin-records':   return <RecordsPage       user={user} onBack={goBack} />
       case 'admin-anomaly':   return <AnomalyManagePage user={user} onBack={goBack} />
       case 'admin-stats':     return <StatsPage         user={user} onBack={goBack} />
+      case 'mystery-manage':  return <MysteryManagePage user={user} onBack={goBack} />
       default:                return <DashboardPage     user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />
     }
   }

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { ClipboardList, AlertTriangle, BarChart2, ShieldCheck, RefreshCw, LogOut } from 'lucide-react'
+import { ClipboardList, AlertTriangle, BarChart2, ShieldCheck, RefreshCw, LogOut, UserSearch } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type { User, Page } from '../../types'
 
@@ -43,9 +43,10 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
   ]
 
   const quickLinks = [
-    { page: 'admin-records' as Page,  label: '紀錄查閱', desc: '查看各門市提交的工作、衛生、設備紀錄', icon: <ClipboardList className="w-5 h-5" />, color: '#3b82f6', bg: '#eff6ff' },
-    { page: 'admin-anomaly' as Page,  label: '異常管理', desc: '集中處理跨門市的異常事件與回報',         icon: <AlertTriangle  className="w-5 h-5" />, color: '#ef4444', bg: '#fef2f2' },
-    { page: 'admin-stats'   as Page,  label: '數據統計', desc: '查看近期完成率與合格率趨勢分析',         icon: <BarChart2      className="w-5 h-5" />, color: '#8b5cf6', bg: '#f5f3ff' },
+    { page: 'admin-records'  as Page, label: '紀錄查閱', desc: '查看各門市提交的工作、衛生、設備紀錄', icon: <ClipboardList className="w-5 h-5" />, color: '#3b82f6', bg: '#eff6ff' },
+    { page: 'admin-anomaly'  as Page, label: '異常管理', desc: '集中處理跨門市的異常事件與回報',         icon: <AlertTriangle  className="w-5 h-5" />, color: '#ef4444', bg: '#fef2f2' },
+    { page: 'admin-stats'    as Page, label: '數據統計', desc: '查看近期完成率與合格率趨勢分析',         icon: <BarChart2      className="w-5 h-5" />, color: '#8b5cf6', bg: '#f5f3ff' },
+    { page: 'mystery-manage' as Page, label: '神秘客稽查', desc: '產生稽查連結，查看各門市評核結果',     icon: <UserSearch     className="w-5 h-5" />, color: '#0891b2', bg: '#ecfeff' },
   ]
 
   return (

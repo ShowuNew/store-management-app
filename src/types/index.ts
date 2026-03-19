@@ -13,6 +13,7 @@ export type Page =
   | 'admin-records'
   | 'admin-anomaly'
   | 'admin-stats'
+  | 'mystery-manage'
 
 export interface User {
   id: string

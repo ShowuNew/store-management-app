@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle2, AlertCircle, RefreshCw, Send } from 'lucide-react'
+import { CheckCircle2, AlertCircle, RefreshCw, Send, Camera, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
 import { SCORE_SECTIONS, MAX_TOTAL } from '../types/mystery'
 import type { MysterySession, MysteryFormData } from '../types/mystery'
@@ -17,6 +17,8 @@ export default function MysteryFormPage({ token }: Props) {
   const [saving, setSaving]     = useState(false)
   const [done, setDone]         = useState(false)
   const [totalScore, setTotalScore] = useState(0)
+  const [photos, setPhotos]     = useState<Record<number, string[]>>({})
+  const [uploadingIdx, setUploadingIdx] = useState<number | null>(null)
 
   useEffect(() => {
     const load = async () => {
@@ -46,6 +48,29 @@ export default function MysteryFormPage({ token }: Props) {
     load()
   }, [token])
 
+  const openCamera = (sectionIdx: number) => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0]
+      if (!file || !session) return
+      setUploadingIdx(sectionIdx)
+      const ext = file.name.split('.').pop() || 'jpg'
+      const path = `${session.id}/${sectionIdx}_${Date.now()}.${ext}`
+      const { error } = await supabase.storage.from('mystery-photos').upload(path, file)
+      if (error) { alert('上傳失敗，請稍後再試'); setUploadingIdx(null); return }
+      const { data: { publicUrl } } = supabase.storage.from('mystery-photos').getPublicUrl(path)
+      setPhotos(p => ({ ...p, [sectionIdx]: [...(p[sectionIdx] ?? []), publicUrl] }))
+      setUploadingIdx(null)
+    }
+    input.click()
+  }
+
+  const removePhoto = (sectionIdx: number, url: string) => {
+    setPhotos(p => ({ ...p, [sectionIdx]: (p[sectionIdx] ?? []).filter(u => u !== url) }))
+  }
+
   const getScore = (key: string) => scores[key] ?? 0
   const total = SCORE_SECTIONS.reduce(
     (sum, sec) => sum + sec.items.reduce((s, it) => s + getScore(it.key), 0), 0
@@ -62,6 +87,12 @@ export default function MysteryFormPage({ token }: Props) {
       })
     )
 
+    const photosPayload: Record<string, string[]> = {}
+    Object.entries(photos).forEach(([idx, urls]) => {
+      const sec = SCORE_SECTIONS[parseInt(idx)]
+      if (sec && urls.length > 0) photosPayload[sec.title] = urls
+    })
+
     const { error } = await supabase
       .from('mystery_sessions')
       .update({
@@ -70,6 +101,7 @@ export default function MysteryFormPage({ token }: Props) {
         form_data:    formData,
         total_score:  total,
         visit_notes:  visitNotes,
+        photos:       photosPayload,
       })
       .eq('token', token)
 
@@ -143,12 +175,26 @@ export default function MysteryFormPage({ token }: Props) {
             transition={{ delay: si * 0.05 }}
             className="bg-white rounded-2xl overflow-hidden shadow-sm"
           >
-            <div className="px-4 py-3 border-b border-gray-50" style={{ background: '#f0fdf4' }}>
-              <p className="text-base font-bold text-green-700">{sec.title}</p>
-              <p className="text-sm text-green-600">
-                小計：{sec.items.reduce((s, it) => s + getScore(it.key), 0)} /
-                {sec.items.reduce((s, it) => s + it.max, 0)} 分
-              </p>
+            <div className="px-4 py-3 border-b border-gray-50 flex items-center justify-between" style={{ background: '#f0fdf4' }}>
+              <div>
+                <p className="text-base font-bold text-green-700">{sec.title}</p>
+                <p className="text-sm text-green-600">
+                  小計：{sec.items.reduce((s, it) => s + getScore(it.key), 0)} /
+                  {sec.items.reduce((s, it) => s + it.max, 0)} 分
+                </p>
+              </div>
+              <button
+                onClick={() => openCamera(si)}
+                disabled={uploadingIdx === si}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all"
+                style={{ background: '#dcfce7', color: '#007d30' }}
+              >
+                {uploadingIdx === si
+                  ? <RefreshCw className="w-4 h-4 animate-spin" />
+                  : <Camera className="w-4 h-4" />
+                }
+                {(photos[si] ?? []).length > 0 ? `${(photos[si] ?? []).length}張` : '拍照'}
+              </button>
             </div>
             <div className="divide-y divide-gray-50">
               {sec.items.map(item => {
@@ -222,6 +268,24 @@ export default function MysteryFormPage({ token }: Props) {
                 )
               })}
             </div>
+            {(photos[si] ?? []).length > 0 && (
+              <div className="px-4 pb-4 pt-2">
+                <p className="text-sm text-gray-400 mb-2">附加照片</p>
+                <div className="flex flex-wrap gap-2">
+                  {(photos[si] ?? []).map(url => (
+                    <div key={url} className="relative">
+                      <img src={url} alt="" className="w-20 h-20 object-cover rounded-xl border border-gray-200" />
+                      <button
+                        onClick={() => removePhoto(si, url)}
+                        className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center shadow"
+                      >
+                        <X className="w-3.5 h-3.5 text-white" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </motion.div>
         ))}
 

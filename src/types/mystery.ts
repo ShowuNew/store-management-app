@@ -11,6 +11,7 @@ export interface MysterySession {
   form_data?: MysteryFormData
   total_score?: number
   visit_notes?: string
+  photos?: Record<string, string[]>
 }
 
 export type MysteryFormData = Record<string, { score: number; note: string }>

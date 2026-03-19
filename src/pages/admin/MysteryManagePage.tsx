@@ -299,6 +299,23 @@ export default function MysteryManagePage({ user, onBack }: Props) {
                             <p className="text-base text-gray-700 leading-relaxed">{s.visit_notes}</p>
                           </div>
                         )}
+                        {s.photos && Object.keys(s.photos).length > 0 && (
+                          <div className="bg-gray-50 rounded-xl px-3 py-3">
+                            <p className="text-sm font-bold text-gray-400 mb-2">附加照片</p>
+                            {Object.entries(s.photos).map(([secTitle, urls]) => (
+                              <div key={secTitle} className="mb-2 last:mb-0">
+                                <p className="text-sm text-gray-500 mb-1">{secTitle}</p>
+                                <div className="flex flex-wrap gap-1.5">
+                                  {urls.map(url => (
+                                    <a key={url} href={url} target="_blank" rel="noopener noreferrer">
+                                      <img src={url} alt="" className="w-16 h-16 object-cover rounded-lg border border-gray-200" />
+                                    </a>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
 

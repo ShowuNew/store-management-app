@@ -794,6 +794,31 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           <span className="text-2xl font-bold text-gray-400 pb-2">°C</span>
         </div>
 
+        {/* Navigation buttons — placed right after input so keyboard won't cover them */}
+        <div className="flex gap-2 mt-3 mb-3">
+          <button
+            onClick={() => goCard(cardIdx - 1)}
+            disabled={cardIdx === 0}
+            className="flex-1 py-3 rounded-2xl text-base font-bold transition-all disabled:opacity-40"
+            style={{ background: '#f3f4f6', color: '#374151' }}
+          >
+            ← 上一台
+          </button>
+          <button
+            onClick={() => {
+              if (isLast) {
+                saveCurrentCard()
+              } else {
+                goCard(cardIdx + 1)
+              }
+            }}
+            className="flex-1 py-3 rounded-2xl text-base font-bold text-white transition-all"
+            style={{ background: isLast ? 'linear-gradient(135deg, #00a040, #007d30)' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}
+          >
+            {isLast ? '完成 ✓' : '確認，下一台 →'}
+          </button>
+        </div>
+
         {/* Status line */}
         <div className="text-center mb-3 h-6">
           {cardNormal === true && <span className="text-base font-semibold text-green-600">✅ 在標準範圍內</span>}
@@ -832,31 +857,6 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               />
             )
           })}
-        </div>
-
-        {/* Navigation buttons */}
-        <div className="flex gap-2 mt-4">
-          <button
-            onClick={() => goCard(cardIdx - 1)}
-            disabled={cardIdx === 0}
-            className="flex-1 py-3 rounded-2xl text-base font-bold transition-all disabled:opacity-40"
-            style={{ background: '#f3f4f6', color: '#374151' }}
-          >
-            ← 上一台
-          </button>
-          <button
-            onClick={() => {
-              if (isLast) {
-                saveCurrentCard()
-              } else {
-                goCard(cardIdx + 1)
-              }
-            }}
-            className="flex-1 py-3 rounded-2xl text-base font-bold text-white transition-all"
-            style={{ background: isLast ? 'linear-gradient(135deg, #00a040, #007d30)' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}
-          >
-            {isLast ? '完成 ✓' : '確認，下一台 →'}
-          </button>
         </div>
 
         {/* Small list mode link */}

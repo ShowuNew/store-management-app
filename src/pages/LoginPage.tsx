@@ -55,7 +55,7 @@ export default function LoginPage({ onLogin }: Props) {
   }
 
   return (
-    <div className="min-h-dvh flex flex-col" style={{ background: '#f4faf6' }}>
+    <div className="min-h-dvh flex flex-col overflow-x-hidden" style={{ background: '#f4faf6' }}>
 
       {/* 頂部品牌區 */}
       <div

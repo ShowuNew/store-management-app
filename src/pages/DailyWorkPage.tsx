@@ -783,6 +783,14 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             placeholder="—"
             value={cardValue}
             onChange={e => setCardValue(e.target.value)}
+            enterKeyHint={isLast ? 'done' : 'next'}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault()
+                if (isLast) saveCurrentCard()
+                else goCard(cardIdx + 1)
+              }
+            }}
             className="outline-none bg-transparent text-center font-black"
             style={{
               fontSize: '56px',

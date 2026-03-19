@@ -127,7 +127,7 @@ export default function MysteryFormPage({ token }: Props) {
       <div className="bg-white rounded-3xl p-8 text-center shadow-sm max-w-sm w-full">
         <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-4" />
         <p className="text-base font-bold text-gray-800">{loadErr}</p>
-        <p className="text-base text-gray-400 mt-2">如有疑問請聯絡督導</p>
+        <p className="text-base text-gray-400 mt-2">如有疑問請聯絡擔當</p>
       </div>
     </div>
   )

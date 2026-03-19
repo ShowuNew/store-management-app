@@ -196,7 +196,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   const allDoneCount = countable.filter(m => m.done === m.total).length
   const pct          = countable.length > 0 ? Math.round(allDoneCount / countable.length * 100) : 0
   const tempAllOk    = tempStatus.every(t => t.ok)
-  const roleLabel    = { staff: '店員', manager: '店長', supervisor: '督導', admin: '管理員' }[user.role]
+  const roleLabel    = { staff: '店員', manager: '店長', supervisor: '擔當', admin: '管理員' }[user.role]
 
   return (
     <div className="min-h-dvh bg-gray-50">

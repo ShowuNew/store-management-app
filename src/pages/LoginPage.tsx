@@ -10,7 +10,7 @@ interface Props {
 const roleLabels: Record<Role, string> = {
   staff: '店員',
   manager: '店長',
-  supervisor: '督導',
+  supervisor: '擔當',
   admin: '系統管理員',
 }
 

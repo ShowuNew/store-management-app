@@ -394,7 +394,7 @@ export default function InspectionPage({ user, onBack }: Props) {
           style={{ background: saved ? 'linear-gradient(135deg,#00a040,#007d30)' : 'linear-gradient(135deg,#8b5cf6,#a78bfa)' }}
         >
           <Save className="w-4 h-4" />
-          {saving ? '儲存中...' : saved ? '已儲存 ✓' : `提交點檢結果（${user.role === 'supervisor' ? '督導' : user.name}簽署）`}
+          {saving ? '儲存中...' : saved ? '已儲存 ✓' : `提交點檢結果（${user.role === 'supervisor' ? '擔當' : user.name}簽署）`}
         </button>
       </div>
     </div>

@@ -284,7 +284,7 @@ export default function StatsPage({ user, onBack }: Props) {
                         />
                       ))}
                     </div>
-                    <span className="text-[9px] text-gray-400 whitespace-nowrap">{d.label}</span>
+                    <span className="text-xs text-gray-400 whitespace-nowrap">{d.label}</span>
                   </motion.div>
                 ))}
               </div>

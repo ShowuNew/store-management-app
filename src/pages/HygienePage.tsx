@@ -325,7 +325,7 @@ export default function HygienePage({ user, onBack }: Props) {
               >
                 {c.name}
                 {cFail > 0 && (
-                  <span className="ml-1 w-4 h-4 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-[9px] font-black">
+                  <span className="ml-1 w-5 h-5 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-black">
                     {cFail}
                   </span>
                 )}

@@ -236,8 +236,8 @@ const hygieneCategories = [
 
 function CheckDot({ done }: { done: boolean }) {
   return (
-    <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${done ? 'bg-green-500 border-green-500' : 'border-gray-200'}`}>
-      {done && <span className="text-white text-[8px]">✓</span>}
+    <span className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${done ? 'bg-green-500 border-green-500' : 'border-gray-200'}`}>
+      {done && <span className="text-white text-xs leading-none">✓</span>}
     </span>
   )
 }
@@ -262,7 +262,7 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
       <div className="px-4 py-3 space-y-4">
         {/* 廢棄物 */}
         <div>
-          <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">廢棄物處理</p>
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">廢棄物處理</p>
           <div className="space-y-1">
             {[
               { label: '廚餘袋數', value: waste.foodWasteBags ?? '—' },
@@ -289,7 +289,7 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
         {/* 設備清潔 */}
         {Object.keys(cleaning).length > 0 && (
           <div>
-            <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">設備清潔</p>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">設備清潔</p>
             <div className="space-y-1">
               {Object.entries(cleaning).map(([machine, time]) => (
                 <div key={machine} className="flex items-center justify-between">
@@ -303,7 +303,7 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
 
         {/* 友善食光 */}
         <div>
-          <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">友善食光 / 過期品下架</p>
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">友善食光 / 過期品下架</p>
           <div className="space-y-1">
             {friendlyKeys.map(({ key, label }) => (
               <div key={key} className="flex items-center gap-2">
@@ -316,7 +316,7 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
 
         {/* 儀容衛生 */}
         <div>
-          <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">儀容與衛生</p>
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">儀容與衛生</p>
           <div className="space-y-1">
             <div className="flex items-center gap-2"><CheckDot done={!!uniform.appearance} /><span className="text-base text-gray-600">服裝儀容合規</span></div>
             <div className="flex items-center gap-2"><CheckDot done={!!uniform.sanitize} /><span className="text-base text-gray-600">手部清潔消毒</span></div>
@@ -325,7 +325,7 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
 
         {/* 簽名 */}
         <div>
-          <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">簽名確認</p>
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">簽名確認</p>
           <div className="space-y-1">
             <div className="flex items-center gap-2"><CheckDot done={signed} /><span className="text-base text-gray-600">班次員工簽名</span></div>
             <div className="flex items-center gap-2"><CheckDot done={mgrSigned} /><span className="text-base text-gray-600">店長簽名</span></div>
@@ -335,7 +335,7 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
         {/* 交接備注 */}
         {record.handover_note && (
           <div>
-            <p className="text-[13px] font-bold text-gray-400 uppercase tracking-[0.08em] mb-1">交接備注</p>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1">交接備注</p>
             <p className="text-base text-gray-600 whitespace-pre-line">{record.handover_note}</p>
           </div>
         )}
@@ -384,8 +384,8 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
         <div className="space-y-1">
           {allKeys.map(key => (
             <div key={key} className="flex items-center gap-2">
-              <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center shrink-0 ${doneItems[key] ? 'bg-green-500 border-green-500' : 'border-gray-200'}`}>
-                {doneItems[key] && <span className="text-white text-[8px]">✓</span>}
+              <span className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${doneItems[key] ? 'bg-green-500 border-green-500' : 'border-gray-200'}`}>
+                {doneItems[key] && <span className="text-white text-xs leading-none">✓</span>}
               </span>
               <span className="text-base text-gray-600">{key}</span>
             </div>

@@ -32,7 +32,7 @@ export default function BottomNav({ currentPage, onNavigate }: Props) {
                 <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 rounded-full bg-green-700" />
               )}
               <Icon className="w-5 h-5" strokeWidth={active ? 2.5 : 1.8} />
-              <span className="text-[11px] font-medium leading-tight">{label}</span>
+              <span className="text-xs font-medium leading-tight">{label}</span>
             </button>
           )
         })}

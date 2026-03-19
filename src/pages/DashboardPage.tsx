@@ -267,7 +267,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
 
         {/* Alerts */}
         <div className="space-y-2">
-          <p className="text-[13px] font-bold text-gray-400 px-1 uppercase tracking-[0.08em]">最新通知</p>
+          <p className="text-sm font-bold text-gray-400 px-1 uppercase tracking-[0.08em]">最新通知</p>
 
           {loading ? (
             <div className="flex items-center justify-center py-6 gap-2 text-gray-300">
@@ -319,7 +319,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 className="bg-white rounded-2xl p-4 text-left shadow-sm relative"
               >
                 {badge && (
-                  <span className="absolute top-3 right-3 text-[11px] font-bold px-1.5 py-0.5 rounded-lg bg-red-500 text-white">
+                  <span className="absolute top-3 right-3 text-xs font-bold px-1.5 py-0.5 rounded-lg bg-red-500 text-white">
                     {badge}
                   </span>
                 )}
@@ -329,7 +329,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-base font-bold text-gray-800 leading-tight">{label}</p>
-                    <p className="text-[13px] text-gray-400 mt-0.5">{desc}</p>
+                    <p className="text-sm text-gray-400 mt-0.5">{desc}</p>
                     {done !== null && total !== null ? (
                       <div className="mt-2">
                         <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">

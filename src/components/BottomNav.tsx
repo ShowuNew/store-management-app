@@ -7,12 +7,12 @@ interface Props {
 }
 
 const tabs = [
-  { page: 'dashboard'  as Page, icon: Home,          label: '首頁'   },
-  { page: 'daily-work' as Page, icon: ClipboardCheck, label: '每日確認' },
-  { page: 'hygiene'    as Page, icon: ShieldCheck,    label: '衛生管理' },
-  { page: 'inspection' as Page, icon: ClipboardList,  label: '店鋪點檢' },
-  { page: 'anomaly'    as Page, icon: AlertTriangle,  label: '異常回報' },
-  { page: 'equipment'  as Page, icon: Wrench,         label: '設備保養' },
+  { page: 'dashboard'  as Page, icon: Home,          label: '首頁' },
+  { page: 'daily-work' as Page, icon: ClipboardCheck, label: '每日' },
+  { page: 'hygiene'    as Page, icon: ShieldCheck,    label: '衛生' },
+  { page: 'inspection' as Page, icon: ClipboardList,  label: '點檢' },
+  { page: 'anomaly'    as Page, icon: AlertTriangle,  label: '異常' },
+  { page: 'equipment'  as Page, icon: Wrench,         label: '設備' },
 ]
 
 export default function BottomNav({ currentPage, onNavigate }: Props) {

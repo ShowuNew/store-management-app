@@ -8,10 +8,10 @@ interface Props {
 }
 
 const tabs: { page: Page; label: string; icon: ReactNode }[] = [
-  { page: 'admin-dashboard', label: '總覽',     icon: <LayoutDashboard className="w-5 h-5" /> },
-  { page: 'admin-records',   label: '紀錄查閱', icon: <ClipboardList   className="w-5 h-5" /> },
-  { page: 'admin-anomaly',   label: '異常管理', icon: <AlertTriangle   className="w-5 h-5" /> },
-  { page: 'admin-stats',     label: '數據統計', icon: <BarChart2       className="w-5 h-5" /> },
+  { page: 'admin-dashboard', label: '總覽', icon: <LayoutDashboard className="w-5 h-5" /> },
+  { page: 'admin-records',   label: '紀錄', icon: <ClipboardList   className="w-5 h-5" /> },
+  { page: 'admin-anomaly',   label: '異常', icon: <AlertTriangle   className="w-5 h-5" /> },
+  { page: 'admin-stats',     label: '統計', icon: <BarChart2       className="w-5 h-5" /> },
 ]
 
 export default function AdminBottomNav({ currentPage, onNavigate }: Props) {

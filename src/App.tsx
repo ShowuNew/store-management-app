@@ -16,14 +16,18 @@ import AnomalyManagePage   from './pages/admin/AnomalyManagePage'
 import StatsPage           from './pages/admin/StatsPage'
 import MysteryManagePage   from './pages/admin/MysteryManagePage'
 import MysteryFormPage     from './pages/MysteryFormPage'
+import SubManagerManagePage from './pages/SubManagerManagePage'
+import SubManagerFormPage  from './pages/SubManagerFormPage'
 import BottomNav           from './components/BottomNav'
 import AdminBottomNav      from './components/AdminBottomNav'
 import type { User, Page } from './types'
 
 // 若 URL 帶有 token 參數，直接顯示神秘客表單（無需登入）
 const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
+// 若 URL 帶有 sub-token 參數，直接顯示小店長工作日誌（無需登入）
+const SUB_TOKEN = new URLSearchParams(window.location.search).get('sub-token')
 
-const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats']
+const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage']
 const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage']
 
 const staffTabs = [
@@ -57,6 +61,8 @@ function App() {
 
   // 神秘客公開表單（無需登入）
   if (URL_TOKEN) return <MysteryFormPage token={URL_TOKEN} />
+  // 小店長公開表單（無需登入）
+  if (SUB_TOKEN) return <SubManagerFormPage token={SUB_TOKEN} />
 
   if (!user) return <LoginPage onLogin={handleLogin} />
 
@@ -73,8 +79,9 @@ function App() {
       case 'admin-records':   return <RecordsPage       user={user} onBack={goBack} />
       case 'admin-anomaly':   return <AnomalyManagePage user={user} onBack={goBack} />
       case 'admin-stats':     return <StatsPage         user={user} onBack={goBack} />
-      case 'mystery-manage':  return <MysteryManagePage user={user} onBack={goBack} />
-      default:                return <DashboardPage     user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />
+      case 'mystery-manage':     return <MysteryManagePage    user={user} onBack={goBack} />
+      case 'sub-manager-manage': return <SubManagerManagePage user={user} onBack={goBack} />
+      default:                   return <DashboardPage        user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />
     }
   }
 

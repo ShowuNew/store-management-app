@@ -14,6 +14,7 @@ export type Page =
   | 'admin-anomaly'
   | 'admin-stats'
   | 'mystery-manage'
+  | 'sub-manager-manage'
 
 export interface User {
   id: string

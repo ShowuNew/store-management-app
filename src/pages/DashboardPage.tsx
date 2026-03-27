@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   ClipboardList, ShieldCheck, Zap, AlertTriangle, CheckSquare,
-  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw,
+  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -198,6 +198,11 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   const tempAllOk    = tempStatus.every(t => t.ok)
   const roleLabel    = { staff: '店員', manager: '店長', supervisor: '擔當', admin: '管理員' }[user.role]
 
+  // 小店長連結模組（只對店長顯示）
+  const subManagerModule: ModuleEntry | null = user.role === 'manager'
+    ? { page: 'sub-manager-manage' as Page, icon: UserPlus, label: '小店長連結', desc: '產生臨時人員入口連結', color: '#7c3aed', bg: '#f5f3ff', done: null, total: null }
+    : null
+
   return (
     <div className="min-h-dvh bg-gray-50">
       <PageHeader
@@ -308,7 +313,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         <div>
           <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
           <div className="flex flex-col gap-2">
-            {modules.map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (
+            {[...modules, ...(subManagerModule ? [subManagerModule] : [])].map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (
               <motion.button
                 key={page + i}
                 initial={{ opacity: 0, x: -8 }}

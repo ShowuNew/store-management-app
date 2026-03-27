@@ -136,21 +136,21 @@ type ViewType = 'overview' | 'temperature' | 'waste' | 'cleaning' | 'friendly' |
 const shifts = ['早班 07:00–15:00', '晚班 15:00–23:00', '大夜班 23:00–07:00']
 
 // ── 溫度設備規格 ──
-interface TempSpec { location: string; required: string; zone: string; check: (v: number) => boolean }
+interface TempSpec { location: string; required: string; zone: string; check: (v: number) => boolean; standard?: string }
 const tempSpecs: TempSpec[] = [
-  { location: '4°C 間隔機（前後中島）', required: '4°C',      zone: '賣場', check: v => v >= 2 && v <= 6 },
-  { location: 'OC',                    required: '0~7°C',    zone: '賣場', check: v => v >= 0 && v <= 7 },
-  { location: 'WI（走入式冷藏）',      required: '0~7°C',    zone: '賣場', check: v => v >= 0 && v <= 7 },
-  { location: '立式冷凍',              required: '-18°C以下', zone: '賣場', check: v => v <= -18 },
-  { location: '18°C 欄',               required: '18°C以下',  zone: '賣場', check: v => v <= 18 },
-  { location: '咖啡冷藏機台',          required: '0~7°C',    zone: '咖啡', check: v => v >= 0 && v <= 7 },
-  { location: '牛奶冰箱',              required: '0~7°C',    zone: '咖啡', check: v => v >= 0 && v <= 7 },
-  { location: '冷凍冰箱',              required: '-18°C以下', zone: '咖啡', check: v => v <= -18 },
-  { location: '冰淇淋機（子母機）',    required: '依機台',    zone: '咖啡', check: () => true },
-  { location: '蒸箱',                  required: '65°C以上',  zone: 'FF區', check: v => v >= 65 },
-  { location: '關東煮機',              required: '82~85°C',   zone: 'FF區', check: v => v >= 82 && v <= 85 },
-  { location: '鮮食機',                required: '0~7°C',    zone: 'FF區', check: v => v >= 0 && v <= 7 },
-  { location: 'FF 冷凍冰箱',            required: '-20°C以下', zone: 'FF區', check: v => v <= -20 },
+  { location: '4°C 間隔機（前後中島）', required: '4°C',      zone: '賣場', check: v => v >= 2  && v <= 6,   standard: '4'   },
+  { location: 'OC',                    required: '0~7°C',    zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { location: 'WI（走入式冷藏）',      required: '0~7°C',    zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { location: '立式冷凍',              required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18' },
+  { location: '18°C 欄',               required: '18°C以下',  zone: '賣場', check: v => v <= 18,             standard: '16'  },
+  { location: '咖啡冷藏機台',          required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { location: '牛奶冰箱',              required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { location: '冷凍冰箱',              required: '-18°C以下', zone: '咖啡', check: v => v <= -18,            standard: '-18' },
+  { location: '冰淇淋機（子母機）',    required: '依機台',    zone: '咖啡', check: () => true                              },
+  { location: '蒸箱',                  required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
+  { location: '關東煮機',              required: '82~85°C',   zone: 'FF區', check: v => v >= 82 && v <= 85,  standard: '83'  },
+  { location: '鮮食機',                required: '0~7°C',    zone: 'FF區', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { location: 'FF 冷凍冰箱',            required: '-20°C以下', zone: 'FF區', check: v => v <= -20,            standard: '-20' },
 ]
 
 // ── 機器清潔清單 ──
@@ -353,7 +353,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     if (!swipeMode) return
     const readings = getReadings(cardIdx)
     const lastFilled = [...readings].reverse().find(r => r.value.trim())
-    setCardValue(lastFilled?.value ?? prevTempData[cardIdx] ?? '')
+    setCardValue(lastFilled?.value ?? prevTempData[cardIdx] ?? tempSpecs[cardIdx]?.standard ?? '')
   }, [cardIdx, swipeMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const getReadings = (i: number) => tempData[i] ?? []
@@ -840,10 +840,13 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           <span className="text-2xl font-bold text-gray-400 pb-2">°C</span>
         </div>
 
-        {/* 上次值提示 */}
-        {prevTempData[cardIdx] && cardValue === prevTempData[cardIdx] && getReadings(cardIdx).length === 0 && (
-          <p className="text-sm text-amber-600 text-center -mt-1 mb-1 font-medium">
-            ↑ 帶入上次值，請確認後送出
+        {/* 上次值 / 標準值提示 */}
+        {getReadings(cardIdx).length === 0 && cardValue !== '' && (
+          <p className="text-sm text-center -mt-1 mb-1 font-medium"
+            style={{ color: prevTempData[cardIdx] === cardValue ? '#d97706' : '#9ca3af' }}>
+            {prevTempData[cardIdx] === cardValue
+              ? '↑ 帶入上次值，請確認後送出'
+              : `↑ 標準參考值 ${tempSpecs[cardIdx]?.required}，請確認後送出`}
           </p>
         )}
 

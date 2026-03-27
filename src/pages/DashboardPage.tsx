@@ -196,7 +196,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   const allDoneCount = countable.filter(m => m.done === m.total).length
   const pct          = countable.length > 0 ? Math.round(allDoneCount / countable.length * 100) : 0
   const tempAllOk    = tempStatus.every(t => t.ok)
-  const roleLabel    = { staff: '店員', manager: '店長', supervisor: '擔當', admin: '管理員' }[user.role]
+  const roleLabel    = { staff: '店員', manager: '店長', 'sub-manager': '小店長', supervisor: '擔當', admin: '管理員' }[user.role]
 
   // 小店長連結模組（只對店長顯示）
   const subManagerModule: ModuleEntry | null = user.role === 'manager'

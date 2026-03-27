@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react'
 import { RefreshCw, CheckCircle2 } from 'lucide-react'
 import { supabase } from '../lib/supabase'
-import DailyWorkPage from './DailyWorkPage'
-import type { User } from '../types'
+import DashboardPage  from './DashboardPage'
+import DailyWorkPage  from './DailyWorkPage'
+import HygienePage    from './HygienePage'
+import InspectionPage from './InspectionPage'
+import AnomalyPage    from './AnomalyPage'
+import EquipmentPage  from './EquipmentPage'
+import BottomNav      from '../components/BottomNav'
+import type { User, Page } from '../types'
 
 interface Props { token: string }
 
@@ -16,14 +22,14 @@ interface SubManagerSession {
   status: 'pending' | 'completed' | 'expired'
 }
 
-const FM_GREEN = '#00a040'
-const FM_GREEN_DARK = '#007d30'
+const NAV_PAGES: Page[] = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection']
 
 export default function SubManagerFormPage({ token }: Props) {
-  const [session, setSession] = useState<SubManagerSession | null>(null)
-  const [loadErr, setLoadErr] = useState<string | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [done, setDone]       = useState(false)
+  const [session, setSession]     = useState<SubManagerSession | null>(null)
+  const [loadErr, setLoadErr]     = useState<string | null>(null)
+  const [loading, setLoading]     = useState(true)
+  const [done, setDone]           = useState(false)
+  const [currentPage, setCurrentPage] = useState<Page>('dashboard')
 
   useEffect(() => {
     const load = async () => {
@@ -47,13 +53,14 @@ export default function SubManagerFormPage({ token }: Props) {
     load()
   }, [token])
 
-  // Called by DailyWorkPage when successfully saved
-  const handleBack = async () => {
+  const handleLogout = async () => {
     if (session) {
       await supabase.from('sub_manager_sessions').update({ status: 'completed' }).eq('token', token)
     }
     setDone(true)
   }
+
+  const goBack = () => setCurrentPage('dashboard')
 
   if (loading) {
     return (
@@ -70,7 +77,7 @@ export default function SubManagerFormPage({ token }: Props) {
     return (
       <div className="min-h-dvh flex flex-col items-center justify-center bg-gray-50 px-6">
         <div className="bg-white rounded-3xl shadow-sm p-8 max-w-sm w-full text-center space-y-4">
-          <div className="w-16 h-16 rounded-2xl mx-auto flex items-center justify-center text-3xl bg-red-50">⚠️</div>
+          <div className="text-4xl">⚠️</div>
           <h2 className="text-xl font-bold text-gray-800">連結無法使用</h2>
           <p className="text-base text-gray-500">{loadErr}</p>
           <p className="text-sm text-gray-400">請聯絡店長重新產生連結</p>
@@ -84,36 +91,43 @@ export default function SubManagerFormPage({ token }: Props) {
       <div className="min-h-dvh flex flex-col items-center justify-center bg-gray-50 px-6">
         <div className="bg-white rounded-3xl shadow-sm p-8 max-w-sm w-full text-center space-y-4">
           <CheckCircle2 className="w-16 h-16 mx-auto text-green-500" />
-          <h2 className="text-xl font-bold text-gray-800">填寫完成！</h2>
-          <p className="text-base text-gray-500">工作日誌已成功儲存，謝謝您的填寫。</p>
+          <h2 className="text-xl font-bold text-gray-800">已結束使用</h2>
+          <p className="text-base text-gray-500">感謝您的填寫，此連結已關閉。</p>
         </div>
       </div>
     )
   }
 
-  // Synthetic user built from session — no role restriction needed for DailyWorkPage
-  const syntheticUser: User = {
+  // 以 sub-manager role 建立 synthetic user（DashboardPage 不會顯示「小店長連結」模組）
+  const user: User = {
     id:        'sub-manager',
     name:      '小店長',
-    role:      'staff',
+    role:      'sub-manager',
     storeId:   session!.store_id,
     storeName: session!.store_name || `全家 ${session!.store_id} 店`,
   }
 
-  return (
-    <div className="min-h-dvh bg-gray-50">
-      {/* Banner */}
-      <div
-        className="flex items-center gap-3 px-4 py-3"
-        style={{ background: `linear-gradient(135deg, ${FM_GREEN_DARK}, ${FM_GREEN})` }}
-      >
-        <div className="flex flex-col flex-1 min-w-0">
-          <p className="text-white font-bold text-base leading-tight">{syntheticUser.storeName}</p>
-          <p className="text-green-200 text-sm">小店長工作日誌（臨時入口）</p>
-        </div>
-      </div>
+  const renderPage = () => {
+    switch (currentPage) {
+      case 'daily-work':  return <DailyWorkPage  user={user} onBack={goBack} />
+      case 'hygiene':     return <HygienePage     user={user} onBack={goBack} />
+      case 'inspection':  return <InspectionPage  user={user} onBack={goBack} />
+      case 'anomaly':     return <AnomalyPage     user={user} onBack={goBack} />
+      case 'equipment':   return <EquipmentPage   user={user} onBack={goBack} />
+      default:            return <DashboardPage   user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />
+    }
+  }
 
-      <DailyWorkPage user={syntheticUser} onBack={handleBack} />
+  const showNav = NAV_PAGES.includes(currentPage)
+
+  return (
+    <div className="flex min-h-dvh bg-gray-50">
+      <main className="flex-1 min-w-0">
+        <div className={showNav ? 'pb-16' : ''}>
+          {renderPage()}
+        </div>
+      </main>
+      {showNav && <BottomNav currentPage={currentPage} onNavigate={setCurrentPage} />}
     </div>
   )
 }

@@ -7,13 +7,18 @@ interface Props {
   onLogin: (user: User) => void
 }
 
-const roleLabels: Record<Role, string> = {
+// 登入頁可選的身份（不含小店長，小店長透過連結進入）
+const loginRoles: Partial<Record<Role, string>> = {
   staff: '店員',
   manager: '店長',
-  'sub-manager': '小店長',
   supervisor: '擔當',
   admin: '系統管理員',
 }
+
+const roleLabels: Record<Role, string> = {
+  ...loginRoles,
+  'sub-manager': '小店長',
+} as Record<Role, string>
 
 const FM_GREEN = '#00a040'
 const FM_GREEN_DARK = '#007d30'
@@ -125,7 +130,7 @@ export default function LoginPage({ onLogin }: Props) {
                 value={role}
                 onChange={e => setRole(e.target.value as Role)}
               >
-                {(Object.entries(roleLabels) as [Role, string][]).map(([val, label]) => (
+                {(Object.entries(loginRoles) as [Role, string][]).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
                 ))}
               </select>

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import {
   Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench,
-  ClipboardList, LayoutDashboard, BarChart2,
+  ClipboardList, LayoutDashboard, BarChart2, Coffee,
 } from 'lucide-react'
 import LoginPage           from './pages/LoginPage'
 import DashboardPage       from './pages/DashboardPage'
@@ -18,6 +18,7 @@ import MysteryManagePage   from './pages/admin/MysteryManagePage'
 import MysteryFormPage     from './pages/MysteryFormPage'
 import SubManagerManagePage from './pages/SubManagerManagePage'
 import SubManagerFormPage  from './pages/SubManagerFormPage'
+import CoffeeCheckPage     from './pages/CoffeeCheckPage'
 import BottomNav           from './components/BottomNav'
 import AdminBottomNav      from './components/AdminBottomNav'
 import type { User, Page } from './types'
@@ -27,16 +28,17 @@ const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
 // 若 URL 帶有 sub-token 參數，直接顯示小店長工作日誌（無需登入）
 const SUB_TOKEN = new URLSearchParams(window.location.search).get('sub-token')
 
-const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage']
+const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage', 'coffee-check']
 const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage']
 
 const staffTabs = [
-  { page: 'dashboard'  as Page, icon: Home,          label: '首頁'   },
-  { page: 'daily-work' as Page, icon: ClipboardCheck, label: '每日確認' },
-  { page: 'hygiene'    as Page, icon: ShieldCheck,    label: '衛生管理' },
-  { page: 'inspection' as Page, icon: ClipboardList,  label: '店鋪點檢' },
-  { page: 'anomaly'    as Page, icon: AlertTriangle,  label: '異常回報' },
-  { page: 'equipment'  as Page, icon: Wrench,         label: '設備保養' },
+  { page: 'dashboard'    as Page, icon: Home,          label: '首頁'   },
+  { page: 'daily-work'   as Page, icon: ClipboardCheck, label: '每日確認' },
+  { page: 'hygiene'      as Page, icon: ShieldCheck,    label: '衛生管理' },
+  { page: 'inspection'   as Page, icon: ClipboardList,  label: '店鋪點檢' },
+  { page: 'anomaly'      as Page, icon: AlertTriangle,  label: '異常回報' },
+  { page: 'equipment'    as Page, icon: Wrench,         label: '設備保養' },
+  { page: 'coffee-check' as Page, icon: Coffee,         label: '咖啡自檢' },
 ]
 
 const adminTabs = [
@@ -81,6 +83,7 @@ function App() {
       case 'admin-stats':     return <StatsPage         user={user} onBack={goBack} />
       case 'mystery-manage':     return <MysteryManagePage    user={user} onBack={goBack} />
       case 'sub-manager-manage': return <SubManagerManagePage user={user} onBack={goBack} />
+      case 'coffee-check':       return <CoffeeCheckPage      user={user} onBack={goBack} />
       default:                   return <DashboardPage        user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />
     }
   }

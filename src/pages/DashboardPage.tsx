@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import {
   ClipboardList, ShieldCheck, Zap, AlertTriangle, CheckSquare,
-  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus,
+  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus, Coffee,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -180,16 +180,17 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   }
 
   const modules: ModuleEntry[] = [
-    { page: 'daily-work', icon: CheckSquare,  label: '每日工作確認', desc: '班次・溫度・清單',   color: '#00a040', bg: '#e8f7ee', done: counts.dailyWork.done,  total: counts.dailyWork.total  },
-    { page: 'hygiene',    icon: ShieldCheck,  label: '衛生自主管理', desc: '場所・品質・人員',   color: '#007d30', bg: '#d4efdf', done: counts.hygiene.done,    total: counts.hygiene.total    },
-    { page: 'inspection', icon: ClipboardList,label: '店鋪點檢',     desc: '年度稽查・評分',    color: '#00a040', bg: '#e8f7ee', done: null, total: null },
-    { page: 'equipment',  icon: Zap,          label: '設備清潔保養', desc: '節電・週期保養',    color: '#f59e0b', bg: '#fffbeb', done: counts.equipment.done,  total: counts.equipment.total  },
+    { page: 'daily-work',   icon: CheckSquare,  label: '每日工作確認', desc: '班次・溫度・清單',   color: '#00a040', bg: '#e8f7ee', done: counts.dailyWork.done,  total: counts.dailyWork.total  },
+    { page: 'hygiene',      icon: ShieldCheck,  label: '衛生自主管理', desc: '場所・品質・人員',   color: '#007d30', bg: '#d4efdf', done: counts.hygiene.done,    total: counts.hygiene.total    },
+    { page: 'inspection',   icon: ClipboardList,label: '店鋪點檢',     desc: '年度稽查・評分',    color: '#00a040', bg: '#e8f7ee', done: null, total: null },
+    { page: 'coffee-check', icon: Coffee,       label: '咖啡機自檢',   desc: '溫度・重量・狀態確認', color: '#7c3aed', bg: '#f5f3ff', done: null, total: null },
+    { page: 'equipment',    icon: Zap,          label: '設備清潔保養', desc: '節電・週期保養',    color: '#f59e0b', bg: '#fffbeb', done: counts.equipment.done,  total: counts.equipment.total  },
     {
       page: 'anomaly', icon: AlertTriangle, label: '異常回報', desc: '事件・追蹤・結案',
       color: '#ef4444', bg: '#fef2f2', done: null, total: null,
       badge: counts.openAnomaly > 0 ? `${counts.openAnomaly} 待處理` : undefined,
     },
-    { page: 'stats',      icon: TrendingUp,   label: '月報統計',     desc: '數據・績效分析',    color: '#007d30', bg: '#d4efdf', done: null, total: null },
+    { page: 'stats',        icon: TrendingUp,   label: '月報統計',     desc: '數據・績效分析',    color: '#007d30', bg: '#d4efdf', done: null, total: null },
   ]
 
   const countable    = modules.filter(m => m.done !== null && m.total !== null && (m.total ?? 0) > 0)

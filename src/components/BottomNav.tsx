@@ -1,4 +1,4 @@
-import { Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench, ClipboardList } from 'lucide-react'
+import { Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench, ClipboardList, Coffee } from 'lucide-react'
 import type { Page } from '../types'
 
 interface Props {
@@ -7,12 +7,13 @@ interface Props {
 }
 
 const tabs = [
-  { page: 'dashboard'  as Page, icon: Home,          label: '首頁' },
-  { page: 'daily-work' as Page, icon: ClipboardCheck, label: '每日' },
-  { page: 'hygiene'    as Page, icon: ShieldCheck,    label: '衛生' },
-  { page: 'inspection' as Page, icon: ClipboardList,  label: '點檢' },
-  { page: 'anomaly'    as Page, icon: AlertTriangle,  label: '異常' },
-  { page: 'equipment'  as Page, icon: Wrench,         label: '設備' },
+  { page: 'dashboard'    as Page, icon: Home,          label: '首頁' },
+  { page: 'daily-work'   as Page, icon: ClipboardCheck, label: '每日' },
+  { page: 'hygiene'      as Page, icon: ShieldCheck,    label: '衛生' },
+  { page: 'inspection'   as Page, icon: ClipboardList,  label: '點檢' },
+  { page: 'anomaly'      as Page, icon: AlertTriangle,  label: '異常' },
+  { page: 'equipment'    as Page, icon: Wrench,         label: '設備' },
+  { page: 'coffee-check' as Page, icon: Coffee,         label: '咖啡' },
 ]
 
 export default function BottomNav({ currentPage, onNavigate }: Props) {

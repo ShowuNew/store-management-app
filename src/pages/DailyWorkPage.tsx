@@ -263,6 +263,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [existingId, setExistingId] = useState<string | null>(null)
   const [tempZone, setTempZone]     = useState('全部')
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
+  const [prevTempData, setPrevTempData] = useState<Record<number, string>>({})
+  const [gpsAccuracy,  setGpsAccuracy]  = useState<number | null>(null)
 
   // Swipe card mode states
   const [swipeMode, setSwipeMode] = useState(true)
@@ -305,6 +307,27 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         setExistingId(null); setHandoverNote(''); setTempData({}); setSubmitted(false)
         setHandoverAnomaly(''); setHandoverSupply(''); setHandoverComplaint(''); setHandoverOther('')
         setShiftSignature('')
+        // 帶入上一次溫度記錄作為預設值
+        const { data: lastLog } = await supabase
+          .from('daily_work_logs')
+          .select('temperatures')
+          .eq('store_id', user.storeId)
+          .not('submitted_at', 'is', null)
+          .order('submitted_at', { ascending: false })
+          .limit(1)
+          .single()
+        if (lastLog?.temperatures) {
+          const prev: Record<number, string> = {}
+          ;(lastLog.temperatures as any[]).forEach((item: any, i: number) => {
+            if (Array.isArray(item.readings)) {
+              const lf = [...item.readings].reverse().find((r: any) => r.value !== null)
+              if (lf?.value != null) prev[i] = String(lf.value)
+            }
+          })
+          setPrevTempData(prev)
+        } else {
+          setPrevTempData({})
+        }
       }
 
       const sorted = [...allLogs].sort((a: any, b: any) =>
@@ -330,7 +353,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     if (!swipeMode) return
     const readings = getReadings(cardIdx)
     const lastFilled = [...readings].reverse().find(r => r.value.trim())
-    setCardValue(lastFilled?.value ?? '')
+    setCardValue(lastFilled?.value ?? prevTempData[cardIdx] ?? '')
   }, [cardIdx, swipeMode]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const getReadings = (i: number) => tempData[i] ?? []
@@ -350,6 +373,18 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const handleSubmit = async () => {
     setSaving(true)
     setSaveError(null)
+    setGpsAccuracy(null)
+
+    // 嘗試取得 GPS（不阻斷儲存）
+    if (navigator.geolocation) {
+      try {
+        const pos = await new Promise<GeolocationPosition>((resolve, reject) =>
+          navigator.geolocation.getCurrentPosition(resolve, reject, { timeout: 6000, enableHighAccuracy: true })
+        )
+        setGpsAccuracy(Math.round(pos.coords.accuracy))
+      } catch { /* GPS 失敗，繼續儲存 */ }
+    }
+
     const temperaturesPayload = tempSpecs.map((spec, i) => ({
       location: spec.location, required: spec.required, zone: spec.zone,
       readings: (tempData[i] ?? []).map(r => {
@@ -553,6 +588,9 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           <div className="w-full py-4 rounded-2xl bg-green-50 border border-green-100 text-center">
             <p className="text-green-600 font-bold text-base">✓ 已完成班次確認並簽署</p>
             <p className="text-green-400 text-base mt-0.5">{new Date().toLocaleTimeString('zh-TW')} 已儲存至資料庫</p>
+            {gpsAccuracy !== null && (
+              <p className="text-blue-400 text-sm mt-0.5">📍 GPS 定位成功（精度 ±{gpsAccuracy} 公尺）</p>
+            )}
             <button onClick={() => setSubmitted(false)} className="mt-2 text-base text-green-500 underline">繼續編輯</button>
           </div>
         )}
@@ -801,6 +839,13 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           />
           <span className="text-2xl font-bold text-gray-400 pb-2">°C</span>
         </div>
+
+        {/* 上次值提示 */}
+        {prevTempData[cardIdx] && cardValue === prevTempData[cardIdx] && getReadings(cardIdx).length === 0 && (
+          <p className="text-sm text-amber-600 text-center -mt-1 mb-1 font-medium">
+            ↑ 帶入上次值，請確認後送出
+          </p>
+        )}
 
         {/* Navigation buttons — placed right after input so keyboard won't cover them */}
         <div className="flex gap-2 mt-3 mb-3">

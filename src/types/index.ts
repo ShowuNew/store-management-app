@@ -15,6 +15,7 @@ export type Page =
   | 'admin-stats'
   | 'mystery-manage'
   | 'sub-manager-manage'
+  | 'coffee-check'
 
 export interface User {
   id: string

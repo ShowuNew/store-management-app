@@ -358,7 +358,10 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
   const getReadings = (i: number) => tempData[i] ?? []
   const addReading = (i: number) => {
-    setTempData(p => ({ ...p, [i]: [...(p[i] ?? []), { time: nowTimeStr(), value: '' }] }))
+    const existing   = tempData[i] ?? []
+    const lastFilled = [...existing].reverse().find(r => r.value.trim())
+    const defaultVal = lastFilled?.value ?? prevTempData[i] ?? tempSpecs[i]?.standard ?? ''
+    setTempData(p => ({ ...p, [i]: [...(p[i] ?? []), { time: nowTimeStr(), value: defaultVal }] }))
     setExpandedIdx(i); setSubmitted(false)
   }
   const updateReading = (i: number, rIdx: number, field: keyof TempReading, val: string) => {

@@ -317,7 +317,9 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         <div>
           <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
           <div className="flex flex-col gap-2">
-            {[...modules, ...(subManagerModule ? [subManagerModule] : [])].map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => (
+            {[...modules, ...(subManagerModule ? [subManagerModule] : [])].map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => {
+              const isCompleted = done !== null && total !== null && (total ?? 0) > 0 && done === total
+              return (
               <motion.button
                 key={page + i}
                 initial={{ opacity: 0, x: -8 }}
@@ -325,7 +327,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 transition={{ delay: i * 0.04 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={() => onNavigate(page)}
-                className="bg-white rounded-2xl p-4 text-left shadow-sm flex items-center gap-4"
+                className={`rounded-2xl p-4 text-left shadow-sm flex items-center gap-4 ${isCompleted ? 'bg-green-50' : 'bg-white'}`}
               >
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: bg }}>
                   <Icon className="w-6 h-6" style={{ color }} />
@@ -344,10 +346,13 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 </div>
                 {badge
                   ? <span className="text-xs font-bold px-2 py-1 rounded-lg bg-red-500 text-white shrink-0">{badge}</span>
-                  : <ChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
+                  : isCompleted
+                    ? <span className="text-xs font-bold px-2 py-1 rounded-lg bg-green-100 text-green-600 shrink-0">✓ 完成</span>
+                    : <ChevronRight className="w-5 h-5 text-gray-300 shrink-0" />
                 }
               </motion.button>
-            ))}
+              )
+            })}
           </div>
         </div>
       </div>

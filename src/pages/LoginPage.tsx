@@ -65,7 +65,7 @@ export default function LoginPage({ onLogin }: Props) {
 
       {/* 頂部品牌區 */}
       <div
-        className="flex flex-col items-center justify-center px-6 pt-4 pb-4 rounded-b-[40px]"
+        className="flex flex-col items-center justify-center px-6 pt-12 pb-8 rounded-b-[40px]"
         style={{ background: FM_GREEN }}
       >
         <motion.div

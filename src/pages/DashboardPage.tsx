@@ -257,7 +257,10 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
             {tempStatus.map(t => (
               <div key={t.label} className="flex flex-col items-center">
                 <span className="text-base text-gray-400">{t.label}</span>
-                <span className="text-base font-bold" style={{ color: t.ok ? '#10b981' : '#ef4444' }}>{t.value}</span>
+                <span className="text-base font-bold" style={{ color: t.value === '—' ? '#d1d5db' : t.ok ? '#10b981' : '#ef4444' }}>
+                  {t.value}
+                </span>
+                {t.value === '—' && <span className="text-xs text-gray-300 leading-tight">尚未記錄</span>}
               </div>
             ))}
           </div>

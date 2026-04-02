@@ -52,7 +52,9 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
   return (
     <div className="min-h-dvh bg-gray-50">
       {/* Header */}
-      <div className="bg-white px-4 pt-10 pb-5 shadow-sm">
+      <div className="bg-white shadow-sm">
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, #00a040, #007d30)' }} />
+        <div className="px-4 pt-6 pb-5">
         <div className="flex items-start justify-between">
           <div>
             <div className="flex items-center gap-2 mb-1">
@@ -70,6 +72,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
           >
             <LogOut className="w-3.5 h-3.5" /> 登出
           </button>
+        </div>
         </div>
       </div>
 

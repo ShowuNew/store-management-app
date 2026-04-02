@@ -8,13 +8,13 @@
 
 ### 需求說明
 **店長**可從系統中產生一組限時連結，將連結傳給**臨時人員（小店長）**。
-臨時人員點開連結後，**不需登入**，直接進入「每日確認（店鋪工作日誌）」頁面進行填寫。
-機制與神秘客連結完全相同（token URL）。
+臨時人員點開連結後，**不需登入**，可存取與**店長相同的所有功能頁面**（每日確認、衛生管理、店鋪點檢、異常回報、設備保養等）。
+機制與神秘客連結相同（token URL），但進入後的權限比照 `manager` 角色。
 
 ### 運作流程
 ```
 店長 → 系統產生 token → /?sub-token=xxxx
-臨時人員點開連結 → 直接進入 DailyWorkPage → 填寫完成儲存
+臨時人員點開連結 → 驗證 token → 以「小店長」身份進入完整系統（同店長權限）
 ```
 
 ### 修改範圍
@@ -26,11 +26,13 @@
   ```
 - 若有 `sub-token`，不需登入，直接渲染 `<SubManagerFormPage token={SUB_TOKEN} />`
 
-#### `src/pages/SubManagerFormPage.tsx`（新建）
-- 載入時向 Supabase 驗證 `sub_manager_sessions` token 是否有效（未過期、未使用完）
+#### `src/pages/SubManagerFormPage.tsx`（修改）
+- 載入時向 Supabase 驗證 `sub_manager_sessions` token 是否有效（未過期）
 - 若無效 → 顯示「連結已失效」提示
-- 若有效 → 直接渲染工作日誌填寫表單（複用 DailyWorkPage 的表單邏輯）
-- 顯示門市名稱，讓臨時人員確認是正確的門市
+- 若有效 → 建立 synthetic user（`role: 'manager'`），渲染完整 `DashboardPage`
+- 小店長擁有與店長完全相同的功能視圖（首頁、每日確認、衛生、點檢、異常、設備）
+- 不顯示「產生小店長連結」模組（避免無限循環產生連結）
+- 頂部顯示「小店長臨時入口」banner 說明身份
 
 #### `src/pages/DashboardPage.tsx`（店長首頁）
 - 在店長（`role === 'manager'`）首頁新增「產生小店長連結」入口按鈕
@@ -234,6 +236,74 @@ ALTER TABLE anomaly_reports    ADD COLUMN gps_accuracy float8;
 
 ---
 
+## 5. 照片上傳壓縮
+
+### 需求說明
+所有照片上傳前自動壓縮至 **最大 0.5 MB**，減少儲存空間與上傳時間，特別是在店內網路不穩定時改善使用體驗。
+
+### 壓縮配置
+- **最大檔案大小**：0.5 MB (500 KB)
+- **最大解析度**：1920px（寬或高）
+- **壓縮品質**：80%
+- **輸出格式**：統一轉為 JPEG
+- **處理方式**：使用 Web Worker 避免阻塞 UI
+
+### 修改範圍
+
+#### 安裝套件
+```bash
+npm install browser-image-compression
+```
+
+#### `src/lib/imageCompression.ts`（新建）
+建立通用壓縮工具函數：
+```ts
+import imageCompression from 'browser-image-compression'
+
+export const compressImage = async (file: File): Promise<File> => {
+  // 已經小於 500KB 就不壓縮
+  if (file.size <= 500 * 1024) return file
+
+  const options = {
+    maxSizeMB: 0.5,
+    maxWidthOrHeight: 1920,
+    useWebWorker: true,
+    fileType: 'image/jpeg',
+    initialQuality: 0.8,
+  }
+
+  try {
+    const compressedFile = await imageCompression(file, options)
+    console.log('壓縮完成:', {
+      原始大小: `${(file.size / 1024).toFixed(2)} KB`,
+      壓縮後: `${(compressedFile.size / 1024).toFixed(2)} KB`,
+      壓縮率: `${((1 - compressedFile.size / file.size) * 100).toFixed(1)}%`
+    })
+    return compressedFile
+  } catch (error) {
+    console.error('壓縮失敗，使用原始檔案:', error)
+    return file  // 失敗時回退到原始檔案
+  }
+}
+```
+
+#### `src/pages/AnomalyPage.tsx`
+- 在 `uploadPhoto` 函數中，上傳前先呼叫 `compressImage(file)`
+- 適用場景：異常回報的現場照片、維修照片
+
+#### `src/pages/MysteryFormPage.tsx`
+- 在 `openCamera` 函數的 `onchange` 處理中，上傳前先壓縮
+- 適用場景：神秘客評鑑的多張照片
+
+### 預期效果
+- **手機照片** (3-5 MB) → 壓縮至 300-500 KB
+- **壓縮時間**：1-3 秒
+- **品質損失**：肉眼幾乎無法察覺
+- **上傳速度**：提升 6-10 倍
+- **儲存成本**：節省 80-90%
+
+---
+
 ## 優先實作順序
 
 | 優先度 | 項目 | 難度 |
@@ -242,4 +312,5 @@ ALTER TABLE anomaly_reports    ADD COLUMN gps_accuracy float8;
 | P0 | 2. 溫度預設值 | 低 |
 | P1 | 3. 咖啡自檢頁面 | 中 |
 | P1 | 4. GPS Hook | 低 |
+| P1 | 5. 照片上傳壓縮 | 低 |
 | P2 | 4. GPS 整合各頁面 | 中 |

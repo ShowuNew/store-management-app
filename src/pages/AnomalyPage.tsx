@@ -6,6 +6,7 @@ import {
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
+import { compressImage } from '../lib/imageCompression'
 import type { User } from '../types'
 
 interface Props { user: User; onBack: () => void }
@@ -108,9 +109,10 @@ export default function AnomalyPage({ user, onBack }: Props) {
 
   // ── Photo upload helper ──
   const uploadPhoto = async (file: File, storeId: string): Promise<string> => {
-    const ext = file.name.split('.').pop() || 'jpg'
+    const compressed = await compressImage(file)
+    const ext = compressed.name.split('.').pop() || 'jpg'
     const path = `${storeId}/${Date.now()}.${ext}`
-    const { error: upErr } = await supabase.storage.from('photos').upload(path, file)
+    const { error: upErr } = await supabase.storage.from('photos').upload(path, compressed)
     if (upErr) throw upErr
     const { data: urlData } = supabase.storage.from('photos').getPublicUrl(path)
     return urlData.publicUrl

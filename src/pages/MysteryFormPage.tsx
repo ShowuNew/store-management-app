@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle2, AlertCircle, RefreshCw, Send, Camera, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
+import { compressImage } from '../lib/imageCompression'
 import { SCORE_SECTIONS, MAX_TOTAL } from '../types/mystery'
 import type { MysterySession, MysteryFormData } from '../types/mystery'
 
@@ -57,9 +58,10 @@ export default function MysteryFormPage({ token }: Props) {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file || !session) return
       setUploadingIdx(sectionIdx)
-      const ext = file.name.split('.').pop() || 'jpg'
+      const compressed = await compressImage(file)
+      const ext = compressed.name.split('.').pop() || 'jpg'
       const path = `${session.id}/${sectionIdx}_${Date.now()}.${ext}`
-      const { error } = await supabase.storage.from('mystery-photos').upload(path, file)
+      const { error } = await supabase.storage.from('mystery-photos').upload(path, compressed)
       if (error) { alert('上傳失敗，請稍後再試'); setUploadingIdx(null); return }
       const { data: { publicUrl } } = supabase.storage.from('mystery-photos').getPublicUrl(path)
       setPhotos(p => ({ ...p, [sectionIdx]: [...(p[sectionIdx] ?? []), publicUrl] }))

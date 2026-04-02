@@ -58,14 +58,19 @@ export default function MysteryFormPage({ token }: Props) {
       const file = (e.target as HTMLInputElement).files?.[0]
       if (!file || !session) return
       setUploadingIdx(sectionIdx)
-      const compressed = await compressImage(file)
-      const ext = compressed.name.split('.').pop() || 'jpg'
-      const path = `${session.id}/${sectionIdx}_${Date.now()}.${ext}`
-      const { error } = await supabase.storage.from('mystery-photos').upload(path, compressed)
-      if (error) { alert('上傳失敗，請稍後再試'); setUploadingIdx(null); return }
-      const { data: { publicUrl } } = supabase.storage.from('mystery-photos').getPublicUrl(path)
-      setPhotos(p => ({ ...p, [sectionIdx]: [...(p[sectionIdx] ?? []), publicUrl] }))
-      setUploadingIdx(null)
+      try {
+        const compressed = await compressImage(file)
+        const ext = compressed.type === 'image/jpeg' ? 'jpg' : (compressed.name.split('.').pop() || 'jpg')
+        const path = `${session.id}/${sectionIdx}_${Date.now()}.${ext}`
+        const { error } = await supabase.storage.from('mystery-photos').upload(path, compressed)
+        if (error) { alert('上傳失敗，請稍後再試'); return }
+        const { data: { publicUrl } } = supabase.storage.from('mystery-photos').getPublicUrl(path)
+        setPhotos(p => ({ ...p, [sectionIdx]: [...(p[sectionIdx] ?? []), publicUrl] }))
+      } catch {
+        alert('上傳失敗，請稍後再試')
+      } finally {
+        setUploadingIdx(null)
+      }
     }
     input.click()
   }

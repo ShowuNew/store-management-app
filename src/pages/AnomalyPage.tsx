@@ -110,7 +110,7 @@ export default function AnomalyPage({ user, onBack }: Props) {
   // ── Photo upload helper ──
   const uploadPhoto = async (file: File, storeId: string): Promise<string> => {
     const compressed = await compressImage(file)
-    const ext = compressed.name.split('.').pop() || 'jpg'
+    const ext = compressed.type === 'image/jpeg' ? 'jpg' : (compressed.name.split('.').pop() || 'jpg')
     const path = `${storeId}/${Date.now()}.${ext}`
     const { error: upErr } = await supabase.storage.from('photos').upload(path, compressed)
     if (upErr) throw upErr

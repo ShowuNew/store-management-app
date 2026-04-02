@@ -1,27 +1,36 @@
-import { useState } from 'react'
+import { useState, lazy, Suspense } from 'react'
 import {
   Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench,
   ClipboardList, LayoutDashboard, BarChart2, Coffee,
 } from 'lucide-react'
-import LoginPage           from './pages/LoginPage'
-import DashboardPage       from './pages/DashboardPage'
-import DailyWorkPage       from './pages/DailyWorkPage'
-import HygienePage         from './pages/HygienePage'
-import InspectionPage      from './pages/InspectionPage'
-import AnomalyPage         from './pages/AnomalyPage'
-import EquipmentPage       from './pages/EquipmentPage'
-import AdminDashboard      from './pages/admin/AdminDashboard'
-import RecordsPage         from './pages/admin/RecordsPage'
-import AnomalyManagePage   from './pages/admin/AnomalyManagePage'
-import StatsPage           from './pages/admin/StatsPage'
-import MysteryManagePage   from './pages/admin/MysteryManagePage'
-import MysteryFormPage     from './pages/MysteryFormPage'
-import SubManagerManagePage from './pages/SubManagerManagePage'
-import SubManagerFormPage  from './pages/SubManagerFormPage'
-import CoffeeCheckPage     from './pages/CoffeeCheckPage'
-import BottomNav           from './components/BottomNav'
-import AdminBottomNav      from './components/AdminBottomNav'
+import BottomNav      from './components/BottomNav'
+import AdminBottomNav from './components/AdminBottomNav'
 import type { User, Page } from './types'
+
+const LoginPage            = lazy(() => import('./pages/LoginPage'))
+const DashboardPage        = lazy(() => import('./pages/DashboardPage'))
+const DailyWorkPage        = lazy(() => import('./pages/DailyWorkPage'))
+const HygienePage          = lazy(() => import('./pages/HygienePage'))
+const InspectionPage       = lazy(() => import('./pages/InspectionPage'))
+const AnomalyPage          = lazy(() => import('./pages/AnomalyPage'))
+const EquipmentPage        = lazy(() => import('./pages/EquipmentPage'))
+const AdminDashboard       = lazy(() => import('./pages/admin/AdminDashboard'))
+const RecordsPage          = lazy(() => import('./pages/admin/RecordsPage'))
+const AnomalyManagePage    = lazy(() => import('./pages/admin/AnomalyManagePage'))
+const StatsPage            = lazy(() => import('./pages/admin/StatsPage'))
+const MysteryManagePage    = lazy(() => import('./pages/admin/MysteryManagePage'))
+const MysteryFormPage      = lazy(() => import('./pages/MysteryFormPage'))
+const SubManagerManagePage = lazy(() => import('./pages/SubManagerManagePage'))
+const SubManagerFormPage   = lazy(() => import('./pages/SubManagerFormPage'))
+const CoffeeCheckPage      = lazy(() => import('./pages/CoffeeCheckPage'))
+
+function PageLoading() {
+  return (
+    <div className="min-h-dvh flex items-center justify-center bg-gray-50">
+      <div className="w-8 h-8 rounded-full border-4 border-green-200 border-t-green-600 animate-spin" />
+    </div>
+  )
+}
 
 // 若 URL 帶有 token 參數，直接顯示神秘客表單（無需登入）
 const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
@@ -62,11 +71,11 @@ function App() {
   )
 
   // 神秘客公開表單（無需登入）
-  if (URL_TOKEN) return <MysteryFormPage token={URL_TOKEN} />
+  if (URL_TOKEN) return <Suspense fallback={<PageLoading />}><MysteryFormPage token={URL_TOKEN} /></Suspense>
   // 小店長公開表單（無需登入）
-  if (SUB_TOKEN) return <SubManagerFormPage token={SUB_TOKEN} />
+  if (SUB_TOKEN) return <Suspense fallback={<PageLoading />}><SubManagerFormPage token={SUB_TOKEN} /></Suspense>
 
-  if (!user) return <LoginPage onLogin={handleLogin} />
+  if (!user) return <Suspense fallback={<PageLoading />}><LoginPage onLogin={handleLogin} /></Suspense>
 
   const renderPage = () => {
     switch (currentPage) {
@@ -94,6 +103,7 @@ function App() {
 
   return (
     <div className="flex min-h-dvh bg-gray-50">
+      <Suspense fallback={<PageLoading />}>
       {/* Desktop sidebar */}
       {activeTabs.length > 0 && (
         <aside className="hidden md:flex flex-col w-56 fixed inset-y-0 left-0 bg-white border-r border-gray-100 z-20">
@@ -131,6 +141,7 @@ function App() {
       {/* Mobile bottom nav */}
       {showBottomNav      && <BottomNav      currentPage={currentPage} onNavigate={setCurrentPage} />}
       {showAdminBottomNav && <AdminBottomNav currentPage={currentPage} onNavigate={setCurrentPage} />}
+      </Suspense>
     </div>
   )
 }

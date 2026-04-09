@@ -552,7 +552,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
         {/* 簽名按鈕 */}
         {(() => {
-          const isManager = user.role === 'manager' || user.role === 'supervisor' || user.role === 'admin'
+          const isManager = user.role === 'manager' || user.role === 'sub-manager' || user.role === 'supervisor' || user.role === 'admin'
           const hasSig = isManager ? !!managerSignature : !!shiftSignature
           return (
             <motion.button whileTap={{ scale: 0.97 }} onClick={() => setSigModalOpen(true)}
@@ -601,7 +601,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         {/* 簽名 Modal */}
         <AnimatePresence>
           {sigModalOpen && (() => {
-            const isManager = user.role === 'manager' || user.role === 'supervisor' || user.role === 'admin'
+            const isManager = user.role === 'manager' || user.role === 'sub-manager' || user.role === 'supervisor' || user.role === 'admin'
             return (
               <motion.div
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}

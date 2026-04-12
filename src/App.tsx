@@ -1,7 +1,7 @@
 import { useState, lazy, Suspense } from 'react'
 import {
   Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench,
-  ClipboardList, LayoutDashboard, BarChart2, Coffee,
+  ClipboardList, LayoutDashboard, BarChart2, Coffee, Building2,
 } from 'lucide-react'
 import BottomNav      from './components/BottomNav'
 import AdminBottomNav from './components/AdminBottomNav'
@@ -19,6 +19,7 @@ const RecordsPage          = lazy(() => import('./pages/admin/RecordsPage'))
 const AnomalyManagePage    = lazy(() => import('./pages/admin/AnomalyManagePage'))
 const StatsPage            = lazy(() => import('./pages/admin/StatsPage'))
 const MysteryManagePage    = lazy(() => import('./pages/admin/MysteryManagePage'))
+const StoreStatusPage      = lazy(() => import('./pages/admin/StoreStatusPage'))
 const MysteryFormPage      = lazy(() => import('./pages/MysteryFormPage'))
 const SubManagerManagePage = lazy(() => import('./pages/SubManagerManagePage'))
 const SubManagerFormPage   = lazy(() => import('./pages/SubManagerFormPage'))
@@ -38,7 +39,7 @@ const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
 const SUB_TOKEN = new URLSearchParams(window.location.search).get('sub-token')
 
 const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage', 'coffee-check']
-const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage']
+const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage', 'admin-store-status']
 
 const staffTabs = [
   { page: 'dashboard'    as Page, icon: Home,          label: '首頁'   },
@@ -51,10 +52,11 @@ const staffTabs = [
 ]
 
 const adminTabs = [
-  { page: 'admin-dashboard' as Page, icon: LayoutDashboard, label: '總覽'   },
-  { page: 'admin-records'   as Page, icon: ClipboardList,   label: '紀錄查閱' },
-  { page: 'admin-anomaly'   as Page, icon: AlertTriangle,   label: '異常管理' },
-  { page: 'admin-stats'     as Page, icon: BarChart2,       label: '數據統計' },
+  { page: 'admin-dashboard'   as Page, icon: LayoutDashboard, label: '總覽'   },
+  { page: 'admin-store-status'as Page, icon: Building2,       label: '店鋪狀況' },
+  { page: 'admin-records'     as Page, icon: ClipboardList,   label: '紀錄查閱' },
+  { page: 'admin-anomaly'     as Page, icon: AlertTriangle,   label: '異常管理' },
+  { page: 'admin-stats'       as Page, icon: BarChart2,       label: '數據統計' },
 ]
 
 function App() {
@@ -90,7 +92,8 @@ function App() {
       case 'admin-records':   return <RecordsPage       user={user} onBack={goBack} />
       case 'admin-anomaly':   return <AnomalyManagePage user={user} onBack={goBack} />
       case 'admin-stats':     return <StatsPage         user={user} onBack={goBack} />
-      case 'mystery-manage':     return <MysteryManagePage    user={user} onBack={goBack} />
+      case 'mystery-manage':      return <MysteryManagePage    user={user} onBack={goBack} />
+      case 'admin-store-status': return <StoreStatusPage      user={user} onBack={goBack} />
       case 'sub-manager-manage': return <SubManagerManagePage user={user} onBack={goBack} />
       case 'coffee-check':       return <CoffeeCheckPage      user={user} onBack={goBack} />
       default:                   return <DashboardPage        user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />

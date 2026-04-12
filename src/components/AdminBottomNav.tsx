@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { LayoutDashboard, ClipboardList, AlertTriangle, BarChart2 } from 'lucide-react'
+import { LayoutDashboard, ClipboardList, AlertTriangle, BarChart2, Building2 } from 'lucide-react'
 import type { Page } from '../types'
 
 interface Props {
@@ -8,10 +8,11 @@ interface Props {
 }
 
 const tabs: { page: Page; label: string; icon: ReactNode }[] = [
-  { page: 'admin-dashboard', label: '總覽', icon: <LayoutDashboard className="w-5 h-5" /> },
-  { page: 'admin-records',   label: '紀錄', icon: <ClipboardList   className="w-5 h-5" /> },
-  { page: 'admin-anomaly',   label: '異常', icon: <AlertTriangle   className="w-5 h-5" /> },
-  { page: 'admin-stats',     label: '統計', icon: <BarChart2       className="w-5 h-5" /> },
+  { page: 'admin-dashboard',    label: '總覽', icon: <LayoutDashboard className="w-5 h-5" /> },
+  { page: 'admin-store-status', label: '店鋪', icon: <Building2       className="w-5 h-5" /> },
+  { page: 'admin-records',      label: '紀錄', icon: <ClipboardList   className="w-5 h-5" /> },
+  { page: 'admin-anomaly',      label: '異常', icon: <AlertTriangle   className="w-5 h-5" /> },
+  { page: 'admin-stats',        label: '統計', icon: <BarChart2       className="w-5 h-5" /> },
 ]
 
 export default function AdminBottomNav({ currentPage, onNavigate }: Props) {

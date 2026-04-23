@@ -1,7 +1,7 @@
-import { useState, lazy, Suspense } from 'react'
+import { useState, useEffect, lazy, Suspense } from 'react'
 import {
   Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench,
-  ClipboardList, LayoutDashboard, BarChart2, Coffee, Building2,
+  ClipboardList, LayoutDashboard, BarChart2, Coffee, Building2, ArrowUp,
 } from 'lucide-react'
 import BottomNav      from './components/BottomNav'
 import AdminBottomNav from './components/AdminBottomNav'
@@ -62,6 +62,13 @@ const adminTabs = [
 function App() {
   const [user, setUser]               = useState<User | null>(null)
   const [currentPage, setCurrentPage] = useState<Page>('login')
+  const [showScrollTop, setShowScrollTop] = useState(false)
+
+  useEffect(() => {
+    const handler = () => setShowScrollTop(window.scrollY > 320)
+    window.addEventListener('scroll', handler, { passive: true })
+    return () => window.removeEventListener('scroll', handler)
+  }, [])
 
   const handleLogin  = (u: User) => {
     setUser(u)
@@ -144,6 +151,21 @@ function App() {
       {/* Mobile bottom nav */}
       {showBottomNav      && <BottomNav      currentPage={currentPage} onNavigate={setCurrentPage} />}
       {showAdminBottomNav && <AdminBottomNav currentPage={currentPage} onNavigate={setCurrentPage} />}
+
+      {/* Scroll-to-top button */}
+      {showScrollTop && user && (
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          aria-label="回到頂端"
+          className="fixed right-4 z-40 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all"
+          style={{
+            bottom: showBottomNav || showAdminBottomNav ? '76px' : '16px',
+            background: 'linear-gradient(135deg, #00a040, #007d30)',
+          }}
+        >
+          <ArrowUp className="w-5 h-5 text-white" />
+        </button>
+      )}
       </Suspense>
     </div>
   )

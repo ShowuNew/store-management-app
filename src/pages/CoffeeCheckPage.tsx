@@ -99,7 +99,7 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
           <div className="flex items-center border-2 rounded-xl px-3 py-2 gap-2"
             style={{ borderColor: data.tempOk ? '#86efac' : '#fca5a5', background: data.tempOk ? '#f0fdf4' : '#fef2f2' }}>
             <input
-              type="number" inputMode="decimal"
+              type="number" inputMode="decimal" step="any"
               placeholder="例：77.8"
               value={data.temp}
               onChange={e => onChange({ ...data, temp: e.target.value })}
@@ -130,7 +130,7 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
           <div className="flex items-center border-2 rounded-xl px-3 py-2 gap-2"
             style={{ borderColor: data.weightOk ? '#86efac' : '#fca5a5', background: data.weightOk ? '#f0fdf4' : '#fef2f2' }}>
             <input
-              type="number" inputMode="decimal"
+              type="number" inputMode="decimal" step="any"
               placeholder="例：311.9"
               value={data.weight}
               onChange={e => onChange({ ...data, weight: e.target.value })}

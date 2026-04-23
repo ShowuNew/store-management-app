@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect, useRef } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   ClipboardList, ShieldCheck, Zap, AlertTriangle, CheckSquare,
-  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus, Coffee,
+  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus, Coffee, X,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -20,6 +20,10 @@ interface AlertItem {
   time: string
 }
 
+interface Anomaly {
+  id: string; category: string; description: string; severity: string; reported_at: string; status: string
+}
+
 interface TempReading { time: string; value: number | null; isNormal: boolean | null }
 interface TempEntry { location: string; required: string; zone: string; readings?: TempReading[]; value?: number | null; isNormal?: boolean | null }
 
@@ -32,6 +36,8 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
 
   const [loading, setLoading] = useState(true)
   const [alerts, setAlerts]   = useState<AlertItem[]>([])
+  const [anomalyModal, setAnomalyModal] = useState<Anomaly[]>([])
+  const anomalyShownRef = useRef(false)
 
   const [tempStatus, setTempStatus] = useState([
     { label: '冷藏', value: '—', ok: true },
@@ -154,6 +160,13 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
             time: new Date(a.reported_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
           })
         })
+
+      // #26 — 店長/小店長首次載入時顯示當天異常 modal
+      const isManager = user.role === 'manager' || user.role === 'sub-manager'
+      if (isManager && openAnomalies.length > 0 && !anomalyShownRef.current) {
+        anomalyShownRef.current = true
+        setAnomalyModal(openAnomalies as Anomaly[])
+      }
 
       // 提醒：今日尚未填寫
       if (dailyDone  === 0) newAlerts.push({ type: 'info', msg: '今日每日工作確認尚未填寫',  time: '' })
@@ -356,6 +369,70 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           </div>
         </div>
       </div>
+
+      {/* #26 — 當天異常事項 modal（店長/小店長登入時顯示）*/}
+      <AnimatePresence>
+        {anomalyModal.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.55)' }}
+          >
+            <motion.div
+              initial={{ y: 80, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 80, opacity: 0 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+              className="w-full bg-white rounded-3xl overflow-hidden"
+              style={{ maxWidth: 440, maxHeight: '80dvh', display: 'flex', flexDirection: 'column' }}
+            >
+              <div className="flex items-center justify-between px-5 pt-5 pb-3 shrink-0">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4 text-red-500" />
+                  </div>
+                  <div>
+                    <p className="text-base font-bold text-gray-800">當天異常事項</p>
+                    <p className="text-sm text-gray-400">{anomalyModal.length} 筆待處理</p>
+                  </div>
+                </div>
+                <button onClick={() => setAnomalyModal([])} className="w-8 h-8 rounded-full bg-gray-100 flex items-center justify-center">
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+              <div className="overflow-y-auto px-5 pb-3 space-y-2 flex-1">
+                {anomalyModal.map(a => {
+                  const sevColor = a.severity === 'critical' ? '#ef4444' : a.severity === 'high' ? '#f97316' : a.severity === 'medium' ? '#f59e0b' : '#6b7280'
+                  const sevBg    = a.severity === 'critical' ? '#fef2f2' : a.severity === 'high' ? '#fff7ed' : a.severity === 'medium' ? '#fffbeb' : '#f9fafb'
+                  const sevLabel = a.severity === 'critical' ? '緊急' : a.severity === 'high' ? '高' : a.severity === 'medium' ? '中' : '低'
+                  return (
+                    <div key={a.id} className="rounded-2xl p-3.5" style={{ background: sevBg }}>
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-full text-white" style={{ background: sevColor }}>{sevLabel}</span>
+                        <span className="text-sm font-semibold text-gray-600">{a.category}</span>
+                        <span className="ml-auto text-xs text-gray-400">
+                          {new Date(a.reported_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      </div>
+                      <p className="text-base text-gray-700 leading-snug">{a.description}</p>
+                    </div>
+                  )
+                })}
+              </div>
+              <div className="px-5 pb-5 pt-2 shrink-0">
+                <button
+                  onClick={() => { setAnomalyModal([]); onNavigate('anomaly') }}
+                  className="w-full py-3.5 rounded-2xl text-white font-bold text-base"
+                  style={{ background: 'linear-gradient(135deg, #ef4444, #dc2626)' }}
+                >
+                  前往異常回報處理
+                </button>
+                <button onClick={() => setAnomalyModal([])} className="w-full mt-2 py-3 text-base text-gray-500 font-semibold">
+                  稍後處理
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

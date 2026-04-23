@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle2, XCircle, MinusCircle, Save, RefreshCw } from 'lucide-react'
+import { CheckCircle2, XCircle, MinusCircle, Save, RefreshCw, AlertTriangle } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
 import type { User } from '../types'
@@ -69,6 +69,7 @@ export default function HygienePage({ user, onBack }: Props) {
   const [loadError, setLoadError]           = useState<string | null>(null)
   const [saveError, setSaveError]           = useState<string | null>(null)
   const [savedAt, setSavedAt]               = useState<string>('')
+  const [confirmLeave, setConfirmLeave]     = useState(false)
 
   // BUG-003: use shift string not index so draft keys survive array reorder
   const draftKey = `hygiene_${user.storeId}_${todayStr}_${shifts[activeShift]}`
@@ -230,12 +231,21 @@ export default function HygienePage({ user, onBack }: Props) {
   const failCount = cat.items.filter((_, i) => results[`${activeCategory}-${i}`] === 'fail').length
   const pendCount = cat.items.length - passCount - failCount
 
+  const totalUnfilled = totalItems - allPassCount - allFailCount
+  const handleBack = () => {
+    if (!saved && totalUnfilled > 0) {
+      setConfirmLeave(true)
+    } else {
+      onBack()
+    }
+  }
+
   return (
     <div className="min-h-dvh bg-gray-50">
       <PageHeader
         title="衛生自主管理"
         subtitle={`${new Date().getMonth() + 1}月 ${new Date().getDate()}日・共${totalItems}項`}
-        onBack={onBack}
+        onBack={handleBack}
       />
 
       <div className="px-4 py-4 space-y-4 pb-8">
@@ -481,6 +491,51 @@ export default function HygienePage({ user, onBack }: Props) {
           </>
         )}
       </div>
+
+      {/* Confirm-leave modal (#25) */}
+      <AnimatePresence>
+        {confirmLeave && (
+          <motion.div
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4"
+            style={{ background: 'rgba(0,0,0,0.5)' }}
+          >
+            <motion.div
+              initial={{ y: 60, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: 60, opacity: 0 }}
+              transition={{ type: 'spring', damping: 22, stiffness: 280 }}
+              className="w-full bg-white rounded-3xl p-6 space-y-4"
+              style={{ maxWidth: 420 }}
+            >
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-yellow-50 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5 text-yellow-500" />
+                </div>
+                <div>
+                  <p className="text-base font-bold text-gray-800">尚有 {totalUnfilled} 題未填寫</p>
+                  <p className="text-base text-gray-500 mt-0.5">
+                    目前還有 {totalUnfilled} 個查核項目尚未選擇結果，是否繼續完成後再送出？
+                  </p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmLeave(false)}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-base"
+                  style={{ background: 'linear-gradient(135deg, #00a040, #007d30)', color: 'white' }}
+                >
+                  繼續填寫
+                </button>
+                <button
+                  onClick={() => { setConfirmLeave(false); onBack() }}
+                  className="flex-1 py-3.5 rounded-2xl font-bold text-base bg-gray-100 text-gray-600"
+                >
+                  直接離開
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { ClipboardList, AlertTriangle, BarChart2, ShieldCheck, RefreshCw, LogOut, UserSearch, Building2 } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type { User, Page } from '../../types'
@@ -77,9 +77,9 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
         </div>
       </div>
 
-      <div className="px-4 py-4 space-y-4 pb-24">
-        {/* Stats */}
-        <div>
+      <div className="px-4 py-4 space-y-4 pb-32 md:pb-8">
+        {/* Stats — desktop only in main content */}
+        <div className="hidden md:block">
           <p className="text-base font-bold text-gray-400 mb-2">今日統計</p>
           {loading ? (
             <div className="flex items-center justify-center py-8 gap-2 text-gray-400">
@@ -87,7 +87,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
               <span className="text-base">載入中...</span>
             </div>
           ) : (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+            <div className="grid md:grid-cols-4 gap-2">
               {statCards.map((s, i) => (
                 <motion.div
                   key={s.label}
@@ -133,6 +133,27 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
           </div>
         </div>
       </div>
+
+      {/* Mobile fixed stats strip — above bottom nav */}
+      <AnimatePresence>
+        {!loading && (
+          <motion.div
+            initial={{ y: 80, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1, type: 'spring', damping: 20, stiffness: 200 }}
+            className="md:hidden fixed bottom-16 left-0 right-0 z-20 bg-white border-t border-gray-100 shadow-lg"
+          >
+            <div className="grid grid-cols-4 divide-x divide-gray-100">
+              {statCards.map(s => (
+                <div key={s.label} className="flex flex-col items-center py-2.5 px-1">
+                  <p className="text-lg font-black leading-tight" style={{ color: s.color }}>{s.value}</p>
+                  <p className="text-xs font-semibold text-center leading-tight mt-0.5 text-gray-500" style={{ fontSize: '10px' }}>{s.label}</p>
+                </div>
+              ))}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

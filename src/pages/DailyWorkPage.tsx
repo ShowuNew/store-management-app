@@ -136,7 +136,7 @@ type ViewType = 'overview' | 'temperature' | 'waste' | 'cleaning' | 'friendly' |
 const shifts = ['早班 07:00–15:00', '晚班 15:00–23:00', '大夜班 23:00–07:00']
 
 // ── 溫度設備規格 ──
-interface TempSpec { location: string; required: string; zone: string; check: (v: number) => boolean; standard?: string }
+interface TempSpec { location: string; required: string; zone: string; check: (v: number) => boolean; standard?: string; hint?: string }
 const tempSpecs: TempSpec[] = [
   { location: '4°C 間隔機（前後中島）', required: '4°C',      zone: '賣場', check: v => v >= 2  && v <= 6,   standard: '4'   },
   { location: 'OC',                    required: '0~7°C',    zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
@@ -146,9 +146,11 @@ const tempSpecs: TempSpec[] = [
   { location: '咖啡冷藏機台',          required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
   { location: '牛奶冰箱',              required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
   { location: '冷凍冰箱',              required: '-18°C以下', zone: '咖啡', check: v => v <= -18,            standard: '-18' },
-  { location: '冰淇淋機（子母機）',    required: '依機台',    zone: '咖啡', check: () => true                              },
+  { location: '冰淇淋機（子母機）',    required: '依機台',    zone: '咖啡', check: () => true,                             hint: '主機（壓縮機）記錄顯示溫度；子機依機型標準填寫。如不確定請拍照備查。' },
   { location: '蒸箱',                  required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
   { location: '關東煮機',              required: '82~85°C',   zone: 'FF區', check: v => v >= 82 && v <= 85,  standard: '83'  },
+  { location: '茶葉蛋鍋',              required: '75°C以上',  zone: 'FF區', check: v => v >= 75,             standard: '75'  },
+  { location: 'FF保溫櫃',              required: '60°C以上',  zone: 'FF區', check: v => v >= 60,             standard: '60'  },
   { location: '鮮食機',                required: '0~7°C',    zone: 'FF區', check: v => v >= 0  && v <= 7,   standard: '4'   },
   { location: 'FF 冷凍冰箱',            required: '-20°C以下', zone: 'FF區', check: v => v <= -20,            standard: '-20' },
 ]
@@ -265,6 +267,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
   const [prevTempData, setPrevTempData] = useState<Record<number, string>>({})
   const [gpsAccuracy,  setGpsAccuracy]  = useState<number | null>(null)
+  const [tempSkipped,  setTempSkipped]  = useState<Record<number, 'fault' | 'no-machine'>>({})
+  const [tempNotes,    setTempNotes]    = useState<Record<number, string>>({})
 
   // Swipe card mode states
   const [swipeMode, setSwipeMode] = useState(true)
@@ -293,20 +297,26 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         setShiftSignature(shiftLog.tasks_done?._signature ?? '')
         if (Array.isArray(shiftLog.temperatures)) {
           const restored: TempData = {}
-          shiftLog.temperatures.forEach((item: { readings?: { time: string; value: number | null }[] }, i: number) => {
+          const restoredSkipped: Record<number, 'fault' | 'no-machine'> = {}
+          const restoredNotes: Record<number, string> = {}
+          shiftLog.temperatures.forEach((item: { readings?: { time: string; value: number | null }[]; skipped?: string; actionNote?: string }, i: number) => {
             if (Array.isArray(item.readings)) {
               restored[i] = item.readings.map(r => ({
                 time: r.time ?? '',
                 value: r.value !== null && r.value !== undefined ? String(r.value) : '',
               }))
             }
+            if (item.skipped === 'fault' || item.skipped === 'no-machine') restoredSkipped[i] = item.skipped
+            if (item.actionNote) restoredNotes[i] = item.actionNote
           })
           setTempData(restored)
-        } else { setTempData({}) }
+          setTempSkipped(restoredSkipped)
+          setTempNotes(restoredNotes)
+        } else { setTempData({}); setTempSkipped({}); setTempNotes({}) }
       } else {
         setExistingId(null); setHandoverNote(''); setTempData({}); setSubmitted(false)
         setHandoverAnomaly(''); setHandoverSupply(''); setHandoverComplaint(''); setHandoverOther('')
-        setShiftSignature('')
+        setShiftSignature(''); setTempSkipped({}); setTempNotes({})
         // 帶入上一次溫度記錄作為預設值
         const { data: lastLog } = await supabase
           .from('daily_work_logs')
@@ -390,6 +400,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
     const temperaturesPayload = tempSpecs.map((spec, i) => ({
       location: spec.location, required: spec.required, zone: spec.zone,
+      skipped: tempSkipped[i] ?? null,
+      actionNote: tempNotes[i]?.trim() ?? null,
       readings: (tempData[i] ?? []).map(r => {
         const num = r.value.trim() !== '' ? parseFloat(r.value) : null
         return { time: r.time, value: num, isNormal: num !== null ? spec.check(num) : null }
@@ -550,6 +562,37 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           ))}
         </div>
 
+        {/* #32 擔當/店長覆核欄位 */}
+        <div className="bg-white rounded-2xl p-4">
+          <p className="text-base font-bold text-gray-700 mb-3 flex items-center gap-2">
+            <PenLine className="w-4 h-4 text-gray-400" /> 擔當 / 店長覆核
+          </p>
+          <div className="space-y-2">
+            {[
+              { label: '早班 擔當簽名', sig: allShiftSigs.morning },
+              { label: '晚班 擔當簽名', sig: allShiftSigs.evening },
+              { label: '大夜班 擔當簽名', sig: allShiftSigs.lateNight },
+            ].map(({ label, sig }) => (
+              <div key={label} className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+                style={{ background: sig ? '#f0fdf4' : '#f9fafb' }}>
+                <span className="text-base font-semibold" style={{ color: sig ? '#16a34a' : '#9ca3af' }}>{label}</span>
+                <span className="text-base font-bold" style={{ color: sig ? '#16a34a' : '#d1d5db' }}>
+                  {sig ? '✓ 已簽名' : '未簽名'}
+                </span>
+              </div>
+            ))}
+            <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
+              style={{ background: managerSignature ? '#ecfdf5' : '#fff7ed' }}>
+              <span className="text-base font-bold" style={{ color: managerSignature ? '#059669' : '#c2410c' }}>
+                店長覆核
+              </span>
+              <span className="text-base font-bold" style={{ color: managerSignature ? '#059669' : '#f97316' }}>
+                {managerSignature ? '✓ 已覆核簽名' : '⚠ 尚未覆核'}
+              </span>
+            </div>
+          </div>
+        </div>
+
         {/* 簽名按鈕 */}
         {(() => {
           const isManager = user.role === 'manager' || user.role === 'sub-manager' || user.role === 'supervisor' || user.role === 'admin'
@@ -707,6 +750,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                   <p className="text-base text-gray-400">標準：{spec.required}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                  {tempSkipped[specIdx] === 'no-machine' && <span className="text-base font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">無此機台</span>}
+                  {tempSkipped[specIdx] === 'fault'      && <span className="text-base font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">故障</span>}
                   {status === 'recheck'  && <span className="text-base font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">需複核</span>}
                   {status === 'repair'   && <span className="text-base font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">需報修</span>}
                   {status === 'resolved' && <span className="text-base font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">已正常</span>}
@@ -736,7 +781,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                             </div>
                             <div className="flex items-center border rounded-lg overflow-hidden flex-1"
                               style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
-                              <input type="number" inputMode="decimal"
+                              <input type="number" inputMode="decimal" step="any"
                                 className="flex-1 text-center text-base font-bold outline-none bg-transparent py-1.5 px-2"
                                 style={{ color: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151' }}
                                 placeholder="溫度" value={r.value}
@@ -756,6 +801,52 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                       </button>
                       {status === 'recheck' && <p className="text-base text-yellow-600 bg-yellow-50 rounded-lg px-3 py-2">⏱ 請於 30 分鐘後再次量測確認</p>}
                       {status === 'repair'  && <p className="text-base text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複核後仍異常，請至「異常回報」提交報修申請</p>}
+
+                      {/* #34 actionNote — shown when anomaly */}
+                      {(status === 'recheck' || status === 'repair') && (
+                        <div>
+                          <label className="text-sm font-semibold text-gray-500 block mb-1">📝 處理措施 / 說明</label>
+                          <textarea
+                            rows={2}
+                            placeholder="記錄複核結果、處理措施或備注…"
+                            className="w-full text-base text-gray-700 border border-yellow-200 rounded-xl px-3 py-2 bg-yellow-50 outline-none focus:ring-2 focus:ring-yellow-400 resize-none leading-relaxed"
+                            value={tempNotes[specIdx] ?? ''}
+                            onChange={e => { setTempNotes(p => ({ ...p, [specIdx]: e.target.value })); setSubmitted(false) }}
+                          />
+                        </div>
+                      )}
+
+                      {/* #17 skip buttons — list mode */}
+                      <div>
+                        <p className="text-sm font-semibold text-gray-400 mb-1">標記機台狀態：</p>
+                        <div className="flex gap-2">
+                          {(['no-machine', 'fault'] as const).map(type => {
+                            const isActive = tempSkipped[specIdx] === type
+                            return (
+                              <button
+                                key={type}
+                                onClick={() => {
+                                  setTempSkipped(p => {
+                                    const next = { ...p }
+                                    if (isActive) delete next[specIdx]
+                                    else next[specIdx] = type
+                                    return next
+                                  })
+                                  setSubmitted(false)
+                                }}
+                                className="flex-1 py-2 rounded-lg text-sm font-bold border-2 transition-all"
+                                style={{
+                                  borderColor: isActive ? (type === 'no-machine' ? '#6b7280' : '#f97316') : '#e5e7eb',
+                                  background:  isActive ? (type === 'no-machine' ? '#f3f4f6' : '#fff7ed') : 'white',
+                                  color:       isActive ? (type === 'no-machine' ? '#374151' : '#c2410c') : '#9ca3af',
+                                }}
+                              >
+                                {type === 'no-machine' ? '🚫 無此機台' : '🔧 機台故障'}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -812,48 +903,70 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           </span>
         </div>
 
-        {/* Device name */}
+        {/* Device name + hint */}
         <p className="text-lg font-bold text-gray-800 mb-1">{spec.location}</p>
-        <p className="text-base text-gray-400 mb-4">標準：{spec.required}</p>
-
-        {/* Large input */}
-        <div className="flex items-end justify-center gap-2 mb-2">
-          <input
-            type="number"
-            inputMode="decimal"
-            placeholder="—"
-            value={cardValue}
-            onChange={e => setCardValue(e.target.value)}
-            enterKeyHint={isLast ? 'done' : 'next'}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault()
-                if (isLast) saveCurrentCard()
-                else goCard(cardIdx + 1)
-              }
-            }}
-            className="outline-none bg-transparent text-center font-black"
-            style={{
-              fontSize: '56px',
-              width: '180px',
-              borderBottom: `3px solid ${cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#d1d5db'}`,
-              color: cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#374151',
-            }}
-          />
-          <span className="text-2xl font-bold text-gray-400 pb-2">°C</span>
-        </div>
-
-        {/* 上次值 / 標準值提示 */}
-        {getReadings(cardIdx).length === 0 && cardValue !== '' && (
-          <p className="text-sm text-center -mt-1 mb-1 font-medium"
-            style={{ color: prevTempData[cardIdx] === cardValue ? '#d97706' : '#9ca3af' }}>
-            {prevTempData[cardIdx] === cardValue
-              ? '↑ 帶入上次值，請確認後送出'
-              : `↑ 標準參考值 ${tempSpecs[cardIdx]?.required}，請確認後送出`}
+        {spec.hint && (
+          <p className="text-sm text-blue-600 bg-blue-50 rounded-xl px-3 py-2 mb-2 leading-snug">
+            ℹ️ {spec.hint}
           </p>
         )}
+        <p className="text-base text-gray-400 mb-4">標準：{spec.required}</p>
 
-        {/* Navigation buttons — placed right after input so keyboard won't cover them */}
+        {/* Large input — hidden when skipped */}
+        {!tempSkipped[cardIdx] && (
+          <>
+            <div className="flex items-end justify-center gap-2 mb-2">
+              <input
+                type="number"
+                inputMode="decimal"
+                placeholder="—"
+                value={cardValue}
+                onChange={e => setCardValue(e.target.value)}
+                enterKeyHint={isLast ? 'done' : 'next'}
+                onKeyDown={e => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault()
+                    if (isLast) saveCurrentCard()
+                    else goCard(cardIdx + 1)
+                  }
+                }}
+                className="outline-none bg-transparent text-center font-black"
+                style={{
+                  fontSize: '56px',
+                  width: '180px',
+                  borderBottom: `3px solid ${cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#d1d5db'}`,
+                  color: cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#374151',
+                }}
+              />
+              <span className="text-2xl font-bold text-gray-400 pb-2">°C</span>
+            </div>
+
+            {/* 上次值 / 標準值提示 */}
+            {getReadings(cardIdx).length === 0 && cardValue !== '' && (
+              <p className="text-sm text-center -mt-1 mb-1 font-medium"
+                style={{ color: prevTempData[cardIdx] === cardValue ? '#d97706' : '#9ca3af' }}>
+                {prevTempData[cardIdx] === cardValue
+                  ? '↑ 帶入上次值，請確認後送出'
+                  : `↑ 標準參考值 ${tempSpecs[cardIdx]?.required}，請確認後送出`}
+              </p>
+            )}
+          </>
+        )}
+
+        {/* Skip status banner — shown when skipped */}
+        {tempSkipped[cardIdx] && (
+          <div className={`rounded-2xl px-4 py-4 mb-3 flex items-center gap-3 ${tempSkipped[cardIdx] === 'no-machine' ? 'bg-gray-50 border border-gray-200' : 'bg-orange-50 border border-orange-200'}`}>
+            <span className="text-2xl">{tempSkipped[cardIdx] === 'no-machine' ? '🚫' : '🔧'}</span>
+            <div>
+              <p className="text-base font-bold" style={{ color: tempSkipped[cardIdx] === 'no-machine' ? '#374151' : '#c2410c' }}>
+                {tempSkipped[cardIdx] === 'no-machine' ? '無此機台' : '機台故障'}
+              </p>
+              <p className="text-sm text-gray-400">已標記為跳過，不需填寫溫度</p>
+            </div>
+          </div>
+        )}
+
+        {/* Navigation buttons */}
         <div className="flex gap-2 mt-3 mb-3">
           <button
             onClick={() => goCard(cardIdx - 1)}
@@ -879,22 +992,68 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         </div>
 
         {/* Status line */}
-        <div className="text-center mb-3 h-6">
-          {cardNormal === true && <span className="text-base font-semibold text-green-600">✅ 在標準範圍內</span>}
-          {cardNormal === false && <span className="text-base font-semibold text-red-500">⚠️ 超出標準範圍</span>}
-        </div>
+        {!tempSkipped[cardIdx] && (
+          <div className="text-center mb-3 h-6">
+            {cardNormal === true && <span className="text-base font-semibold text-green-600">✅ 在標準範圍內</span>}
+            {cardNormal === false && <span className="text-base font-semibold text-red-500">⚠️ 超出標準範圍</span>}
+          </div>
+        )}
 
-        {/* Anomaly banners */}
+        {/* Anomaly banners + actionNote (#34) */}
         {status === 'recheck' && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 mb-3 text-base font-semibold text-yellow-700">
+          <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 mb-2 text-base font-semibold text-yellow-700">
             ⏱ 請於 30 分鐘後再次量測確認
           </div>
         )}
         {status === 'repair' && (
-          <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-3 text-base font-semibold text-red-700">
+          <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-2 text-base font-semibold text-red-700">
             ⚠ 複核後仍異常，請至「異常回報」提交報修申請
           </div>
         )}
+        {(status === 'recheck' || status === 'repair') && (
+          <div className="mb-3">
+            <label className="text-sm font-semibold text-gray-500 block mb-1">📝 處理措施 / 說明</label>
+            <textarea
+              rows={2}
+              placeholder="記錄複核結果、處理措施或備注…"
+              className="w-full text-base text-gray-700 border border-yellow-200 rounded-xl px-3 py-2 bg-yellow-50 outline-none focus:ring-2 focus:ring-yellow-400 resize-none leading-relaxed"
+              value={tempNotes[cardIdx] ?? ''}
+              onChange={e => { setTempNotes(p => ({ ...p, [cardIdx]: e.target.value })); setSubmitted(false) }}
+            />
+          </div>
+        )}
+
+        {/* Skip buttons (#17) */}
+        <div className="mb-2">
+          <p className="text-sm font-semibold text-gray-400 mb-1.5">標記機台狀態：</p>
+          <div className="flex gap-2">
+            {(['no-machine', 'fault'] as const).map(type => {
+              const isActive = tempSkipped[cardIdx] === type
+              return (
+                <button
+                  key={type}
+                  onClick={() => {
+                    setTempSkipped(p => {
+                      const next = { ...p }
+                      if (isActive) delete next[cardIdx]
+                      else next[cardIdx] = type
+                      return next
+                    })
+                    setSubmitted(false)
+                  }}
+                  className="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all"
+                  style={{
+                    borderColor: isActive ? (type === 'no-machine' ? '#6b7280' : '#f97316') : '#e5e7eb',
+                    background:  isActive ? (type === 'no-machine' ? '#f3f4f6' : '#fff7ed') : 'white',
+                    color:       isActive ? (type === 'no-machine' ? '#374151' : '#c2410c') : '#9ca3af',
+                  }}
+                >
+                  {type === 'no-machine' ? '🚫 無此機台' : '🔧 機台故障'}
+                </button>
+              )
+            })}
+          </div>
+        </div>
 
         {/* Dots progress */}
         <div className="flex justify-center gap-1.5 my-3">
@@ -903,12 +1062,14 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             const lf = [...r].reverse().find(rd => rd.value.trim())
             const isNorm = lf ? evalReading(sp, lf) : null
             const isCurrent = i === cardIdx
+            const isSkipped = !!tempSkipped[i]
             return (
               <div key={i} className="rounded-full transition-all"
                 style={{
                   width: isCurrent ? 10 : 6,
                   height: isCurrent ? 10 : 6,
                   background: isCurrent ? '#1e40af'
+                    : isSkipped ? '#9ca3af'
                     : isNorm === false ? '#ef4444'
                     : isNorm === true ? '#10b981'
                     : '#d1d5db',
@@ -1062,6 +1223,14 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 value={cleaning[machine] ?? ''}
                 onChange={e => { setCleaning(p => ({ ...p, [machine]: e.target.value })); setSubmitted(false) }} />
             </div>
+            {cleaning[machine]?.trim() && (
+              <button
+                onClick={() => { setCleaning(p => ({ ...p, [machine]: '' })); setSubmitted(false) }}
+                className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 shrink-0"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-400" />
+              </button>
+            )}
           </div>
         ))}
       </div>

@@ -42,8 +42,10 @@ export default function LoginPage({ onLogin }: Props) {
   const [pin, setPin] = useState('')
   const [error, setError] = useState('')
 
+  const isHQ = role === 'supervisor' || role === 'admin'
+
   const handleLogin = () => {
-    if (!storeCode.trim()) {
+    if (!isHQ && !storeCode.trim()) {
       setError('請輸入店號')
       return
     }
@@ -51,12 +53,13 @@ export default function LoginPage({ onLogin }: Props) {
       setError('請輸入 4 位數字 PIN 碼')
       return
     }
+    const effectiveStoreId = isHQ ? 'HQ' : storeCode.trim()
     onLogin({
       id: '1',
       name: roleLabels[role],
       role,
-      storeId: storeCode.trim(),
-      storeName: `全家 ${storeCode.trim()} 店`,
+      storeId: effectiveStoreId,
+      storeName: isHQ ? '總部管理' : `全家 ${storeCode.trim()} 店`,
     })
   }
 
@@ -101,7 +104,8 @@ export default function LoginPage({ onLogin }: Props) {
             </div>
           )}
 
-          {/* 店號 */}
+          {/* 店號（擔當/系統管理員不需填） */}
+          {!isHQ && (
           <div className="mb-4">
             <label className="text-base font-semibold text-gray-600 mb-2 block">店號</label>
             <div className="flex items-center border-2 border-gray-100 rounded-2xl px-4 bg-gray-50 focus-within:border-green-400 transition-colors" style={{ minHeight: '52px' }}>
@@ -119,6 +123,7 @@ export default function LoginPage({ onLogin }: Props) {
               />
             </div>
           </div>
+          )}
 
           {/* 身份 */}
           <div className="mb-4">

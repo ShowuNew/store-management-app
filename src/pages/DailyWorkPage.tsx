@@ -891,6 +891,17 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
     return (
       <div>
+        {/* 操作說明（首張卡片且尚無資料時顯示） */}
+        {cardIdx === 0 && readings.length === 0 && (
+          <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5 mb-4 text-blue-700">
+            <span className="text-base shrink-0 mt-0.5">💡</span>
+            <p className="text-sm leading-snug">
+              點擊中間大數字區域輸入溫度 → 按「<strong>下一台</strong>」儲存並跳至下一台；
+              若無此機台或機台故障，請點下方按鈕標記後跳過。
+            </p>
+          </div>
+        )}
+
         {/* Progress header */}
         <div className="flex items-center justify-between mb-4">
           <span className="text-base font-bold text-gray-500">{cardIdx + 1} / {tempSpecs.length}</span>
@@ -1240,32 +1251,57 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // ────────────────────────────────────────────────
   // 友善食光
   // ────────────────────────────────────────────────
-  const renderFriendly = () => (
-    <div className="bg-white rounded-2xl p-4">
-      <div className="flex items-center justify-between mb-3">
+  const renderFriendly = () => {
+    // 依班次時段分組
+    const periods: { label: string; color: string; keys: string[] }[] = [
+      { label: '早班作業', color: '#f59e0b', keys: ['t0930'] },
+      { label: '下午作業', color: '#3b82f6', keys: ['t1600', 't1630'] },
+      { label: '夜班作業', color: '#8b5cf6', keys: ['t2300', 't2400'] },
+    ]
+    return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between px-1">
         <span className="text-base font-bold text-gray-500">{friendlyDone}/{friendlyTasks.length} 完成</span>
-        <span className="text-base text-gray-300">不分班次</span>
+        <span className="text-base text-gray-400">不分班次，依時段確認</span>
       </div>
-      <div className="space-y-2">
-        {friendlyTasks.map(t => {
-          const done = !!friendly[t.key]
-          return (
-            <button key={t.key} onClick={() => { setFriendly(p => ({ ...p, [t.key]: !p[t.key] })); setSubmitted(false) }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all"
-              style={{ background: done ? '#ecfdf5' : '#f9fafb' }}>
-              {done ? <CheckCircle2 className="w-5 h-5 shrink-0 text-green-500" /> : <Circle className="w-5 h-5 shrink-0 text-gray-200" />}
-              <div>
-                <p className="text-base font-bold" style={{ color: done ? '#059669' : '#374151' }}>
-                  <span className="text-gray-400 mr-1">{t.time}</span>{t.label}
-                </p>
-                <p className="text-base text-gray-400">{t.detail}</p>
-              </div>
-            </button>
-          )
-        })}
-      </div>
+      {periods.map(period => {
+        const tasks = friendlyTasks.filter(t => period.keys.includes(t.key))
+        const periodDone = tasks.filter(t => !!friendly[t.key]).length
+        return (
+          <div key={period.label} className="bg-white rounded-2xl overflow-hidden">
+            {/* 時段標頭 */}
+            <div className="flex items-center justify-between px-4 py-2.5" style={{ background: period.color + '15', borderBottom: `2px solid ${period.color}30` }}>
+              <span className="text-sm font-bold" style={{ color: period.color }}>{period.label}</span>
+              <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ background: period.color + '20', color: period.color }}>
+                {periodDone}/{tasks.length} 完成
+              </span>
+            </div>
+            {/* 該時段的任務 */}
+            <div className="p-3 space-y-2">
+              {tasks.map(t => {
+                const done = !!friendly[t.key]
+                return (
+                  <button key={t.key} onClick={() => { setFriendly(p => ({ ...p, [t.key]: !p[t.key] })); setSubmitted(false) }}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all"
+                    style={{ background: done ? '#ecfdf5' : '#f9fafb' }}>
+                    {done ? <CheckCircle2 className="w-5 h-5 shrink-0 text-green-500" /> : <Circle className="w-5 h-5 shrink-0 text-gray-200" />}
+                    <div>
+                      <p className="text-base font-bold" style={{ color: done ? '#059669' : '#374151' }}>
+                        <span className="font-mono text-sm mr-1.5 px-1.5 py-0.5 rounded" style={{ background: period.color + '15', color: period.color }}>{t.time}</span>
+                        {t.label}
+                      </p>
+                      <p className="text-sm text-gray-400 mt-0.5">{t.detail}</p>
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })}
     </div>
-  )
+    )
+  }
 
   // ────────────────────────────────────────────────
   // 交接班紀錄

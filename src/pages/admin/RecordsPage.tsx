@@ -16,6 +16,25 @@ export default function RecordsPage({ onBack }: Props) {
   const [records, setRecords]   = useState<any[]>([])
   const [loading, setLoading]   = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [storeOptions, setStoreOptions] = useState<string[]>([])
+
+  // 載入所有曾出現過的門市代號供下拉選擇
+  useEffect(() => {
+    const fetchStores = async () => {
+      const [r1, r2, r3] = await Promise.all([
+        supabase.from('daily_work_logs').select('store_id'),
+        supabase.from('hygiene_records').select('store_id'),
+        supabase.from('equipment_logs').select('store_id'),
+      ])
+      const all = [
+        ...(r1.data || []),
+        ...(r2.data || []),
+        ...(r3.data || []),
+      ].map((r: any) => r.store_id).filter(Boolean)
+      setStoreOptions([...new Set(all)].sort())
+    }
+    fetchStores()
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -108,13 +127,19 @@ export default function RecordsPage({ onBack }: Props) {
             onChange={e => setDate(e.target.value)}
             className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-base text-gray-700 bg-gray-50 outline-none"
           />
-          <input
-            type="text"
-            placeholder="門市代號"
-            value={storeFilter}
-            onChange={e => setStoreFilter(e.target.value)}
-            className="w-28 border border-gray-200 rounded-xl px-3 py-2 text-base text-gray-700 bg-gray-50 outline-none"
-          />
+          <div className="relative">
+            <select
+              value={storeFilter}
+              onChange={e => setStoreFilter(e.target.value)}
+              className="w-32 border border-gray-200 rounded-xl px-3 py-2 text-base text-gray-700 bg-gray-50 outline-none appearance-none pr-7"
+            >
+              <option value="">全部門市</option>
+              {storeOptions.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+          </div>
         </div>
       </div>
 

@@ -319,31 +319,35 @@ export default function HygienePage({ user, onBack }: Props) {
 
         {/* Category tabs */}
         <div className="relative">
-        <div className="flex gap-2 overflow-x-auto pb-1">
-
-          {categories.map((c, i) => {
-            const cFail = c.items.filter((_, j) => results[`${i}-${j}`] === 'fail').length
-            return (
-              <button
-                key={i}
-                onClick={() => setActiveCategory(i)}
-                className="shrink-0 px-3 py-2 rounded-xl text-base font-bold transition-all whitespace-nowrap"
-                style={{
-                  background: activeCategory === i ? '#005f3b' : 'white',
-                  color:      activeCategory === i ? 'white'   : '#6b7280',
-                }}
-              >
-                {c.name}
-                {cFail > 0 && (
-                  <span className="ml-1 w-5 h-5 inline-flex items-center justify-center rounded-full bg-red-500 text-white text-xs font-black">
-                    {cFail}
-                  </span>
-                )}
-              </button>
-            )
-          })}
-        </div>
-        <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none" />
+          <p className="text-xs text-gray-400 mb-1 pl-0.5">← 左右滑動查看各分類 →</p>
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+            {categories.map((c, i) => {
+              const cFilled = c.items.filter((_, j) => results[`${i}-${j}`] !== undefined && results[`${i}-${j}`] !== null).length
+              const cFail   = c.items.filter((_, j) => results[`${i}-${j}`] === 'fail').length
+              const isActive = activeCategory === i
+              return (
+                <button
+                  key={i}
+                  onClick={() => setActiveCategory(i)}
+                  className="shrink-0 px-3 py-2 rounded-xl text-left transition-all whitespace-nowrap"
+                  style={{
+                    background: isActive ? '#005f3b' : 'white',
+                    color:      isActive ? 'white'   : '#6b7280',
+                    minWidth: '7rem',
+                  }}
+                >
+                  <p className="text-sm font-bold leading-tight">{c.name}</p>
+                  <p className="text-xs mt-0.5" style={{ color: isActive ? 'rgba(255,255,255,0.7)' : '#9ca3af' }}>
+                    已填 {cFilled}/{c.items.length}
+                    {cFail > 0 && (
+                      <span className="ml-1 px-1 rounded-full bg-red-500 text-white font-black">缺 {cFail}</span>
+                    )}
+                  </p>
+                </button>
+              )
+            })}
+          </div>
+          <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-gray-50 to-transparent pointer-events-none" />
         </div>
 
         {/* BUG-001: load error banner */}

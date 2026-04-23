@@ -39,6 +39,10 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   const [anomalyModal, setAnomalyModal] = useState<Anomaly[]>([])
   const anomalyShownRef = useRef(false)
 
+  const [shiftFillStatus, setShiftFillStatus] = useState<
+    { shift: string; submitted: boolean; staffName: string; time: string }[]
+  >([])
+
   const [tempStatus, setTempStatus] = useState([
     { label: '冷藏', value: '—', ok: true },
     { label: '冷凍', value: '—', ok: true },
@@ -140,6 +144,17 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         })
       }
 
+      // #33 — 班次填寫狀況（店長/小店長用）
+      const isManager = user.role === 'manager' || user.role === 'sub-manager'
+      if (isManager) {
+        const shifts33 = ['早班', '晚班', '大夜班']
+        setShiftFillStatus(shifts33.map(s => {
+          const log = dailyLogs.find((l: any) => l.shift === s && l.submitted_at)
+          const ts  = log?.submitted_at ? new Date(log.submitted_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }) : ''
+          return { shift: s, submitted: !!log, staffName: log?.staff_name || '', time: ts }
+        }))
+      }
+
       // ── 衛生管理 ──
       if (hygieneRes.error) console.error('[Dashboard] hygiene_records SELECT error:', hygieneRes.error)
       const hygieneDone = (hygieneRes.data || []).length   // 每時段一筆
@@ -162,7 +177,6 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         })
 
       // #26 — 店長/小店長首次載入時顯示當天異常 modal
-      const isManager = user.role === 'manager' || user.role === 'sub-manager'
       if (isManager && openAnomalies.length > 0 && !anomalyShownRef.current) {
         anomalyShownRef.current = true
         setAnomalyModal(openAnomalies as Anomaly[])
@@ -218,7 +232,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
     : null
 
   return (
-    <div className="min-h-dvh bg-gray-50">
+    <div className="min-h-dvh bg-gray-100">
       <PageHeader
         title="店鋪工作日誌"
         subtitle={`${user.storeName}・${user.name}（${roleLabel}）`}
@@ -326,9 +340,38 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           )}
         </div>
 
+        {/* #33 — 班次填寫狀況（只對店長/小店長顯示）*/}
+        {(user.role === 'manager' || user.role === 'sub-manager') && shiftFillStatus.length > 0 && (
+          <div className="bg-white rounded-2xl px-4 py-4">
+            <p className="text-sm font-bold text-gray-500 mb-3">今日班次填寫狀況</p>
+            <div className="space-y-2">
+              {shiftFillStatus.map(s => (
+                <div key={s.shift} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                  style={{ background: s.submitted ? '#ecfdf5' : '#f9fafb' }}>
+                  <span className="text-base" style={{ color: s.submitted ? '#10b981' : '#d1d5db' }}>
+                    {s.submitted ? '✓' : '○'}
+                  </span>
+                  <span className="text-sm font-bold" style={{ color: s.submitted ? '#059669' : '#9ca3af' }}>
+                    {s.shift}
+                  </span>
+                  {s.submitted ? (
+                    <span className="ml-auto text-sm text-gray-500">{s.staffName} · {s.time}</span>
+                  ) : (
+                    <span className="ml-auto text-sm text-gray-300">尚未提交</span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* Module grid */}
         <div>
-          <p className="text-base font-bold text-gray-400 px-1 uppercase tracking-wide mb-3">功能模組</p>
+          <div className="flex items-center gap-2 px-1 mb-3">
+            <span className="w-1 h-5 rounded-full" style={{ background: '#00a040' }} />
+            <p className="text-base font-bold text-gray-700">今日填寫項目</p>
+            <p className="ml-auto text-sm text-gray-400">點擊進入填寫</p>
+          </div>
           <div className="flex flex-col gap-2">
             {[...modules, ...(subManagerModule ? [subManagerModule] : [])].map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => {
               const isCompleted = done !== null && total !== null && (total ?? 0) > 0 && done === total

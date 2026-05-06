@@ -6,7 +6,7 @@ import type { User } from '../../types'
 
 interface Props { user: User; onBack: () => void }
 
-type Tab = 'daily-work' | 'hygiene' | 'equipment'
+type Tab = 'daily-work' | 'hygiene' | 'equipment' | 'coffee-check'
 
 export default function RecordsPage({ onBack }: Props) {
   const todayStr = new Date().toISOString().split('T')[0]
@@ -21,15 +21,17 @@ export default function RecordsPage({ onBack }: Props) {
   // 載入所有曾出現過的門市代號供下拉選擇
   useEffect(() => {
     const fetchStores = async () => {
-      const [r1, r2, r3] = await Promise.all([
+      const [r1, r2, r3, r4] = await Promise.all([
         supabase.from('daily_work_logs').select('store_id'),
         supabase.from('hygiene_records').select('store_id'),
         supabase.from('equipment_logs').select('store_id'),
+        supabase.from('coffee_check_records').select('store_id'),
       ])
       const all = [
         ...(r1.data || []),
         ...(r2.data || []),
         ...(r3.data || []),
+        ...(r4.data || []),
       ].map((r: any) => r.store_id).filter(Boolean)
       setStoreOptions([...new Set(all)].sort())
     }
@@ -46,8 +48,10 @@ export default function RecordsPage({ onBack }: Props) {
         query = supabase.from('daily_work_logs').select('*').eq('log_date', date).order('submitted_at', { ascending: false })
       } else if (tab === 'hygiene') {
         query = supabase.from('hygiene_records').select('*').eq('record_date', date).order('saved_at', { ascending: false })
-      } else {
+      } else if (tab === 'equipment') {
         query = supabase.from('equipment_logs').select('*').eq('log_date', date).order('saved_at', { ascending: false })
+      } else {
+        query = supabase.from('coffee_check_records').select('*').eq('check_date', date).order('created_at', { ascending: false })
       }
 
       if (storeFilter.trim()) query = query.eq('store_id', storeFilter.trim())
@@ -60,9 +64,10 @@ export default function RecordsPage({ onBack }: Props) {
   }, [tab, date, storeFilter])
 
   const tabs: { key: Tab; label: string }[] = [
-    { key: 'daily-work', label: '每日工作' },
-    { key: 'hygiene',    label: '衛生記錄' },
-    { key: 'equipment',  label: '設備保養' },
+    { key: 'daily-work',    label: '每日工作' },
+    { key: 'hygiene',       label: '衛生記錄' },
+    { key: 'equipment',     label: '設備保養' },
+    { key: 'coffee-check',  label: '咖啡自檢' },
   ]
 
   const getDoneCount = (record: any): string => {
@@ -75,12 +80,15 @@ export default function RecordsPage({ onBack }: Props) {
       const fail = Object.values(record.results || {}).filter(v => v === 'fail').length
       return `${pass} 符合 / ${fail} 缺失`
     }
+    if (tab === 'coffee-check') {
+      return record.overall_ok ? '✓ 無異常' : '⚠ 有異常'
+    }
     const done = Object.values(record.done_items || {}).filter(Boolean).length
     return `${done} 項完成`
   }
 
   const getTimestamp = (record: any): string => {
-    const ts = record.submitted_at || record.saved_at
+    const ts = record.submitted_at || record.saved_at || record.created_at
     if (!ts) return '—'
     return new Date(ts).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
   }
@@ -88,6 +96,7 @@ export default function RecordsPage({ onBack }: Props) {
   const getSubtitle = (record: any): string => {
     if (tab === 'daily-work') return record.shift
     if (tab === 'hygiene')    return `${record.shift} 班`
+    if (tab === 'coffee-check') return record.machine_no ? `機號 ${record.machine_no}` : '咖啡機'
     return record.zone
   }
 
@@ -106,12 +115,12 @@ export default function RecordsPage({ onBack }: Props) {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-4">
+        <div className="flex flex-wrap gap-2 mb-4">
           {tabs.map(t => (
             <button
               key={t.key}
               onClick={() => setTab(t.key)}
-              className="flex-1 py-2 rounded-xl text-base font-bold transition-all"
+              className="flex-1 min-w-[4.5rem] py-2 rounded-xl text-sm font-bold transition-all"
               style={{ background: tab === t.key ? '#005f3b' : '#f3f4f6', color: tab === t.key ? 'white' : '#6b7280' }}
             >
               {t.label}
@@ -267,7 +276,49 @@ function CheckDot({ done }: { done: boolean }) {
   )
 }
 
+function OkBadge({ ok }: { ok: boolean }) {
+  return (
+    <span className={`text-sm font-bold px-2 py-0.5 rounded-md ${ok ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
+      {ok ? '正常' : '異常'}
+    </span>
+  )
+}
+
 function DetailView({ record, tab }: { record: any; tab: Tab }) {
+  if (tab === 'coffee-check') {
+    const rows: { label: string; value: string | number | null; ok?: boolean }[] = [
+      { label: '中熱套式 溫度', value: record.medium_hot_set_temp != null ? `${record.medium_hot_set_temp} °C` : '—', ok: record.medium_hot_set_temp_ok },
+      { label: '中熱套式 重量', value: record.medium_hot_set_weight != null ? `${record.medium_hot_set_weight} g` : '—', ok: record.medium_hot_set_weight_ok },
+      { label: '中熱拿鐵 溫度', value: record.medium_latte_temp != null ? `${record.medium_latte_temp} °C` : '—', ok: record.medium_latte_temp_ok },
+      { label: '中熱拿鐵 重量', value: record.medium_latte_weight != null ? `${record.medium_latte_weight} g` : '—', ok: record.medium_latte_weight_ok },
+    ]
+    return (
+      <div className="px-4 py-3 space-y-3">
+        <div className="space-y-2">
+          {rows.map(row => (
+            <div key={row.label} className="flex items-center justify-between">
+              <span className="text-base text-gray-500">{row.label}</span>
+              <div className="flex items-center gap-2">
+                <span className="text-base font-semibold text-gray-700">{row.value}</span>
+                {row.ok !== undefined && <OkBadge ok={row.ok} />}
+              </div>
+            </div>
+          ))}
+        </div>
+        {record.note ? (
+          <div>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1">備註</p>
+            <p className="text-base text-gray-600 whitespace-pre-line">{record.note}</p>
+          </div>
+        ) : null}
+        <div className="flex items-center justify-between pt-1 border-t border-gray-50">
+          <span className="text-base text-gray-400">整體結論</span>
+          <OkBadge ok={record.overall_ok} />
+        </div>
+      </div>
+    )
+  }
+
   if (tab === 'daily-work') {
     const td       = record.tasks_done || {}
     const waste    = td._waste    || {}

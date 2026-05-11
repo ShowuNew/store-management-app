@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Save, CheckCircle2, MapPin, Coffee } from 'lucide-react'
+import { Save, CheckCircle2, MapPin, Coffee, Clock } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
 import { useGeolocation } from '../hooks/useGeolocation'
@@ -13,6 +13,17 @@ interface DrinkCheck {
   tempOk:    boolean
   weight:    string   // g input
   weightOk:  boolean
+}
+
+interface PastRecord {
+  id: string
+  machine_no: string
+  overall_ok: boolean
+  created_at: string
+  medium_hot_set_temp_ok: boolean
+  medium_hot_set_weight_ok: boolean
+  medium_latte_temp_ok: boolean
+  medium_latte_weight_ok: boolean
 }
 
 const defaultDrink = (): DrinkCheck => ({ temp: '', tempOk: true, weight: '', weightOk: true })
@@ -28,8 +39,35 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
   const [saved,     setSaved]       = useState(false)
   const [saveError, setSaveError]   = useState<string | null>(null)
   const [gpsInfo,   setGpsInfo]     = useState<string | null>(null)
+  const [todayRecords, setTodayRecords] = useState<PastRecord[]>([])
+  const [now, setNow]               = useState(new Date())
 
   const { getPosition } = useGeolocation()
+
+  // 每分鐘更新 now（用於複核計時）
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(t)
+  }, [])
+
+  // 載入今日已有的自檢紀錄
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from('coffee_check_records')
+        .select('id, machine_no, overall_ok, created_at, medium_hot_set_temp_ok, medium_hot_set_weight_ok, medium_latte_temp_ok, medium_latte_weight_ok')
+        .eq('store_id', user.storeId)
+        .eq('check_date', todayStr)
+        .order('created_at', { ascending: false })
+      if (data) setTodayRecords(data as PastRecord[])
+    }
+    load()
+  }, [user.storeId, todayStr, saved])
+
+  const getElapsedMinutes = (isoTs: string) => {
+    const diff = now.getTime() - new Date(isoTs).getTime()
+    return Math.floor(diff / 60000)
+  }
 
   const overallOk = medHotSet.tempOk && medHotSet.weightOk && medLatte.tempOk && medLatte.weightOk
 
@@ -80,6 +118,15 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
     setMachineNo(''); setMedHotSet(defaultDrink()); setMedLatte(defaultDrink())
     setNote(''); setSaved(false); setSaveError(null); setGpsInfo(null)
   }
+
+  // 依機號取最新一筆，判斷是否需要複核
+  const latestByMachine = todayRecords.reduce<Record<string, PastRecord>>((acc, r) => {
+    const key = r.machine_no?.trim() || '未設定'
+    if (!acc[key]) acc[key] = r
+    return acc
+  }, {})
+
+  const recheckEntries = Object.entries(latestByMachine).filter(([, r]) => !r.overall_ok)
 
   // ── 飲品輸入區塊 ──
   const DrinkSection = ({
@@ -213,6 +260,60 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
             className="w-full text-base border-2 border-gray-100 rounded-xl px-4 py-3 outline-none focus:border-purple-400 bg-gray-50 resize-none"
           />
         </div>
+
+        {/* 複核計時提醒 */}
+        {recheckEntries.map(([machineNo, r]) => {
+          const elapsed = getElapsedMinutes(r.created_at)
+          const issues: string[] = []
+          if (!r.medium_hot_set_temp_ok)   issues.push('中熱套溫度')
+          if (!r.medium_hot_set_weight_ok) issues.push('中熱套重量')
+          if (!r.medium_latte_temp_ok)     issues.push('中熱拿鐵溫度')
+          if (!r.medium_latte_weight_ok)   issues.push('中熱拿鐵重量')
+          const ready = elapsed >= 30
+          return (
+            <div key={machineNo}
+              className="flex items-start gap-3 px-4 py-3.5 rounded-2xl"
+              style={{ background: ready ? '#f0fdf4' : '#fffbeb' }}
+            >
+              <Clock className="w-4 h-4 shrink-0 mt-0.5" style={{ color: ready ? '#16a34a' : '#d97706' }} />
+              <div>
+                <p className="text-sm font-bold" style={{ color: ready ? '#15803d' : '#92400e' }}>
+                  {ready
+                    ? `✓ 機號 ${machineNo} 已過 30 分鐘，可進行複核量測`
+                    : `⏱ 機號 ${machineNo} 首次異常 ${elapsed} 分鐘前，建議 30 分後複核`}
+                </p>
+                {issues.length > 0 && (
+                  <p className="text-xs mt-0.5" style={{ color: ready ? '#16a34a' : '#b45309' }}>
+                    異常項目：{issues.join('、')}
+                  </p>
+                )}
+              </div>
+            </div>
+          )
+        })}
+
+        {/* 今日自檢紀錄 */}
+        {todayRecords.length > 0 && (
+          <div className="bg-white rounded-2xl p-4 shadow-sm space-y-2">
+            <p className="text-sm font-bold text-gray-500">今日已填紀錄</p>
+            {todayRecords.map(r => {
+              const time = new Date(r.created_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
+              return (
+                <div key={r.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
+                  style={{ background: r.overall_ok ? '#f0fdf4' : '#fef2f2' }}>
+                  <span className="text-base shrink-0">{r.overall_ok ? '✅' : '⚠️'}</span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-gray-700 truncate">機號 {r.machine_no || '未設定'}</p>
+                    <p className="text-xs" style={{ color: r.overall_ok ? '#16a34a' : '#dc2626' }}>
+                      {r.overall_ok ? '無異常' : '有異常'}
+                    </p>
+                  </div>
+                  <span className="text-xs text-gray-400 shrink-0">{time}</span>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* GPS 資訊 */}
         {gpsInfo && (

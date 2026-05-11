@@ -60,7 +60,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
     const load = async () => {
       setLoading(true)
 
-      const [dailyRes, hygieneRes, equipRes, anomalyRes] = await Promise.all([
+      const [dailyRes, hygieneRes, equipRes, anomalyRes, coffeeRes] = await Promise.all([
         supabase.from('daily_work_logs')
           .select('*')
           .eq('store_id', user.storeId)
@@ -82,6 +82,13 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           .eq('status', 'open')
           .order('reported_at', { ascending: false })
           .limit(5),
+
+        supabase.from('coffee_check_records')
+          .select('machine_no, overall_ok, medium_hot_set_temp_ok, medium_hot_set_weight_ok, medium_latte_temp_ok, medium_latte_weight_ok, created_at')
+          .eq('store_id', user.storeId)
+          .eq('check_date', todayStr)
+          .order('created_at', { ascending: false })
+          .limit(20),
       ])
 
       const newAlerts: AlertItem[] = []
@@ -175,6 +182,29 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
             time: new Date(a.reported_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
           })
         })
+
+      // ── 咖啡自檢異常通知 ──
+      const coffeeChecks = coffeeRes.data || []
+      const latestByMachine: Record<string, any> = {}
+      for (const c of coffeeChecks) {
+        const key = c.machine_no?.trim() || '未設定'
+        if (!latestByMachine[key]) latestByMachine[key] = c
+      }
+      for (const [machineNo, c] of Object.entries(latestByMachine)) {
+        if (!c.overall_ok) {
+          const issues: string[] = []
+          if (!c.medium_hot_set_temp_ok)   issues.push('中熱套溫度')
+          if (!c.medium_hot_set_weight_ok) issues.push('中熱套重量')
+          if (!c.medium_latte_temp_ok)     issues.push('中熱拿鐵溫度')
+          if (!c.medium_latte_weight_ok)   issues.push('中熱拿鐵重量')
+          const time = new Date(c.created_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
+          newAlerts.push({
+            type: 'error',
+            msg:  `咖啡機 ${machineNo} 自檢異常（${issues.length > 0 ? issues.join('、') : '整體異常'}），請30分鐘後複核`,
+            time,
+          })
+        }
+      }
 
       // #26 — 店長/小店長首次載入時顯示當天異常 modal
       if (isManager && openAnomalies.length > 0 && !anomalyShownRef.current) {

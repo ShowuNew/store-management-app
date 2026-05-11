@@ -328,12 +328,12 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  className="flex items-start gap-3 px-4 py-4 rounded-2xl"
+                  className="flex items-center gap-2.5 px-3 py-2.5 rounded-xl"
                   style={{ background: s.bg }}
                 >
-                  <span className="text-base font-bold px-2 py-1 rounded shrink-0 mt-0.5" style={{ background: s.color, color: '#fff' }}>{s.label}</span>
-                  <p className="flex-1 text-base font-medium" style={{ color: s.color }}>{a.msg}</p>
-                  {a.time && <span className="text-base text-gray-400 shrink-0">{a.time}</span>}
+                  <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: s.color, color: '#fff' }}>{s.label}</span>
+                  <p className="flex-1 text-sm font-medium leading-snug line-clamp-2" style={{ color: s.color }}>{a.msg}</p>
+                  {a.time && <span className="text-xs text-gray-400 shrink-0">{a.time}</span>}
                 </motion.div>
               )
             })

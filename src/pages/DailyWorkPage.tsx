@@ -643,7 +643,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     return (
       <div className="space-y-4">
         {/* 班次選擇 */}
-        <div className="bg-white rounded-2xl p-4">
+        <div className="bg-white rounded-2xl p-4" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
           <p className="text-base font-semibold text-gray-400 mb-3">選擇班次</p>
           <div className="flex gap-2">
             {shifts.map((s, i) => (
@@ -662,19 +662,21 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         </div>
 
         {/* 區塊卡片 */}
-        <div className="bg-white rounded-2xl overflow-hidden divide-y divide-gray-50">
+        <div className="space-y-2">
           {cards.map(card => (
-            <motion.button key={card.view} whileTap={{ scale: 0.98 }}
+            <motion.button key={card.view} whileTap={{ scale: 0.97 }}
               onClick={() => setView(card.view)}
-              className="w-full flex items-center gap-4 px-4 py-4 text-left transition-colors"
-              style={{ background: statusBg[card.status] }}>
+              className="w-full flex items-center gap-3 pr-4 py-3.5 text-left rounded-2xl bg-white overflow-hidden transition-colors"
+              style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
+              {/* 左側色條 */}
+              <div className="w-1.5 self-stretch shrink-0 rounded-l-2xl" style={{ background: statusColor[card.status] }} />
               <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                style={{ background: 'white', boxShadow: '0 1px 4px rgba(0,0,0,0.08)' }}>
+                style={{ background: statusBg[card.status] }}>
                 {card.icon}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-base font-bold text-gray-800">{card.title}</p>
-                <p className="text-base mt-0.5 font-medium" style={{ color: statusColor[card.status] }}>{card.sub}</p>
+                <p className="text-sm mt-0.5 font-semibold" style={{ color: statusColor[card.status] }}>{card.sub}</p>
               </div>
               <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
             </motion.button>
@@ -682,7 +684,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         </div>
 
         {/* #32 擔當/店長覆核欄位 */}
-        <div className="bg-white rounded-2xl p-4">
+        <div className="bg-white rounded-2xl p-4" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
           <p className="text-base font-bold text-gray-700 mb-3 flex items-center gap-2">
             <PenLine className="w-4 h-4 text-gray-400" /> 擔當 / 店長覆核
           </p>
@@ -1510,7 +1512,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   }
 
   return (
-    <div className="min-h-dvh bg-gray-50">
+    <div className="min-h-dvh bg-gray-100">
       <PageHeader
         title={viewTitles[view]}
         subtitle={view === 'overview' ? user.storeName : shifts[selectedShift]}

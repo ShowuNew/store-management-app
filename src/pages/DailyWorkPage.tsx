@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircle2, Circle, Thermometer, Save, AlertCircle,
@@ -136,24 +136,40 @@ type ViewType = 'overview' | 'temperature' | 'waste' | 'cleaning' | 'friendly' |
 const shifts = ['早班 07:00–15:00', '晚班 15:00–23:00', '大夜班 23:00–07:00']
 
 // ── 溫度設備規格 ──
-interface TempSpec { location: string; required: string; zone: string; check: (v: number) => boolean; standard?: string; hint?: string }
-const tempSpecs: TempSpec[] = [
-  { location: '4°C 間隔機（前後中島）', required: '4°C',      zone: '賣場', check: v => v >= 2  && v <= 6,   standard: '4'   },
-  { location: 'OC',                    required: '0~7°C',    zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { location: 'WI（走入式冷藏）',      required: '0~7°C',    zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { location: '立式冷凍',              required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18' },
-  { location: '18°C 欄',               required: '18°C以下',  zone: '賣場', check: v => v <= 18,             standard: '16'  },
-  { location: '咖啡冷藏機台',          required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { location: '牛奶冰箱',              required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { location: '冷凍冰箱',              required: '-18°C以下', zone: '咖啡', check: v => v <= -18,            standard: '-18' },
-  { location: '冰淇淋機（子母機）',    required: '依機台',    zone: '咖啡', check: () => true,                             hint: '主機（壓縮機）記錄顯示溫度；子機依機型標準填寫。如不確定請拍照備查。' },
-  { location: '蒸箱',                  required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
-  { location: '關東煮機',              required: '82~85°C',   zone: 'FF區', check: v => v >= 82 && v <= 85,  standard: '83'  },
-  { location: '茶葉蛋鍋',              required: '75°C以上',  zone: 'FF區', check: v => v >= 75,             standard: '75'  },
-  { location: 'FF保溫櫃',              required: '60°C以上',  zone: 'FF區', check: v => v >= 60,             standard: '60'  },
-  { location: '鮮食機',                required: '0~7°C',    zone: 'FF區', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { location: 'FF 冷凍冰箱',            required: '-20°C以下', zone: 'FF區', check: v => v <= -20,            standard: '-20' },
+interface TempSpec { specKey: string; location: string; required: string; zone: string; check: (v: number) => boolean; standard?: string; hint?: string }
+interface EffectiveSpec extends TempSpec { unitIndex: number; slotKey: string; unitLabel: string }
+
+const BASE_SPECS: TempSpec[] = [
+  { specKey: 'fridge-4c',    location: '4°C 間隔機（前後中島）', required: '4°C',      zone: '賣場', check: v => v >= 2  && v <= 6,   standard: '4'   },
+  { specKey: 'OC',           location: 'OC',                    required: '0~7°C',    zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'WI',           location: 'WI（走入式冷藏）',      required: '0~7°C',    zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'freezer-v',    location: '立式冷凍',              required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18' },
+  { specKey: 'shelf-18c',    location: '18°C 欄',               required: '18°C以下',  zone: '賣場', check: v => v <= 18,             standard: '16'  },
+  { specKey: 'coffee-fridge', location: '咖啡冷藏機台',         required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'milk-fridge',   location: '牛奶冰箱',             required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'freezer-c',    location: '冷凍冰箱',              required: '-18°C以下', zone: '咖啡', check: v => v <= -18,            standard: '-18' },
+  { specKey: 'icecream',     location: '冰淇淋機（子母機）',    required: '依機台',    zone: '咖啡', check: () => true,               hint: '主機（壓縮機）記錄顯示溫度；子機依機型標準填寫。如不確定請拍照備查。' },
+  { specKey: 'steamer',      location: '蒸箱',                  required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
+  { specKey: 'oden',         location: '關東煮機',              required: '82~85°C',   zone: 'FF區', check: v => v >= 82 && v <= 85,  standard: '83'  },
+  { specKey: 'tea-egg',      location: '茶葉蛋鍋',              required: '75°C以上',  zone: 'FF區', check: v => v >= 75,             standard: '75'  },
+  { specKey: 'ff-warmer',    location: 'FF保溫櫃',              required: '60°C以上',  zone: 'FF區', check: v => v >= 60,             standard: '60'  },
+  { specKey: 'fresh-food',   location: '鮮食機',                required: '0~7°C',    zone: 'FF區', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'freezer-ff',   location: 'FF 冷凍冰箱',           required: '-20°C以下', zone: 'FF區', check: v => v <= -20,            standard: '-20' },
 ]
+
+function buildEffectiveSpecs(counts: Record<string, number>, customs: TempSpec[]): EffectiveSpec[] {
+  const result: EffectiveSpec[] = []
+  for (const spec of BASE_SPECS) {
+    const count = counts[spec.specKey] ?? 1
+    for (let u = 0; u < count; u++) {
+      result.push({ ...spec, unitIndex: u, slotKey: `${spec.specKey}-${u}`, unitLabel: count > 1 ? `（${u + 1}號機）` : '' })
+    }
+  }
+  for (const spec of customs) {
+    result.push({ ...spec, unitIndex: 0, slotKey: `${spec.specKey}-0`, unitLabel: '' })
+  }
+  return result
+}
 
 // ── 機器清潔清單 ──
 const cleaningMachines = [
@@ -170,14 +186,14 @@ const friendlyTasks = [
   { key: 't2400', time: '24:00', label: '過期品下架',    detail: '預購/隨買/蘭購/各溫層專區（冷藏、冷凍、常溫）' },
 ]
 
-const zones = ['全部', '賣場', '咖啡', 'FF區']
+const zones = ['全部', '賣場', '咖啡', 'FF區', '其他']
 const nowTimeStr = () => {
   const n = new Date()
   return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`
 }
 
 interface TempReading { time: string; value: string }
-type TempData = Record<number, TempReading[]>
+type TempData = Record<string, TempReading[]>  // key = slotKey e.g. 'OC-0', 'OC-1'
 
 interface WasteState {
   foodWasteBags: string; recyclingCount: string
@@ -264,16 +280,30 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [loading, setLoading]       = useState(true)
   const [existingId, setExistingId] = useState<string | null>(null)
   const [tempZone, setTempZone]     = useState('全部')
-  const [expandedIdx, setExpandedIdx] = useState<number | null>(null)
-  const [prevTempData, setPrevTempData] = useState<Record<number, string>>({})
+  const [expandedIdx, setExpandedIdx] = useState<string | null>(null)
+  const [prevTempData, setPrevTempData] = useState<Record<string, string>>({})
   const [gpsAccuracy,  setGpsAccuracy]  = useState<number | null>(null)
-  const [tempSkipped,  setTempSkipped]  = useState<Record<number, 'fault' | 'no-machine'>>({})
-  const [tempNotes,    setTempNotes]    = useState<Record<number, string>>({})
+  const [tempSkipped,  setTempSkipped]  = useState<Record<string, 'fault' | 'no-machine'>>({})
+  const [tempNotes,    setTempNotes]    = useState<Record<string, string>>({})
+  const [equipmentCounts, setEquipmentCounts] = useState<Record<string, number>>({})
+  const [customSpecs, setCustomSpecs] = useState<TempSpec[]>([])
+  const [now, setNow] = useState(new Date())
+  const [addCustomOpen, setAddCustomOpen] = useState(false)
+  const [customName, setCustomName] = useState('')
+  const [customRequired, setCustomRequired] = useState('')
 
   // Swipe card mode states
   const [swipeMode, setSwipeMode] = useState(true)
   const [cardIdx, setCardIdx] = useState(0)
   const [cardValue, setCardValue] = useState('')
+
+  const effectiveSpecs = useMemo(() => buildEffectiveSpecs(equipmentCounts, customSpecs), [equipmentCounts, customSpecs])
+
+  // Update clock every minute for 30-min recheck timer
+  useEffect(() => {
+    const t = setInterval(() => setNow(new Date()), 60000)
+    return () => clearInterval(t)
+  }, [])
 
   useEffect(() => {
     const load = async () => {
@@ -297,21 +327,36 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         setShiftSignature(shiftLog.tasks_done?._signature ?? '')
         if (Array.isArray(shiftLog.temperatures)) {
           const restored: TempData = {}
-          const restoredSkipped: Record<number, 'fault' | 'no-machine'> = {}
-          const restoredNotes: Record<number, string> = {}
-          shiftLog.temperatures.forEach((item: { readings?: { time: string; value: number | null }[]; skipped?: string; actionNote?: string }, i: number) => {
-            if (Array.isArray(item.readings)) {
-              restored[i] = item.readings.map(r => ({
-                time: r.time ?? '',
-                value: r.value !== null && r.value !== undefined ? String(r.value) : '',
-              }))
+          const restoredSkipped: Record<string, 'fault' | 'no-machine'> = {}
+          const restoredNotes: Record<string, string> = {}
+          const newCounts: Record<string, number> = {}
+          const newCustoms: TempSpec[] = []
+          shiftLog.temperatures.forEach((item: any, positionalIdx: number) => {
+            let slotKey: string
+            if (item.specKey) {
+              const unitIdx = item.unitIndex ?? 0
+              slotKey = `${item.specKey}-${unitIdx}`
+              const needed = unitIdx + 1
+              if ((newCounts[item.specKey] ?? 0) < needed) newCounts[item.specKey] = needed
+              if ((item.specKey as string).startsWith('custom-') && !newCustoms.find(s => s.specKey === item.specKey)) {
+                newCustoms.push({ specKey: item.specKey, location: item.location ?? '', required: item.required ?? '', zone: item.zone ?? '其他', check: () => true })
+              }
+            } else {
+              const base = BASE_SPECS[positionalIdx]
+              if (!base) return
+              slotKey = `${base.specKey}-0`
             }
-            if (item.skipped === 'fault' || item.skipped === 'no-machine') restoredSkipped[i] = item.skipped
-            if (item.actionNote) restoredNotes[i] = item.actionNote
+            if (Array.isArray(item.readings)) {
+              restored[slotKey] = item.readings.map((r: any) => ({ time: r.time ?? '', value: r.value !== null && r.value !== undefined ? String(r.value) : '' }))
+            }
+            if (item.skipped === 'fault' || item.skipped === 'no-machine') restoredSkipped[slotKey] = item.skipped
+            if (item.actionNote) restoredNotes[slotKey] = item.actionNote
           })
           setTempData(restored)
           setTempSkipped(restoredSkipped)
           setTempNotes(restoredNotes)
+          if (Object.keys(newCounts).length > 0) setEquipmentCounts(newCounts)
+          if (newCustoms.length > 0) setCustomSpecs(newCustoms)
         } else { setTempData({}); setTempSkipped({}); setTempNotes({}) }
       } else {
         setExistingId(null); setHandoverNote(''); setTempData({}); setSubmitted(false)
@@ -327,14 +372,32 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           .limit(1)
           .single()
         if (lastLog?.temperatures) {
-          const prev: Record<number, string> = {}
-          ;(lastLog.temperatures as any[]).forEach((item: any, i: number) => {
+          const prev: Record<string, string> = {}
+          const newCounts: Record<string, number> = {}
+          const newCustoms: TempSpec[] = []
+          ;(lastLog.temperatures as any[]).forEach((item: any, positionalIdx: number) => {
+            let slotKey: string
+            if (item.specKey) {
+              const unitIdx = item.unitIndex ?? 0
+              slotKey = `${item.specKey}-${unitIdx}`
+              const needed = unitIdx + 1
+              if ((newCounts[item.specKey] ?? 0) < needed) newCounts[item.specKey] = needed
+              if ((item.specKey as string).startsWith('custom-') && !newCustoms.find(s => s.specKey === item.specKey)) {
+                newCustoms.push({ specKey: item.specKey, location: item.location ?? '', required: item.required ?? '', zone: item.zone ?? '其他', check: () => true })
+              }
+            } else {
+              const base = BASE_SPECS[positionalIdx]
+              if (!base) return
+              slotKey = `${base.specKey}-0`
+            }
             if (Array.isArray(item.readings)) {
               const lf = [...item.readings].reverse().find((r: any) => r.value !== null)
-              if (lf?.value != null) prev[i] = String(lf.value)
+              if (lf?.value != null) prev[slotKey] = String(lf.value)
             }
           })
           setPrevTempData(prev)
+          if (Object.keys(newCounts).length > 0) setEquipmentCounts(newCounts)
+          if (newCustoms.length > 0) setCustomSpecs(newCustoms)
         } else {
           setPrevTempData({})
         }
@@ -361,26 +424,78 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // When cardIdx changes or entering swipe mode, pre-fill cardValue with last reading
   useEffect(() => {
     if (!swipeMode) return
-    const readings = getReadings(cardIdx)
+    const spec = effectiveSpecs[cardIdx]
+    if (!spec) return
+    const readings = getReadings(spec.slotKey)
     const lastFilled = [...readings].reverse().find(r => r.value.trim())
-    setCardValue(lastFilled?.value ?? prevTempData[cardIdx] ?? tempSpecs[cardIdx]?.standard ?? '')
-  }, [cardIdx, swipeMode]) // eslint-disable-line react-hooks/exhaustive-deps
+    setCardValue(lastFilled?.value ?? prevTempData[spec.slotKey] ?? spec.standard ?? '')
+  }, [cardIdx, swipeMode, effectiveSpecs]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const getReadings = (i: number) => tempData[i] ?? []
-  const addReading = (i: number) => {
-    const existing   = tempData[i] ?? []
+  const getReadings = (slotKey: string) => tempData[slotKey] ?? []
+  const addReading = (slotKey: string, spec: TempSpec) => {
+    const existing   = tempData[slotKey] ?? []
     const lastFilled = [...existing].reverse().find(r => r.value.trim())
-    const defaultVal = lastFilled?.value ?? prevTempData[i] ?? tempSpecs[i]?.standard ?? ''
-    setTempData(p => ({ ...p, [i]: [...(p[i] ?? []), { time: nowTimeStr(), value: defaultVal }] }))
-    setExpandedIdx(i); setSubmitted(false)
+    const defaultVal = lastFilled?.value ?? prevTempData[slotKey] ?? spec.standard ?? ''
+    setTempData(p => ({ ...p, [slotKey]: [...(p[slotKey] ?? []), { time: nowTimeStr(), value: defaultVal }] }))
+    setExpandedIdx(slotKey); setSubmitted(false)
   }
-  const updateReading = (i: number, rIdx: number, field: keyof TempReading, val: string) => {
-    setTempData(p => { const list = [...(p[i] ?? [])]; list[rIdx] = { ...list[rIdx], [field]: val }; return { ...p, [i]: list } })
+  const updateReading = (slotKey: string, rIdx: number, field: keyof TempReading, val: string) => {
+    setTempData(p => { const list = [...(p[slotKey] ?? [])]; list[rIdx] = { ...list[rIdx], [field]: val }; return { ...p, [slotKey]: list } })
     setSubmitted(false)
   }
-  const removeReading = (i: number, rIdx: number) => {
-    setTempData(p => { const list = [...(p[i] ?? [])]; list.splice(rIdx, 1); return { ...p, [i]: list } })
+  const removeReading = (slotKey: string, rIdx: number) => {
+    setTempData(p => { const list = [...(p[slotKey] ?? [])]; list.splice(rIdx, 1); return { ...p, [slotKey]: list } })
     setSubmitted(false)
+  }
+
+  const adjustCount = (specKey: string, delta: number) => {
+    setEquipmentCounts(p => {
+      const cur = p[specKey] ?? 1
+      const next = Math.max(1, cur + delta)
+      if (next === cur) return p
+      // If reducing, clean up the removed slot's data
+      if (delta < 0) {
+        const removedSlot = `${specKey}-${cur - 1}`
+        setTempData(prev => { const n = { ...prev }; delete n[removedSlot]; return n })
+        setTempSkipped(prev => { const n = { ...prev }; delete n[removedSlot]; return n })
+        setTempNotes(prev => { const n = { ...prev }; delete n[removedSlot]; return n })
+      }
+      return { ...p, [specKey]: next }
+    })
+    setSubmitted(false)
+  }
+
+  const addCustomSpec = () => {
+    if (!customName.trim()) return
+    const specKey = `custom-${Date.now()}`
+    setCustomSpecs(p => [...p, { specKey, location: customName.trim(), required: customRequired.trim() || '填寫實際值', zone: '其他', check: () => true }])
+    setCustomName(''); setCustomRequired(''); setAddCustomOpen(false); setSubmitted(false)
+  }
+
+  const removeCustomSpec = (specKey: string) => {
+    setCustomSpecs(p => p.filter(s => s.specKey !== specKey))
+    const slotKey = `${specKey}-0`
+    setTempData(p => { const n = { ...p }; delete n[slotKey]; return n })
+    setTempSkipped(p => { const n = { ...p }; delete n[slotKey]; return n })
+    setTempNotes(p => { const n = { ...p }; delete n[slotKey]; return n })
+    setSubmitted(false)
+  }
+
+  // Derive anomaly detection time from the first bad reading's time field
+  const getAnomalyTime = (spec: TempSpec, readings: TempReading[]): string | null => {
+    const firstBad = readings.find(r => {
+      if (!r.value.trim()) return false
+      const n = parseFloat(r.value)
+      return !isNaN(n) && !spec.check(n)
+    })
+    return firstBad?.time ?? null
+  }
+
+  const getElapsedMinutes = (timeHHMM: string): number => {
+    const [h, m] = timeHHMM.split(':').map(Number)
+    const then = new Date(todayStr)
+    then.setHours(h, m, 0, 0)
+    return Math.floor((now.getTime() - then.getTime()) / 60000)
   }
 
   const handleSubmit = async () => {
@@ -398,11 +513,15 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       } catch { /* GPS 失敗，繼續儲存 */ }
     }
 
-    const temperaturesPayload = tempSpecs.map((spec, i) => ({
-      location: spec.location, required: spec.required, zone: spec.zone,
-      skipped: tempSkipped[i] ?? null,
-      actionNote: tempNotes[i]?.trim() ?? null,
-      readings: (tempData[i] ?? []).map(r => {
+    const temperaturesPayload = effectiveSpecs.map(spec => ({
+      specKey: spec.specKey,
+      unitIndex: spec.unitIndex,
+      location: `${spec.location}${spec.unitLabel}`,
+      required: spec.required,
+      zone: spec.zone,
+      skipped: tempSkipped[spec.slotKey] ?? null,
+      actionNote: tempNotes[spec.slotKey]?.trim() ?? null,
+      readings: (tempData[spec.slotKey] ?? []).map(r => {
         const num = r.value.trim() !== '' ? parseFloat(r.value) : null
         return { time: r.time, value: num, isNormal: num !== null ? spec.check(num) : null }
       }),
@@ -433,17 +552,17 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   }
 
   // ── 各區塊完成狀態（用於 overview 卡片）──
-  const tempFilledCount  = tempSpecs.filter((_, i) => getReadings(i).some(r => r.value.trim())).length
-  const tempRepairCount  = tempSpecs.filter((spec, i) => anomalyStatus(spec, getReadings(i)) === 'repair').length
-  const tempRecheckCount = tempSpecs.filter((spec, i) => anomalyStatus(spec, getReadings(i)) === 'recheck').length
+  const tempFilledCount  = effectiveSpecs.filter(spec => getReadings(spec.slotKey).some(r => r.value.trim())).length
+  const tempRepairCount  = effectiveSpecs.filter(spec => anomalyStatus(spec, getReadings(spec.slotKey)) === 'repair').length
+  const tempRecheckCount = effectiveSpecs.filter(spec => anomalyStatus(spec, getReadings(spec.slotKey)) === 'recheck').length
   const cleaningFilled   = cleaningMachines.filter(m => cleaning[m]?.trim()).length
   const friendlyDone     = friendlyTasks.filter(t => friendly[t.key]).length
   const wasteAnyFilled   = !!(waste.foodWasteBags || waste.recyclingCount || waste.leftoverFoodTime || waste.cupCollectionTime || waste.verified || waste.groundCleaning || uniform.appearance || uniform.sanitize)
   const wasteDone        = waste.verified && waste.groundCleaning && uniform.appearance
 
-  const filteredIndices = tempZone === '全部'
-    ? tempSpecs.map((_, i) => i)
-    : tempSpecs.map((_, i) => i).filter(i => tempSpecs[i].zone === tempZone)
+  const filteredSpecs = tempZone === '全部'
+    ? effectiveSpecs
+    : effectiveSpecs.filter(spec => spec.zone === tempZone)
 
   // ── 路由標題 ──
   const viewTitles: Record<ViewType, string> = {
@@ -487,7 +606,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         title: '溫度記錄',
         sub: tempRepairCount > 0 ? `⚠ ${tempRepairCount} 項需報修`
            : tempRecheckCount > 0 ? `⏱ ${tempRecheckCount} 項需複核`
-           : tempFilledCount > 0 ? `${tempFilledCount}/${tempSpecs.length} 台已填`
+           : tempFilledCount > 0 ? `${tempFilledCount}/${effectiveSpecs.length} 台已填`
            : '尚未填寫',
         status: tempStatus,
       },
@@ -717,12 +836,12 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   }
 
   // ────────────────────────────────────────────────
-  // 溫度記錄 - List mode (existing accordion)
+  // 溫度記錄 - List mode
   // ────────────────────────────────────────────────
   const renderTempList = () => (
     <>
       <div className="flex gap-1.5 mb-3 overflow-x-auto pb-0.5">
-        {zones.map(z => (
+        {zones.filter(z => z === '全部' || effectiveSpecs.some(s => s.zone === z)).map(z => (
           <button key={z} onClick={() => setTempZone(z)}
             className="shrink-0 px-3 py-1.5 rounded-lg text-base font-bold transition-all"
             style={{ background: tempZone === z ? '#1e40af' : '#f3f4f6', color: tempZone === z ? 'white' : '#6b7280' }}>
@@ -731,27 +850,34 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         ))}
       </div>
       <div className="space-y-2">
-        {filteredIndices.map(specIdx => {
-          const spec       = tempSpecs[specIdx]
-          const readings   = getReadings(specIdx)
-          const isExpanded = expandedIdx === specIdx
+        {filteredSpecs.map(spec => {
+          const { slotKey } = spec
+          const readings   = getReadings(slotKey)
+          const isExpanded = expandedIdx === slotKey
           const status     = anomalyStatus(spec, readings)
           const lastFilled = [...readings].reverse().find(r => r.value.trim())
           const lastNormal = lastFilled ? evalReading(spec, lastFilled) : null
           const bgHeader   = status === 'repair' ? '#fef2f2' : status === 'recheck' ? '#fffbeb' : status === 'resolved' ? '#f0fdf4' : readings.length > 0 ? '#f0fdf4' : '#f9fafb'
+          const isLastUnit = !effectiveSpecs.find(s => s.specKey === spec.specKey && s.unitIndex === spec.unitIndex + 1)
+          const isCustom   = spec.specKey.startsWith('custom-')
+          const anomalyTime = getAnomalyTime(spec, readings)
+          const elapsed = anomalyTime !== null ? getElapsedMinutes(anomalyTime) : null
+          const readyToRecheck = elapsed !== null && elapsed >= 30
 
           return (
-            <div key={specIdx} className="border border-gray-100 rounded-xl overflow-hidden">
+            <div key={slotKey} className="border border-gray-100 rounded-xl overflow-hidden">
               <button className="w-full flex items-center justify-between px-3 py-2.5"
                 style={{ background: bgHeader }}
-                onClick={() => setExpandedIdx(isExpanded ? null : specIdx)}>
+                onClick={() => setExpandedIdx(isExpanded ? null : slotKey)}>
                 <div className="text-left">
-                  <p className="text-base font-semibold text-gray-700">{spec.location}</p>
+                  <p className="text-base font-semibold text-gray-700">
+                    {spec.location}{spec.unitLabel}
+                  </p>
                   <p className="text-base text-gray-400">標準：{spec.required}</p>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  {tempSkipped[specIdx] === 'no-machine' && <span className="text-base font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">無此機台</span>}
-                  {tempSkipped[specIdx] === 'fault'      && <span className="text-base font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">故障</span>}
+                  {tempSkipped[slotKey] === 'no-machine' && <span className="text-base font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">無此機台</span>}
+                  {tempSkipped[slotKey] === 'fault'      && <span className="text-base font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">故障</span>}
                   {status === 'recheck'  && <span className="text-base font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">需複核</span>}
                   {status === 'repair'   && <span className="text-base font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">需報修</span>}
                   {status === 'resolved' && <span className="text-base font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">已正常</span>}
@@ -777,7 +903,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                             <div className="flex items-center gap-1 border border-gray-200 rounded-lg px-2 py-1.5 bg-gray-50">
                               <Clock className="w-3 h-3 text-gray-300 shrink-0" />
                               <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-16"
-                                value={r.time} onChange={e => updateReading(specIdx, rIdx, 'time', e.target.value)} />
+                                value={r.time} onChange={e => updateReading(slotKey, rIdx, 'time', e.target.value)} />
                             </div>
                             <div className="flex items-center border rounded-lg overflow-hidden flex-1"
                               style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
@@ -785,68 +911,85 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                                 className="flex-1 text-center text-base font-bold outline-none bg-transparent py-1.5 px-2"
                                 style={{ color: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151' }}
                                 placeholder="溫度" value={r.value}
-                                onChange={e => updateReading(specIdx, rIdx, 'value', e.target.value)} />
+                                onChange={e => updateReading(slotKey, rIdx, 'value', e.target.value)} />
                               <span className="text-base text-gray-400 pr-2">°C</span>
                             </div>
                             {r.value.trim() && <span className="text-base font-bold w-7 text-center shrink-0" style={{ color: normal === false ? '#ef4444' : '#10b981' }}>{normal === false ? '異常' : 'OK'}</span>}
-                            <button onClick={() => removeReading(specIdx, rIdx)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 shrink-0">
+                            <button onClick={() => removeReading(slotKey, rIdx)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 shrink-0">
                               <Trash2 className="w-3 h-3 text-gray-400" />
                             </button>
                           </div>
                         )
                       })}
-                      <button onClick={() => addReading(specIdx)}
+                      <button onClick={() => addReading(slotKey, spec)}
                         className="w-full flex items-center justify-center gap-1.5 py-2 rounded-lg border border-dashed border-blue-300 text-base font-semibold text-blue-500">
                         <Plus className="w-3.5 h-3.5" /> 新增量測
                       </button>
-                      {status === 'recheck' && <p className="text-base text-yellow-600 bg-yellow-50 rounded-lg px-3 py-2">⏱ 請於 30 分鐘後再次量測確認</p>}
-                      {status === 'repair'  && <p className="text-base text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複核後仍異常，請至「異常回報」提交報修申請</p>}
 
-                      {/* #34 actionNote — shown when anomaly */}
+                      {/* 30-min recheck timer */}
+                      {status === 'recheck' && (
+                        <p className="text-base rounded-lg px-3 py-2" style={{ background: readyToRecheck ? '#f0fdf4' : '#fffbeb', color: readyToRecheck ? '#16a34a' : '#b45309' }}>
+                          {readyToRecheck
+                            ? `✓ 已過 ${elapsed} 分鐘，可進行複核量測`
+                            : elapsed !== null ? `⏱ 首次異常 ${elapsed} 分鐘前，建議 30 分後再複核` : '⏱ 請於 30 分鐘後再次量測確認'}
+                        </p>
+                      )}
+                      {status === 'repair' && <p className="text-base text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複核後仍異常，請至「異常回報」提交報修申請</p>}
+
                       {(status === 'recheck' || status === 'repair') && (
                         <div>
                           <label className="text-sm font-semibold text-gray-500 block mb-1">📝 處理措施 / 說明</label>
-                          <textarea
-                            rows={2}
-                            placeholder="記錄複核結果、處理措施或備注…"
+                          <textarea rows={2} placeholder="記錄複核結果、處理措施或備注…"
                             className="w-full text-base text-gray-700 border border-yellow-200 rounded-xl px-3 py-2 bg-yellow-50 outline-none focus:ring-2 focus:ring-yellow-400 resize-none leading-relaxed"
-                            value={tempNotes[specIdx] ?? ''}
-                            onChange={e => { setTempNotes(p => ({ ...p, [specIdx]: e.target.value })); setSubmitted(false) }}
+                            value={tempNotes[slotKey] ?? ''}
+                            onChange={e => { setTempNotes(p => ({ ...p, [slotKey]: e.target.value })); setSubmitted(false) }}
                           />
                         </div>
                       )}
 
-                      {/* #17 skip buttons — list mode */}
+                      {/* Skip buttons */}
                       <div>
                         <p className="text-sm font-semibold text-gray-400 mb-1">標記機台狀態：</p>
                         <div className="flex gap-2">
                           {(['no-machine', 'fault'] as const).map(type => {
-                            const isActive = tempSkipped[specIdx] === type
+                            const isActive = tempSkipped[slotKey] === type
                             return (
-                              <button
-                                key={type}
-                                onClick={() => {
-                                  setTempSkipped(p => {
-                                    const next = { ...p }
-                                    if (isActive) delete next[specIdx]
-                                    else next[specIdx] = type
-                                    return next
-                                  })
-                                  setSubmitted(false)
-                                }}
+                              <button key={type}
+                                onClick={() => { setTempSkipped(p => { const n = { ...p }; if (isActive) delete n[slotKey]; else n[slotKey] = type; return n }); setSubmitted(false) }}
                                 className="flex-1 py-2 rounded-lg text-sm font-bold border-2 transition-all"
-                                style={{
-                                  borderColor: isActive ? (type === 'no-machine' ? '#6b7280' : '#f97316') : '#e5e7eb',
-                                  background:  isActive ? (type === 'no-machine' ? '#f3f4f6' : '#fff7ed') : 'white',
-                                  color:       isActive ? (type === 'no-machine' ? '#374151' : '#c2410c') : '#9ca3af',
-                                }}
-                              >
+                                style={{ borderColor: isActive ? (type === 'no-machine' ? '#6b7280' : '#f97316') : '#e5e7eb', background: isActive ? (type === 'no-machine' ? '#f3f4f6' : '#fff7ed') : 'white', color: isActive ? (type === 'no-machine' ? '#374151' : '#c2410c') : '#9ca3af' }}>
                                 {type === 'no-machine' ? '🚫 無此機台' : '🔧 機台故障'}
                               </button>
                             )
                           })}
                         </div>
                       </div>
+
+                      {/* Multi-unit controls (non-custom specs) */}
+                      {!isCustom && (
+                        <div className="flex gap-2 pt-1 border-t border-gray-100">
+                          {spec.unitIndex > 0 && (
+                            <button onClick={() => adjustCount(spec.specKey, -1)}
+                              className="flex-1 py-1.5 rounded-lg text-sm font-bold border border-red-200 text-red-500 bg-red-50">
+                              ─ 減少此機型台數
+                            </button>
+                          )}
+                          {isLastUnit && (
+                            <button onClick={() => adjustCount(spec.specKey, 1)}
+                              className="flex-1 py-1.5 rounded-lg text-sm font-bold border border-blue-200 text-blue-500 bg-blue-50">
+                              ＋ 新增同型機台
+                            </button>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Delete custom spec */}
+                      {isCustom && (
+                        <button onClick={() => removeCustomSpec(spec.specKey)}
+                          className="w-full py-1.5 rounded-lg text-sm font-bold border border-red-200 text-red-500 bg-red-50 flex items-center justify-center gap-1">
+                          <Trash2 className="w-3 h-3" /> 刪除此自訂機台
+                        </button>
+                      )}
                     </div>
                   </motion.div>
                 )}
@@ -854,6 +997,31 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             </div>
           )
         })}
+
+        {/* Add custom machine */}
+        {addCustomOpen ? (
+          <div className="border border-dashed border-green-300 rounded-xl p-3 space-y-2 bg-green-50">
+            <p className="text-sm font-bold text-green-700">新增其他機台</p>
+            <input type="text" placeholder="機台名稱（例：哈根達斯冰箱）" value={customName}
+              onChange={e => setCustomName(e.target.value)}
+              className="w-full text-base border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-400 bg-white" />
+            <input type="text" placeholder="溫度標準（例：-20°C以下）" value={customRequired}
+              onChange={e => setCustomRequired(e.target.value)}
+              className="w-full text-base border border-gray-200 rounded-lg px-3 py-2 outline-none focus:ring-2 focus:ring-green-400 bg-white" />
+            <div className="flex gap-2">
+              <button onClick={() => { setAddCustomOpen(false); setCustomName(''); setCustomRequired('') }}
+                className="flex-1 py-2 rounded-lg text-sm font-bold border border-gray-200 text-gray-500 bg-white">取消</button>
+              <button onClick={addCustomSpec} disabled={!customName.trim()}
+                className="flex-1 py-2 rounded-lg text-sm font-bold text-white disabled:opacity-40"
+                style={{ background: 'linear-gradient(135deg, #00a040, #007d30)' }}>確認新增</button>
+            </div>
+          </div>
+        ) : (
+          <button onClick={() => setAddCustomOpen(true)}
+            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-dashed border-green-300 text-base font-semibold text-green-600 bg-green-50">
+            <Plus className="w-3.5 h-3.5" /> 新增其他機台
+          </button>
+        )}
       </div>
     </>
   )
@@ -862,36 +1030,48 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // 溫度記錄 - Card (swipe) mode
   // ────────────────────────────────────────────────
   const renderTempCard = () => {
-    const spec = tempSpecs[cardIdx]
-    const readings = getReadings(cardIdx)
+    const spec = effectiveSpecs[cardIdx]
+    if (!spec) return null
+    const { slotKey } = spec
+    const readings = getReadings(slotKey)
     const cardNormal = cardValue.trim() ? (() => {
       const n = parseFloat(cardValue)
       return isNaN(n) ? null : spec.check(n)
     })() : null
     const status = anomalyStatus(spec, readings)
+    const anomalyTime = getAnomalyTime(spec, readings)
+    const elapsed = anomalyTime !== null ? getElapsedMinutes(anomalyTime) : null
+    const readyToRecheck = elapsed !== null && elapsed >= 30
+    const isCustom = spec.specKey.startsWith('custom-')
 
     const saveCurrentCard = () => {
       if (!cardValue.trim()) return
       const time = nowTimeStr()
       setTempData(p => {
-        const existing = [...(p[cardIdx] ?? [])]
+        const existing = [...(p[slotKey] ?? [])]
         const last = [...existing].reverse().find(r => r.value.trim())
-        if (last && last.value === cardValue) return p // unchanged, skip
-        return { ...p, [cardIdx]: [...existing, { time, value: cardValue }] }
+        if (last && last.value === cardValue) return p
+        return { ...p, [slotKey]: [...existing, { time, value: cardValue }] }
       })
       setSubmitted(false)
     }
 
     const goCard = (nextIdx: number) => {
       saveCurrentCard()
-      setCardIdx(Math.max(0, Math.min(tempSpecs.length - 1, nextIdx)))
+      setCardIdx(Math.max(0, Math.min(effectiveSpecs.length - 1, nextIdx)))
     }
 
-    const isLast = cardIdx === tempSpecs.length - 1
+    const isLast = cardIdx === effectiveSpecs.length - 1
+
+    const zoneColors: Record<string, { bg: string; color: string }> = {
+      '賣場': { bg: '#eff6ff', color: '#1d4ed8' },
+      '咖啡': { bg: '#fdf4ff', color: '#7c3aed' },
+      'FF區': { bg: '#fff7ed', color: '#c2410c' },
+    }
+    const zoneStyle = zoneColors[spec.zone] ?? { bg: '#f3f4f6', color: '#6b7280' }
 
     return (
       <div>
-        {/* 操作說明（首張卡片且尚無資料時顯示） */}
         {cardIdx === 0 && readings.length === 0 && (
           <div className="flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-xl px-3 py-2.5 mb-4 text-blue-700">
             <span className="text-base shrink-0 mt-0.5">💡</span>
@@ -904,73 +1084,64 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
         {/* Progress header */}
         <div className="flex items-center justify-between mb-4">
-          <span className="text-base font-bold text-gray-500">{cardIdx + 1} / {tempSpecs.length}</span>
-          <span className="px-2 py-1 rounded-lg text-base font-bold"
-            style={{
-              background: spec.zone === '賣場' ? '#eff6ff' : spec.zone === '咖啡' ? '#fdf4ff' : '#fff7ed',
-              color: spec.zone === '賣場' ? '#1d4ed8' : spec.zone === '咖啡' ? '#7c3aed' : '#c2410c',
-            }}>
+          <span className="text-base font-bold text-gray-500">{cardIdx + 1} / {effectiveSpecs.length}</span>
+          <span className="px-2 py-1 rounded-lg text-base font-bold" style={{ background: zoneStyle.bg, color: zoneStyle.color }}>
             {spec.zone}
           </span>
         </div>
 
-        {/* Device name + hint */}
-        <p className="text-lg font-bold text-gray-800 mb-1">{spec.location}</p>
+        {/* Device name + unit label + hint */}
+        <p className="text-lg font-bold text-gray-800 mb-1">{spec.location}{spec.unitLabel}</p>
         {spec.hint && (
-          <p className="text-sm text-blue-600 bg-blue-50 rounded-xl px-3 py-2 mb-2 leading-snug">
-            ℹ️ {spec.hint}
-          </p>
+          <p className="text-sm text-blue-600 bg-blue-50 rounded-xl px-3 py-2 mb-2 leading-snug">ℹ️ {spec.hint}</p>
         )}
         <p className="text-base text-gray-400 mb-4">標準：{spec.required}</p>
 
-        {/* Large input — hidden when skipped */}
-        {!tempSkipped[cardIdx] && (
+        {/* Multi-unit count adjuster */}
+        {!isCustom && (
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-sm text-gray-400">此機型台數：</span>
+            <button onClick={() => adjustCount(spec.specKey, -1)} disabled={(equipmentCounts[spec.specKey] ?? 1) <= 1}
+              className="w-7 h-7 rounded-lg border border-gray-200 text-gray-600 font-bold text-base disabled:opacity-30 flex items-center justify-center">
+              ─
+            </button>
+            <span className="text-base font-bold text-gray-700 w-6 text-center">{equipmentCounts[spec.specKey] ?? 1}</span>
+            <button onClick={() => adjustCount(spec.specKey, 1)}
+              className="w-7 h-7 rounded-lg border border-blue-200 text-blue-600 font-bold text-base flex items-center justify-center">
+              ＋
+            </button>
+          </div>
+        )}
+
+        {/* Large input */}
+        {!tempSkipped[slotKey] && (
           <>
             <div className="flex items-end justify-center gap-2 mb-2">
-              <input
-                type="number"
-                inputMode="decimal"
-                placeholder="—"
-                value={cardValue}
+              <input type="number" inputMode="decimal" placeholder="—" value={cardValue}
                 onChange={e => setCardValue(e.target.value)}
                 enterKeyHint={isLast ? 'done' : 'next'}
-                onKeyDown={e => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault()
-                    if (isLast) saveCurrentCard()
-                    else goCard(cardIdx + 1)
-                  }
-                }}
+                onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (isLast) saveCurrentCard(); else goCard(cardIdx + 1) } }}
                 className="outline-none bg-transparent text-center font-black"
-                style={{
-                  fontSize: '56px',
-                  width: '180px',
-                  borderBottom: `3px solid ${cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#d1d5db'}`,
-                  color: cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#374151',
-                }}
+                style={{ fontSize: '56px', width: '180px', borderBottom: `3px solid ${cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#d1d5db'}`, color: cardNormal === false ? '#ef4444' : cardNormal === true ? '#10b981' : '#374151' }}
               />
               <span className="text-2xl font-bold text-gray-400 pb-2">°C</span>
             </div>
-
-            {/* 上次值 / 標準值提示 */}
-            {getReadings(cardIdx).length === 0 && cardValue !== '' && (
+            {readings.length === 0 && cardValue !== '' && (
               <p className="text-sm text-center -mt-1 mb-1 font-medium"
-                style={{ color: prevTempData[cardIdx] === cardValue ? '#d97706' : '#9ca3af' }}>
-                {prevTempData[cardIdx] === cardValue
-                  ? '↑ 帶入上次值，請確認後送出'
-                  : `↑ 標準參考值 ${tempSpecs[cardIdx]?.required}，請確認後送出`}
+                style={{ color: prevTempData[slotKey] === cardValue ? '#d97706' : '#9ca3af' }}>
+                {prevTempData[slotKey] === cardValue ? '↑ 帶入上次值，請確認後送出' : `↑ 標準參考值 ${spec.required}，請確認後送出`}
               </p>
             )}
           </>
         )}
 
-        {/* Skip status banner — shown when skipped */}
-        {tempSkipped[cardIdx] && (
-          <div className={`rounded-2xl px-4 py-4 mb-3 flex items-center gap-3 ${tempSkipped[cardIdx] === 'no-machine' ? 'bg-gray-50 border border-gray-200' : 'bg-orange-50 border border-orange-200'}`}>
-            <span className="text-2xl">{tempSkipped[cardIdx] === 'no-machine' ? '🚫' : '🔧'}</span>
+        {/* Skip status banner */}
+        {tempSkipped[slotKey] && (
+          <div className={`rounded-2xl px-4 py-4 mb-3 flex items-center gap-3 ${tempSkipped[slotKey] === 'no-machine' ? 'bg-gray-50 border border-gray-200' : 'bg-orange-50 border border-orange-200'}`}>
+            <span className="text-2xl">{tempSkipped[slotKey] === 'no-machine' ? '🚫' : '🔧'}</span>
             <div>
-              <p className="text-base font-bold" style={{ color: tempSkipped[cardIdx] === 'no-machine' ? '#374151' : '#c2410c' }}>
-                {tempSkipped[cardIdx] === 'no-machine' ? '無此機台' : '機台故障'}
+              <p className="text-base font-bold" style={{ color: tempSkipped[slotKey] === 'no-machine' ? '#374151' : '#c2410c' }}>
+                {tempSkipped[slotKey] === 'no-machine' ? '無此機台' : '機台故障'}
               </p>
               <p className="text-sm text-gray-400">已標記為跳過，不需填寫溫度</p>
             </div>
@@ -979,41 +1150,33 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
         {/* Navigation buttons */}
         <div className="flex gap-2 mt-3 mb-3">
-          <button
-            onClick={() => goCard(cardIdx - 1)}
-            disabled={cardIdx === 0}
+          <button onClick={() => goCard(cardIdx - 1)} disabled={cardIdx === 0}
             className="flex-1 py-3 rounded-2xl text-base font-bold transition-all disabled:opacity-40"
-            style={{ background: '#f3f4f6', color: '#374151' }}
-          >
+            style={{ background: '#f3f4f6', color: '#374151' }}>
             ← 上一台
           </button>
-          <button
-            onClick={() => {
-              if (isLast) {
-                saveCurrentCard()
-              } else {
-                goCard(cardIdx + 1)
-              }
-            }}
+          <button onClick={() => { if (isLast) saveCurrentCard(); else goCard(cardIdx + 1) }}
             className="flex-1 py-3 rounded-2xl text-base font-bold text-white transition-all"
-            style={{ background: isLast ? 'linear-gradient(135deg, #00a040, #007d30)' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}
-          >
+            style={{ background: isLast ? 'linear-gradient(135deg, #00a040, #007d30)' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}>
             {isLast ? '完成 ✓' : '確認，下一台 →'}
           </button>
         </div>
 
         {/* Status line */}
-        {!tempSkipped[cardIdx] && (
+        {!tempSkipped[slotKey] && (
           <div className="text-center mb-3 h-6">
             {cardNormal === true && <span className="text-base font-semibold text-green-600">✅ 在標準範圍內</span>}
             {cardNormal === false && <span className="text-base font-semibold text-red-500">⚠️ 超出標準範圍</span>}
           </div>
         )}
 
-        {/* Anomaly banners + actionNote (#34) */}
+        {/* Anomaly banners with 30-min timer */}
         {status === 'recheck' && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 mb-2 text-base font-semibold text-yellow-700">
-            ⏱ 請於 30 分鐘後再次量測確認
+          <div className="rounded-xl px-3 py-2 mb-2 text-base font-semibold"
+            style={{ background: readyToRecheck ? '#f0fdf4' : '#fffbeb', color: readyToRecheck ? '#16a34a' : '#b45309', border: `1px solid ${readyToRecheck ? '#bbf7d0' : '#fde68a'}` }}>
+            {readyToRecheck
+              ? `✓ 已過 ${elapsed} 分鐘，可進行複核量測`
+              : elapsed !== null ? `⏱ 首次異常 ${elapsed} 分鐘前，建議 30 分後再複核` : '⏱ 請於 30 分鐘後再次量測確認'}
           </div>
         )}
         {status === 'repair' && (
@@ -1024,41 +1187,25 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         {(status === 'recheck' || status === 'repair') && (
           <div className="mb-3">
             <label className="text-sm font-semibold text-gray-500 block mb-1">📝 處理措施 / 說明</label>
-            <textarea
-              rows={2}
-              placeholder="記錄複核結果、處理措施或備注…"
+            <textarea rows={2} placeholder="記錄複核結果、處理措施或備注…"
               className="w-full text-base text-gray-700 border border-yellow-200 rounded-xl px-3 py-2 bg-yellow-50 outline-none focus:ring-2 focus:ring-yellow-400 resize-none leading-relaxed"
-              value={tempNotes[cardIdx] ?? ''}
-              onChange={e => { setTempNotes(p => ({ ...p, [cardIdx]: e.target.value })); setSubmitted(false) }}
+              value={tempNotes[slotKey] ?? ''}
+              onChange={e => { setTempNotes(p => ({ ...p, [slotKey]: e.target.value })); setSubmitted(false) }}
             />
           </div>
         )}
 
-        {/* Skip buttons (#17) */}
+        {/* Skip buttons */}
         <div className="mb-2">
           <p className="text-sm font-semibold text-gray-400 mb-1.5">標記機台狀態：</p>
           <div className="flex gap-2">
             {(['no-machine', 'fault'] as const).map(type => {
-              const isActive = tempSkipped[cardIdx] === type
+              const isActive = tempSkipped[slotKey] === type
               return (
-                <button
-                  key={type}
-                  onClick={() => {
-                    setTempSkipped(p => {
-                      const next = { ...p }
-                      if (isActive) delete next[cardIdx]
-                      else next[cardIdx] = type
-                      return next
-                    })
-                    setSubmitted(false)
-                  }}
+                <button key={type}
+                  onClick={() => { setTempSkipped(p => { const n = { ...p }; if (isActive) delete n[slotKey]; else n[slotKey] = type; return n }); setSubmitted(false) }}
                   className="flex-1 py-2.5 rounded-xl text-sm font-bold border-2 transition-all"
-                  style={{
-                    borderColor: isActive ? (type === 'no-machine' ? '#6b7280' : '#f97316') : '#e5e7eb',
-                    background:  isActive ? (type === 'no-machine' ? '#f3f4f6' : '#fff7ed') : 'white',
-                    color:       isActive ? (type === 'no-machine' ? '#374151' : '#c2410c') : '#9ca3af',
-                  }}
-                >
+                  style={{ borderColor: isActive ? (type === 'no-machine' ? '#6b7280' : '#f97316') : '#e5e7eb', background: isActive ? (type === 'no-machine' ? '#f3f4f6' : '#fff7ed') : 'white', color: isActive ? (type === 'no-machine' ? '#374151' : '#c2410c') : '#9ca3af' }}>
                   {type === 'no-machine' ? '🚫 無此機台' : '🔧 機台故障'}
                 </button>
               )
@@ -1067,37 +1214,23 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         </div>
 
         {/* Dots progress */}
-        <div className="flex justify-center gap-1.5 my-3">
-          {tempSpecs.map((sp, i) => {
-            const r = getReadings(i)
+        <div className="flex justify-center gap-1.5 my-3 flex-wrap">
+          {effectiveSpecs.map((sp, i) => {
+            const r = getReadings(sp.slotKey)
             const lf = [...r].reverse().find(rd => rd.value.trim())
             const isNorm = lf ? evalReading(sp, lf) : null
             const isCurrent = i === cardIdx
-            const isSkipped = !!tempSkipped[i]
+            const isSkipped = !!tempSkipped[sp.slotKey]
             return (
-              <div key={i} className="rounded-full transition-all"
-                style={{
-                  width: isCurrent ? 10 : 6,
-                  height: isCurrent ? 10 : 6,
-                  background: isCurrent ? '#1e40af'
-                    : isSkipped ? '#9ca3af'
-                    : isNorm === false ? '#ef4444'
-                    : isNorm === true ? '#10b981'
-                    : '#d1d5db',
-                }}
+              <div key={sp.slotKey} className="rounded-full transition-all"
+                style={{ width: isCurrent ? 10 : 6, height: isCurrent ? 10 : 6, background: isCurrent ? '#1e40af' : isSkipped ? '#9ca3af' : isNorm === false ? '#ef4444' : isNorm === true ? '#10b981' : '#d1d5db' }}
               />
             )
           })}
         </div>
 
-        {/* Small list mode link */}
         <div className="text-center mt-3">
-          <button
-            onClick={() => setSwipeMode(false)}
-            className="text-base text-gray-400 underline"
-          >
-            切換為列表模式
-          </button>
+          <button onClick={() => setSwipeMode(false)} className="text-base text-gray-400 underline">切換為列表模式</button>
         </div>
       </div>
     )
@@ -1107,9 +1240,9 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // 溫度記錄 (top-level with toggle)
   // ────────────────────────────────────────────────
   const renderTemperature = () => {
-    const totalReadings = tempSpecs.reduce((s, _, i) => s + (tempData[i]?.filter(r => r.value.trim()).length ?? 0), 0)
-    const hasAbnormal = tempSpecs.some((spec, i) => {
-      const s = anomalyStatus(spec, getReadings(i))
+    const totalReadings = effectiveSpecs.reduce((s, spec) => s + (tempData[spec.slotKey]?.filter(r => r.value.trim()).length ?? 0), 0)
+    const hasAbnormal = effectiveSpecs.some(spec => {
+      const s = anomalyStatus(spec, getReadings(spec.slotKey))
       return s === 'recheck' || s === 'repair'
     })
 

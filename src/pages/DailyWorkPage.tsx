@@ -140,21 +140,30 @@ interface TempSpec { specKey: string; location: string; required: string; zone: 
 interface EffectiveSpec extends TempSpec { unitIndex: number; slotKey: string; unitLabel: string }
 
 const BASE_SPECS: TempSpec[] = [
-  { specKey: 'fridge-4c',    location: '4°C 間隔機（前後中島）', required: '4°C',      zone: '賣場', check: v => v >= 2  && v <= 6,   standard: '4'   },
-  { specKey: 'OC',           location: 'OC',                    required: '0~7°C',    zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'WI',           location: 'WI（走入式冷藏）',      required: '0~7°C',    zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'freezer-v',    location: '立式冷凍',              required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18' },
-  { specKey: 'shelf-18c',    location: '18°C 欄',               required: '18°C以下',  zone: '賣場', check: v => v <= 18,             standard: '16'  },
-  { specKey: 'coffee-fridge', location: '咖啡冷藏機台',         required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'milk-fridge',   location: '牛奶冰箱',             required: '0~7°C',    zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'freezer-c',    location: '冷凍冰箱',              required: '-18°C以下', zone: '咖啡', check: v => v <= -18,            standard: '-18' },
-  { specKey: 'icecream',     location: '冰淇淋機（子母機）',    required: '依機台',    zone: '咖啡', check: () => true,               hint: '主機（壓縮機）記錄顯示溫度；子機依機型標準填寫。如不確定請拍照備查。' },
-  { specKey: 'steamer',      location: '蒸箱',                  required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
-  { specKey: 'oden',         location: '關東煮機',              required: '82~85°C',   zone: 'FF區', check: v => v >= 82 && v <= 85,  standard: '83'  },
-  { specKey: 'tea-egg',      location: '茶葉蛋鍋',              required: '75°C以上',  zone: 'FF區', check: v => v >= 75,             standard: '75'  },
-  { specKey: 'ff-warmer',    location: 'FF保溫櫃',              required: '60°C以上',  zone: 'FF區', check: v => v >= 60,             standard: '60'  },
-  { specKey: 'fresh-food',   location: '鮮食機',                required: '0~7°C',    zone: 'FF區', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'freezer-ff',   location: 'FF 冷凍冰箱',           required: '-20°C以下', zone: 'FF區', check: v => v <= -20,            standard: '-20' },
+  // ── 店舖賣場 ──
+  { specKey: 'shelf-18c',       location: '18°C開放櫃',              required: '16-20°C',   zone: '賣場', check: v => v >= 16 && v <= 20,  standard: '18'  },
+  { specKey: 'fridge-4c',       location: '4°C開放櫃（壁型、中島）', required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'OC',              location: 'OC',                      required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'WI',              location: 'WI',                      required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'RI',              location: 'RI立式冷藏櫃',            required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'freezer-chest',   location: '臥式冰櫃（含子母櫃）',   required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18' },
+  { specKey: 'freezer-v',       location: '立式冷凍櫃（含走入式）',  required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18' },
+  { specKey: 'light-food',      location: '輕食櫃',                  required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'sapporo-fridge',  location: '金色三麥冷藏冰箱',        required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'haagen-dazs',     location: '哈根達斯冰箱',            required: '-20°C以下', zone: '賣場', check: v => v <= -20,            standard: '-20' },
+  // ── 咖啡櫃檯區 ──
+  { specKey: 'milk-fridge',     location: '牛奶冰箱',                required: '0~7°C',     zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'coffee-fridge',   location: '抽屜式冷藏冰箱',          required: '0~7°C',     zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'freezer-c',       location: '冷凍冰箱',                required: '-18°C以下', zone: '咖啡', check: v => v <= -18,            standard: '-18' },
+  // ── 店舖後場／倉庫區 ──
+  { specKey: 'backroom-fridge',  location: '冷藏冰箱',               required: '0~7°C',     zone: '後場', check: v => v >= 0  && v <= 7,   standard: '4'   },
+  { specKey: 'backroom-freezer', location: '冷凍冰箱／立式冰箱',     required: '-18°C以下', zone: '後場', check: v => v <= -18,            standard: '-18' },
+  // ── FF區機台 ──
+  { specKey: 'hotdog',          location: '熱狗機刻度',               required: '3~3.5',     zone: 'FF區', check: v => v >= 3  && v <= 3.5, standard: '3.5' },
+  { specKey: 'tea-egg',         location: '茶葉蛋鍋',                 required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
+  { specKey: 'steamer',         location: '蒸箱',                     required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
+  { specKey: 'ff-warmer',       location: '保溫櫃（單溫／雙溫）',     required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
+  { specKey: 'oden',            location: '關東煮機',                  required: '82~85°C',   zone: 'FF區', check: v => v >= 82 && v <= 85,  standard: '83'  },
 ]
 
 function buildEffectiveSpecs(counts: Record<string, number>, customs: TempSpec[]): EffectiveSpec[] {
@@ -186,7 +195,7 @@ const friendlyTasks = [
   { key: 't2400', time: '24:00', label: '過期品下架',    detail: '預購/隨買/蘭購/各溫層專區（冷藏、冷凍、常溫）' },
 ]
 
-const zones = ['全部', '賣場', '咖啡', 'FF區', '其他']
+const zones = ['全部', '賣場', '咖啡', '後場', 'FF區', '其他']
 const nowTimeStr = () => {
   const n = new Date()
   return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`

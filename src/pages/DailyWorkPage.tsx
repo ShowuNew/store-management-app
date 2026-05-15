@@ -217,13 +217,13 @@ type TempData = Record<string, TempReading[]>  // key = slotKey e.g. 'OC-0', 'OC
 interface WasteState {
   generalWasteBags: string; foodWasteBags: string; recyclingBags: string
   wasteDeliveryTime: string; cupCollectionTime: string
-  uniformBags: string; uniformScan: boolean
+  uniformBags: string; uniformScan: string
   groundCleaning: boolean; tapeSafety: boolean
 }
 const defaultWaste: WasteState = {
   generalWasteBags: '', foodWasteBags: '', recyclingBags: '',
   wasteDeliveryTime: '', cupCollectionTime: '',
-  uniformBags: '', uniformScan: false,
+  uniformBags: '', uniformScan: '',
   groundCleaning: false, tapeSafety: false,
 }
 
@@ -582,7 +582,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const shiftFriendlyKeys = selectedShift === 0 ? ['t0930'] : selectedShift === 1 ? ['t1600', 't1630'] : ['t2300', 't2400']
   const shiftFriendlyTasks = friendlyTasks.filter(t => shiftFriendlyKeys.includes(t.key))
   const friendlyDone     = shiftFriendlyTasks.filter(t => friendly[t.key]).length
-  const wasteAnyFilled   = !!(waste.generalWasteBags || waste.foodWasteBags || waste.recyclingBags || waste.wasteDeliveryTime || waste.cupCollectionTime || waste.uniformBags || waste.uniformScan || waste.groundCleaning || waste.tapeSafety)
+  const wasteAnyFilled   = !!(waste.generalWasteBags || waste.foodWasteBags || waste.recyclingBags || waste.wasteDeliveryTime || waste.cupCollectionTime || waste.uniformBags || waste.uniformScan?.trim() || waste.groundCleaning || waste.tapeSafety)
   const wasteDone        = waste.groundCleaning && waste.tapeSafety
 
   const filteredSpecs = tempZone === '全部'
@@ -1317,11 +1317,11 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const timeFields: { label: string; key: keyof WasteState }[] = [
       { label: '廢棄物交付時間',        key: 'wasteDeliveryTime' },
       { label: '收退循環杯（交付日翊）', key: 'cupCollectionTime' },
+      { label: '制服（離店過刷）',       key: 'uniformScan'       },
     ]
     const checkFields: { label: string; key: keyof WasteState; color: string }[] = [
-      { label: '制服（離店過刷）', key: 'uniformScan',    color: '#7c3aed' },
-      { label: '地墊清潔',         key: 'groundCleaning', color: '#059669' },
-      { label: '貼膠安全',         key: 'tapeSafety',     color: '#059669' },
+      { label: '地墊清潔', key: 'groundCleaning', color: '#059669' },
+      { label: '貼膠安全', key: 'tapeSafety',     color: '#059669' },
     ]
     return (
       <div className="bg-white rounded-2xl p-4 space-y-4">

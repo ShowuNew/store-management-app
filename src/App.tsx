@@ -38,7 +38,7 @@ const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
 // 若 URL 帶有 sub-token 參數，直接顯示小店長工作日誌（無需登入）
 const SUB_TOKEN = new URLSearchParams(window.location.search).get('sub-token')
 
-const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage', 'coffee-check']
+const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage', 'coffee-check', 'admin-records']
 const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage', 'admin-store-status']
 
 const staffTabs = [
@@ -49,6 +49,10 @@ const staffTabs = [
   { page: 'anomaly'      as Page, icon: AlertTriangle,  label: '異常回報' },
   { page: 'equipment'    as Page, icon: Wrench,         label: '設備保養' },
   { page: 'coffee-check' as Page, icon: Coffee,         label: '咖啡自檢' },
+]
+
+const managerExtraTabs = [
+  { page: 'admin-records' as Page, icon: ClipboardList, label: '紀錄查閱' },
 ]
 
 const adminTabs = [
@@ -75,8 +79,9 @@ function App() {
     setCurrentPage(u.role === 'supervisor' || u.role === 'admin' ? 'admin-dashboard' : 'dashboard')
   }
   const handleLogout = () => { setUser(null); setCurrentPage('login') }
+  const isManager    = user?.role === 'manager' || user?.role === 'sub-manager'
   const goBack       = () => setCurrentPage(
-    ADMIN_NAV_PAGES.includes(currentPage) ? 'admin-dashboard' : 'dashboard'
+    ADMIN_NAV_PAGES.includes(currentPage) && !isManager ? 'admin-dashboard' : 'dashboard'
   )
 
   // 神秘客公開表單（無需登入）
@@ -107,9 +112,10 @@ function App() {
     }
   }
 
-  const showBottomNav      = NAV_PAGES.includes(currentPage)
-  const showAdminBottomNav = ADMIN_NAV_PAGES.includes(currentPage)
-  const activeTabs         = showBottomNav ? staffTabs : showAdminBottomNav ? adminTabs : []
+  const showAdminBottomNav = ADMIN_NAV_PAGES.includes(currentPage) && !isManager
+  const showBottomNav      = NAV_PAGES.includes(currentPage) && !showAdminBottomNav
+  const baseStaffTabs      = isManager ? [...staffTabs, ...managerExtraTabs] : staffTabs
+  const activeTabs         = showBottomNav ? baseStaffTabs : showAdminBottomNav ? adminTabs : []
 
   return (
     <div className="flex min-h-dvh bg-gray-50">

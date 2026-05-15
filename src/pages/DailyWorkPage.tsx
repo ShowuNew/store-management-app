@@ -556,7 +556,9 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const tempRepairCount  = effectiveSpecs.filter(spec => anomalyStatus(spec, getReadings(spec.slotKey)) === 'repair').length
   const tempRecheckCount = effectiveSpecs.filter(spec => anomalyStatus(spec, getReadings(spec.slotKey)) === 'recheck').length
   const cleaningFilled   = cleaningMachines.filter(m => cleaning[m]?.trim()).length
-  const friendlyDone     = friendlyTasks.filter(t => friendly[t.key]).length
+  const shiftFriendlyKeys = selectedShift === 0 ? ['t0930'] : selectedShift === 1 ? ['t1600', 't1630'] : ['t2300', 't2400']
+  const shiftFriendlyTasks = friendlyTasks.filter(t => shiftFriendlyKeys.includes(t.key))
+  const friendlyDone     = shiftFriendlyTasks.filter(t => friendly[t.key]).length
   const wasteAnyFilled   = !!(waste.foodWasteBags || waste.recyclingCount || waste.leftoverFoodTime || waste.cupCollectionTime || waste.verified || waste.groundCleaning || uniform.appearance || uniform.sanitize)
   const wasteDone        = waste.verified && waste.groundCleaning && uniform.appearance
 
@@ -596,7 +598,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const tempStatus: CardStatus = tempRepairCount > 0 ? 'red' : tempRecheckCount > 0 ? 'yellow' : tempFilledCount > 0 ? 'green' : 'gray'
     const wasteStatus: CardStatus = wasteDone ? 'green' : wasteAnyFilled ? 'yellow' : 'gray'
     const cleanStatus: CardStatus = cleaningFilled === cleaningMachines.length ? 'green' : cleaningFilled > 0 ? 'yellow' : 'gray'
-    const friendlyStatus: CardStatus = friendlyDone === friendlyTasks.length ? 'green' : friendlyDone > 0 ? 'yellow' : 'gray'
+    const friendlyStatus: CardStatus = friendlyDone === shiftFriendlyTasks.length ? 'green' : friendlyDone > 0 ? 'yellow' : 'gray'
     const handoverStatus: CardStatus = handoverNote.trim() ? 'green' : 'gray'
 
     const cards: { view: ViewType; icon: React.ReactNode; title: string; sub: string; status: CardStatus }[] = [
@@ -628,7 +630,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         view: 'friendly',
         icon: <Leaf className="w-5 h-5" style={{ color: statusColor[friendlyStatus] }} />,
         title: '友善食光 / 過期品下架',
-        sub: friendlyDone > 0 ? `${friendlyDone}/${friendlyTasks.length} 完成` : '尚未確認',
+        sub: friendlyDone > 0 ? `${friendlyDone}/${shiftFriendlyTasks.length} 完成` : '尚未確認',
         status: friendlyStatus,
       },
       {
@@ -1387,20 +1389,20 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // 友善食光
   // ────────────────────────────────────────────────
   const renderFriendly = () => {
-    // 依班次時段分組
-    const periods: { label: string; color: string; keys: string[] }[] = [
+    const allPeriods: { label: string; color: string; keys: string[] }[] = [
       { label: '早班作業', color: '#f59e0b', keys: ['t0930'] },
       { label: '下午作業', color: '#3b82f6', keys: ['t1600', 't1630'] },
       { label: '夜班作業', color: '#8b5cf6', keys: ['t2300', 't2400'] },
     ]
+    const periods = [allPeriods[selectedShift]]
     return (
     <div className="space-y-3">
       <div className="flex items-center justify-between px-1">
-        <span className="text-base font-bold text-gray-500">{friendlyDone}/{friendlyTasks.length} 完成</span>
-        <span className="text-base text-gray-400">不分班次，依時段確認</span>
+        <span className="text-base font-bold text-gray-500">{friendlyDone}/{shiftFriendlyTasks.length} 完成</span>
+        <span className="text-base text-gray-400">{shifts[selectedShift].split(' ')[0]} 班別作業</span>
       </div>
       {periods.map(period => {
-        const tasks = friendlyTasks.filter(t => period.keys.includes(t.key))
+        const tasks = shiftFriendlyTasks
         const periodDone = tasks.filter(t => !!friendly[t.key]).length
         return (
           <div key={period.label} className="bg-white rounded-2xl overflow-hidden">

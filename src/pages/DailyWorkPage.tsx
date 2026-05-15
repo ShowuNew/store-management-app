@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircle2, Circle, Thermometer, Save, AlertCircle,
-  RefreshCw, Clock, Plus, Trash2, Package, Wrench, Leaf, Shirt, MessageSquare, ChevronRight, PenLine, RotateCcw,
+  RefreshCw, Clock, Plus, Trash2, Package, Wrench, Leaf, MessageSquare, ChevronRight, PenLine, RotateCcw,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -182,8 +182,18 @@ function buildEffectiveSpecs(counts: Record<string, number>, customs: TempSpec[]
 
 // ── 機器清潔清單 ──
 const cleaningMachines = [
-  '霜淇淋機濾網清潔沖洗', '封口機', '蒸包機', '熱狗機', '茶葉蛋鍋',
-  '保溫機（單溫）', '保溫機（雙溫）', '咖啡機（手沖臥式固定式）', '廚房清潔',
+  '咖啡機（含自助區機台）',
+  '霜淇淋機（殺菌鍵／洗濾網）',
+  '封口機',
+  '蒸包機',
+  '熱狗機',
+  '茶葉蛋鍋',
+  '番薯機',
+  '保溫櫃單溫／雙溫',
+  '旋風烤箱／蒸烤爐',
+  '咖啡複合店-手沖／義式／磨豆機',
+  '咖啡複合店-輕食櫃',
+  '咖啡複合店-微波烤箱',
 ]
 
 // ── 友善食光任務 ──
@@ -205,11 +215,17 @@ interface TempReading { time: string; value: string }
 type TempData = Record<string, TempReading[]>  // key = slotKey e.g. 'OC-0', 'OC-1'
 
 interface WasteState {
-  foodWasteBags: string; recyclingCount: string
-  leftoverFoodTime: string; cupCollectionTime: string
-  verified: boolean; groundCleaning: boolean
+  generalWasteBags: string; foodWasteBags: string; recyclingBags: string
+  wasteDeliveryTime: string; cupCollectionTime: string
+  uniformBags: string; uniformScan: boolean
+  groundCleaning: boolean; tapeSafety: boolean
 }
-const defaultWaste: WasteState = { foodWasteBags: '', recyclingCount: '', leftoverFoodTime: '', cupCollectionTime: '', verified: false, groundCleaning: false }
+const defaultWaste: WasteState = {
+  generalWasteBags: '', foodWasteBags: '', recyclingBags: '',
+  wasteDeliveryTime: '', cupCollectionTime: '',
+  uniformBags: '', uniformScan: false,
+  groundCleaning: false, tapeSafety: false,
+}
 
 
 const evalReading = (spec: TempSpec, r: TempReading): boolean | null => {
@@ -273,7 +289,6 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [waste, setWaste]           = useState<WasteState>(defaultWaste)
   const [cleaning, setCleaning]     = useState<Record<string, string>>({})
   const [friendly, setFriendly]     = useState<Record<string, boolean>>({})
-  const [uniform, setUniform]         = useState({ appearance: false, sanitize: false })
   const [shiftSignature, setShiftSignature]     = useState('')
   const [managerSignature, setManagerSignature] = useState('')
   const [allShiftSigs, setAllShiftSigs] = useState({ morning: '', evening: '', lateNight: '' })
@@ -418,7 +433,6 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       setWaste(sorted.find((l: any) => l.tasks_done?._waste)?.tasks_done._waste ?? defaultWaste)
       setCleaning(sorted.find((l: any) => l.tasks_done?._cleaning)?.tasks_done._cleaning ?? {})
       setFriendly(sorted.find((l: any) => l.tasks_done?._friendly)?.tasks_done._friendly ?? {})
-      setUniform(sorted.find((l: any) => l.tasks_done?._uniform)?.tasks_done._uniform ?? { appearance: false, sanitize: false })
       setManagerSignature(sorted.find((l: any) => l.tasks_done?._manager_signature)?.tasks_done._manager_signature ?? '')
       setAllShiftSigs({
         morning:   allLogs.find((l: any) => l.shift === shifts[0])?.tasks_done?._signature ?? '',
@@ -538,7 +552,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const payload = {
       store_id: user.storeId, staff_name: user.name, log_date: todayStr,
       shift: shifts[selectedShift], temperatures: temperaturesPayload,
-      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _uniform: uniform, _signature: shiftSignature, _manager_signature: managerSignature },
+      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _signature: shiftSignature, _manager_signature: managerSignature },
       handover_note: handoverNote,
       submitted_at: new Date().toISOString(),
     }
@@ -568,8 +582,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const shiftFriendlyKeys = selectedShift === 0 ? ['t0930'] : selectedShift === 1 ? ['t1600', 't1630'] : ['t2300', 't2400']
   const shiftFriendlyTasks = friendlyTasks.filter(t => shiftFriendlyKeys.includes(t.key))
   const friendlyDone     = shiftFriendlyTasks.filter(t => friendly[t.key]).length
-  const wasteAnyFilled   = !!(waste.foodWasteBags || waste.recyclingCount || waste.leftoverFoodTime || waste.cupCollectionTime || waste.verified || waste.groundCleaning || uniform.appearance || uniform.sanitize)
-  const wasteDone        = waste.verified && waste.groundCleaning && uniform.appearance
+  const wasteAnyFilled   = !!(waste.generalWasteBags || waste.foodWasteBags || waste.recyclingBags || waste.wasteDeliveryTime || waste.cupCollectionTime || waste.uniformBags || waste.uniformScan || waste.groundCleaning || waste.tapeSafety)
+  const wasteDone        = waste.groundCleaning && waste.tapeSafety
 
   const filteredSpecs = tempZone === '全部'
     ? effectiveSpecs
@@ -1293,75 +1307,81 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // ────────────────────────────────────────────────
   // 廢棄物 / 制服
   // ────────────────────────────────────────────────
-  const renderWaste = () => (
-    <div className="space-y-4">
-      <div className="bg-white rounded-2xl p-4">
-        <div className="flex items-center gap-2 mb-3">
-          <Shirt className="w-3.5 h-3.5 text-purple-500" />
-          <p className="text-base font-bold text-gray-700">制服 / 服裝儀容確認</p>
-          <span className="ml-auto text-base text-gray-300">不分班次</span>
-        </div>
-        <div className="space-y-2">
-          {[
-            { key: 'appearance', label: '當班制服清潔整齊、頭髮整潔、無飾物' },
-            { key: 'sanitize',   label: '手部消毒完成（販售咖啡前 / 更換牛奶前）' },
-          ].map(({ key, label }) => (
-            <button key={key} onClick={() => { setUniform(p => ({ ...p, [key]: !p[key as keyof typeof uniform] })); setSubmitted(false) }}
-              className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all"
-              style={{ background: (uniform as any)[key] ? '#f5f3ff' : '#f9fafb' }}>
-              {(uniform as any)[key]
-                ? <CheckCircle2 className="w-5 h-5 shrink-0 text-purple-500" />
-                : <Circle className="w-5 h-5 shrink-0 text-gray-200" />}
-              <span className="text-base" style={{ color: (uniform as any)[key] ? '#7c3aed' : '#374151' }}>{label}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="bg-white rounded-2xl p-4">
-        <div className="flex items-center gap-2 mb-3">
+  const renderWaste = () => {
+    const numberFields: { label: string; key: keyof WasteState; unit: string }[] = [
+      { label: '一般垃圾', key: 'generalWasteBags', unit: '袋' },
+      { label: '廚餘',     key: 'foodWasteBags',    unit: '袋' },
+      { label: '資源回收', key: 'recyclingBags',    unit: '袋' },
+      { label: '制服',     key: 'uniformBags',      unit: '袋' },
+    ]
+    const timeFields: { label: string; key: keyof WasteState }[] = [
+      { label: '廢棄物交付時間',        key: 'wasteDeliveryTime' },
+      { label: '收退循環杯（交付日翊）', key: 'cupCollectionTime' },
+    ]
+    const checkFields: { label: string; key: keyof WasteState; color: string }[] = [
+      { label: '制服（離店過刷）', key: 'uniformScan',    color: '#7c3aed' },
+      { label: '地墊清潔',         key: 'groundCleaning', color: '#059669' },
+      { label: '貼膠安全',         key: 'tapeSafety',     color: '#059669' },
+    ]
+    return (
+      <div className="bg-white rounded-2xl p-4 space-y-4">
+        <div className="flex items-center gap-2">
           <Package className="w-3.5 h-3.5 text-orange-500" />
-          <p className="text-base font-bold text-gray-700">廢棄物管理</p>
+          <p className="text-base font-bold text-gray-700">廢棄物 / 制服確認</p>
           <span className="ml-auto text-base text-gray-300">不分班次</span>
         </div>
-        <div className="grid grid-cols-2 gap-3 mb-3">
-          {[
-            { label: '廚餘袋數',     key: 'foodWasteBags',    unit: '袋', type: 'number' },
-            { label: '資源回收',     key: 'recyclingCount',   unit: '件', type: 'number' },
-            { label: '剩食交付時間', key: 'leftoverFoodTime', unit: '',   type: 'time'   },
-            { label: '鋼環杯交付',   key: 'cupCollectionTime',unit: '',   type: 'time'   },
-          ].map(({ label, key, unit, type }) => (
+
+        {/* 袋數 */}
+        <div className="grid grid-cols-2 gap-3">
+          {numberFields.map(({ label, key, unit }) => (
             <div key={key}>
               <label className="text-base font-semibold text-gray-400 mb-1 block">{label}</label>
-              <div className="flex items-center border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 gap-1">
-                <input type={type} inputMode={type === 'number' ? 'numeric' : undefined}
+              <div className="flex items-center border border-gray-200 rounded-xl px-3 py-2 bg-gray-50 gap-1"
+                style={{ borderColor: (waste[key] as string)?.trim() ? '#6ee7b7' : '#e5e7eb' }}>
+                <input type="number" inputMode="numeric"
                   className="flex-1 text-base font-medium text-gray-700 outline-none bg-transparent"
-                  placeholder={type === 'time' ? '--:--' : '0'}
-                  value={(waste as any)[key]}
+                  placeholder="0"
+                  value={waste[key] as string}
                   onChange={e => { setWaste(p => ({ ...p, [key]: e.target.value })); setSubmitted(false) }} />
-                {unit && <span className="text-base text-gray-400">{unit}</span>}
+                <span className="text-base text-gray-400">{unit}</span>
               </div>
             </div>
           ))}
         </div>
+
+        {/* 時間 */}
+        <div className="grid grid-cols-2 gap-3">
+          {timeFields.map(({ label, key }) => (
+            <div key={key}>
+              <label className="text-base font-semibold text-gray-400 mb-1 block">{label}</label>
+              <div className="flex items-center border border-gray-200 rounded-xl px-3 py-2 bg-gray-50"
+                style={{ borderColor: (waste[key] as string)?.trim() ? '#6ee7b7' : '#e5e7eb' }}>
+                <input type="time"
+                  className="flex-1 text-base font-medium text-gray-700 outline-none bg-transparent"
+                  placeholder="--:--"
+                  value={waste[key] as string}
+                  onChange={e => { setWaste(p => ({ ...p, [key]: e.target.value })); setSubmitted(false) }} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* 確認項目 */}
         <div className="space-y-2">
-          {[
-            { key: 'verified',      label: '驗整確認' },
-            { key: 'groundCleaning',label: '地盤清潔／貼膠安全確認' },
-          ].map(({ key, label }) => (
-            <button key={key} onClick={() => { setWaste(p => ({ ...p, [key]: !p[key as keyof WasteState] })); setSubmitted(false) }}
+          {checkFields.map(({ label, key, color }) => (
+            <button key={key} onClick={() => { setWaste(p => ({ ...p, [key]: !p[key] })); setSubmitted(false) }}
               className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all"
-              style={{ background: (waste as any)[key] ? '#ecfdf5' : '#f9fafb' }}>
-              {(waste as any)[key]
-                ? <CheckCircle2 className="w-5 h-5 shrink-0 text-green-500" />
+              style={{ background: waste[key] ? color + '15' : '#f9fafb' }}>
+              {waste[key]
+                ? <CheckCircle2 className="w-5 h-5 shrink-0" style={{ color }} />
                 : <Circle className="w-5 h-5 shrink-0 text-gray-200" />}
-              <span className="text-base" style={{ color: (waste as any)[key] ? '#059669' : '#374151' }}>{label}</span>
+              <span className="text-base" style={{ color: waste[key] ? color : '#374151' }}>{label}</span>
             </button>
           ))}
         </div>
       </div>
-    </div>
-  )
+    )
+  }
 
   // ────────────────────────────────────────────────
   // 機器清潔

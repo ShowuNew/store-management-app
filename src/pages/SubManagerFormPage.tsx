@@ -20,8 +20,9 @@ interface SubManagerSession {
   store_id: string
   store_name: string
   created_by: string
+  starts_at?: string
   expires_at: string
-  status: 'pending' | 'completed' | 'expired'
+  status: 'pending' | 'completed' | 'expired' | 'cancelled'
 }
 
 const NAV_PAGES: Page[] = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'coffee-check']
@@ -43,11 +44,17 @@ export default function SubManagerFormPage({ token }: Props) {
 
       if (error || !data) { setLoadErr('連結無效或已失效'); setLoading(false); return }
 
-      if (new Date(data.expires_at) < new Date()) {
+      const now = new Date()
+      if (data.status === 'expired' || data.status === 'cancelled') {
+        setLoadErr('此連結已停用'); setLoading(false); return
+      }
+      if (new Date(data.expires_at) < now) {
         await supabase.from('sub_manager_sessions').update({ status: 'expired' }).eq('token', token)
         setLoadErr('此連結已過期'); setLoading(false); return
       }
-      if (data.status === 'expired') { setLoadErr('此連結已過期'); setLoading(false); return }
+      if (data.starts_at && new Date(data.starts_at) > now) {
+        setLoadErr('此連結尚未開放使用'); setLoading(false); return
+      }
 
       setSession(data)
       setLoading(false)

@@ -32,15 +32,18 @@ export default function MysteryFormPage({ token }: Props) {
       if (error || !data) { setLoadErr('連結無效或已失效'); setLoading(false); return }
 
       const now = new Date()
+      if (data.status === 'completed') {
+        setLoadErr('此表單已填寫完成，無法重複提交'); setLoading(false); return
+      }
+      if (data.status === 'expired' || data.status === 'cancelled') {
+        setLoadErr('此連結已停用'); setLoading(false); return
+      }
       if (new Date(data.expires_at) < now) {
         await supabase.from('mystery_sessions').update({ status: 'expired' }).eq('token', token)
         setLoadErr('此連結已過期'); setLoading(false); return
       }
-      if (data.status === 'completed') {
-        setLoadErr('此表單已填寫完成，無法重複提交'); setLoading(false); return
-      }
-      if (data.status === 'expired') {
-        setLoadErr('此連結已過期'); setLoading(false); return
+      if (data.starts_at && new Date(data.starts_at) > now) {
+        setLoadErr('此連結尚未開放使用'); setLoading(false); return
       }
 
       setSession(data)

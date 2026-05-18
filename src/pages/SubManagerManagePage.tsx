@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Link2, Copy, Check, RefreshCw, ClipboardList, Plus, CheckCircle2, Clock, XCircle } from 'lucide-react'
+import { Link2, Copy, Check, RefreshCw, ClipboardList, Plus, CheckCircle2, Clock, XCircle, Ban } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
 import type { User } from '../types'
@@ -13,8 +13,9 @@ interface SubManagerSession {
   store_id: string
   store_name: string
   created_by: string
+  starts_at?: string
   expires_at: string
-  status: 'pending' | 'completed' | 'expired'
+  status: 'pending' | 'completed' | 'expired' | 'cancelled'
   created_at: string
 }
 
@@ -24,20 +25,31 @@ function generateToken() {
   return crypto.randomUUID().replace(/-/g, '').slice(0, 16)
 }
 
-const EXPIRY_OPTIONS = [
-  { label: '1 天', days: 1 },
-  { label: '3 天', days: 3 },
-  { label: '7 天', days: 7 },
-]
+function toDatetimeLocal(date: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+}
+
+function fmtDT(iso: string): string {
+  const d = new Date(iso)
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+}
 
 export default function SubManagerManagePage({ user, onBack }: Props) {
   const [tab, setTab] = useState<'create' | 'history'>('create')
 
   // ── Create ──
-  const [expiryDays, setExpiryDays] = useState(1)
+  const [startsAt, setStartsAt] = useState(() => toDatetimeLocal(new Date()))
+  const [endsAt, setEndsAt] = useState(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 3)
+    return toDatetimeLocal(d)
+  })
   const [creating, setCreating]     = useState(false)
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null)
   const [copied, setCopied]         = useState(false)
+  const [createdRange, setCreatedRange] = useState<{ starts: string; ends: string } | null>(null)
 
   // ── History ──
   const [sessions, setSessions] = useState<SubManagerSession[]>([])
@@ -58,24 +70,34 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
   useEffect(() => { if (tab === 'history') loadHistory() }, [tab])
 
   const handleCreate = async () => {
+    if (new Date(endsAt) <= new Date(startsAt)) {
+      alert('結束時間必須晚於開始時間')
+      return
+    }
     setCreating(true)
     const token = generateToken()
-    const expires = new Date()
-    expires.setDate(expires.getDate() + expiryDays)
 
     const { error } = await supabase.from('sub_manager_sessions').insert({
       token,
       store_id:   user.storeId,
       store_name: user.storeName,
       created_by: user.name,
-      expires_at: expires.toISOString(),
+      starts_at:  new Date(startsAt).toISOString(),
+      expires_at: new Date(endsAt).toISOString(),
       status:     'pending',
     })
 
     if (error) { alert('建立失敗，請稍後再試'); setCreating(false); return }
 
+    setCreatedRange({ starts: startsAt, ends: endsAt })
     setGeneratedUrl(`${BASE_URL}/?sub-token=${token}`)
     setCreating(false)
+  }
+
+  const handleCancel = async (id: string) => {
+    if (!confirm('確定要取消此連結？對方將無法再使用此連結。')) return
+    await supabase.from('sub_manager_sessions').update({ status: 'cancelled' }).eq('id', id)
+    await loadHistory()
   }
 
   const handleCopy = async () => {
@@ -87,16 +109,26 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
 
   const handleReset = () => {
     setGeneratedUrl(null)
-    setExpiryDays(1)
+    setCreatedRange(null)
+    const now = new Date()
+    setStartsAt(toDatetimeLocal(now))
+    const end = new Date()
+    end.setDate(end.getDate() + 3)
+    setEndsAt(toDatetimeLocal(end))
     setCopied(false)
   }
 
   const statusLabel = (s: SubManagerSession) => {
     const now = new Date()
     if (s.status === 'completed') return { text: '已填寫', color: '#10b981', bg: '#ecfdf5', icon: <CheckCircle2 className="w-4 h-4" /> }
+    if (s.status === 'cancelled') return { text: '已取消', color: '#ef4444', bg: '#fef2f2', icon: <Ban className="w-4 h-4" /> }
     if (s.status === 'expired' || new Date(s.expires_at) < now) return { text: '已過期', color: '#9ca3af', bg: '#f3f4f6', icon: <XCircle className="w-4 h-4" /> }
-    return { text: '待填寫', color: '#f59e0b', bg: '#fffbeb', icon: <Clock className="w-4 h-4" /> }
+    if (s.starts_at && new Date(s.starts_at) > now) return { text: '未開始', color: '#6366f1', bg: '#eef2ff', icon: <Clock className="w-4 h-4" /> }
+    return { text: '進行中', color: '#f59e0b', bg: '#fffbeb', icon: <Clock className="w-4 h-4" /> }
   }
+
+  const isActionable = (s: SubManagerSession) =>
+    s.status === 'pending' && new Date(s.expires_at) > new Date()
 
   return (
     <div className="min-h-dvh bg-gray-50">
@@ -135,23 +167,26 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
                   <p className="text-sm text-green-600">店號：{user.storeId}</p>
                 </div>
 
-                <div>
-                  <label className="text-base font-semibold text-gray-500 block mb-2">連結有效期限</label>
-                  <div className="flex gap-2">
-                    {EXPIRY_OPTIONS.map(opt => (
-                      <button
-                        key={opt.days}
-                        onClick={() => setExpiryDays(opt.days)}
-                        className="flex-1 py-3 rounded-xl text-base font-bold border-2 transition-all"
-                        style={{
-                          borderColor: expiryDays === opt.days ? '#007d30' : '#e5e7eb',
-                          background:  expiryDays === opt.days ? '#f0fdf4' : '#fafafa',
-                          color:       expiryDays === opt.days ? '#007d30' : '#9ca3af',
-                        }}
-                      >
-                        {opt.label}
-                      </button>
-                    ))}
+                <div className="space-y-3">
+                  <label className="text-base font-semibold text-gray-500 block">連結有效期間</label>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">開始時間</p>
+                    <input
+                      type="datetime-local"
+                      value={startsAt}
+                      onChange={e => setStartsAt(e.target.value)}
+                      className="w-full text-base font-medium border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-green-500 bg-gray-50"
+                    />
+                  </div>
+                  <div>
+                    <p className="text-sm text-gray-400 mb-1">結束時間</p>
+                    <input
+                      type="datetime-local"
+                      value={endsAt}
+                      min={startsAt}
+                      onChange={e => setEndsAt(e.target.value)}
+                      className="w-full text-base font-medium border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-green-500 bg-gray-50"
+                    />
                   </div>
                 </div>
 
@@ -179,8 +214,12 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
                   <p className="text-base font-bold text-gray-800">連結已建立！</p>
                 </div>
 
-                <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-200">
-                  <p className="text-sm text-gray-400 mb-1">小店長入口連結（有效 {expiryDays} 天）</p>
+                <div className="bg-gray-50 rounded-xl px-4 py-3 border border-gray-200 space-y-1">
+                  <div className="flex items-center gap-2 text-sm text-gray-400">
+                    <span>開始：{createdRange ? fmtDT(createdRange.starts) : '—'}</span>
+                    <span>→</span>
+                    <span>結束：{createdRange ? fmtDT(createdRange.ends) : '—'}</span>
+                  </div>
                   <p className="text-base font-medium text-gray-700 break-all leading-relaxed">{generatedUrl}</p>
                 </div>
 
@@ -229,6 +268,7 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
             ) : (
               sessions.map(s => {
                 const st = statusLabel(s)
+                const actionable = isActionable(s)
                 return (
                   <motion.div key={s.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                     className="bg-white rounded-2xl shadow-sm px-4 py-4 flex items-center gap-3">
@@ -240,21 +280,31 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
                       <p className="text-base font-bold text-gray-800">
                         {new Date(s.created_at).toLocaleDateString('zh-TW')} 建立
                       </p>
+                      <p className="text-sm text-gray-400">由 {s.created_by}</p>
                       <p className="text-sm text-gray-400">
-                        由 {s.created_by}・有效至 {new Date(s.expires_at).toLocaleDateString('zh-TW')}
+                        {s.starts_at ? fmtDT(s.starts_at) : '—'} → {fmtDT(s.expires_at)}
                       </p>
                     </div>
-                    {s.status === 'pending' && new Date(s.expires_at) > new Date() && (
-                      <button
-                        onClick={async () => {
-                          const url = `${BASE_URL}/?sub-token=${s.token}`
-                          await navigator.clipboard.writeText(url)
-                          alert('連結已複製！')
-                        }}
-                        className="shrink-0 p-2 rounded-xl bg-gray-50"
-                      >
-                        <Copy className="w-4 h-4 text-gray-400" />
-                      </button>
+                    {actionable && (
+                      <div className="shrink-0 flex gap-1">
+                        <button
+                          onClick={async () => {
+                            await navigator.clipboard.writeText(`${BASE_URL}/?sub-token=${s.token}`)
+                            alert('連結已複製！')
+                          }}
+                          className="p-2 rounded-xl bg-gray-50"
+                          title="複製連結"
+                        >
+                          <Copy className="w-4 h-4 text-gray-400" />
+                        </button>
+                        <button
+                          onClick={() => handleCancel(s.id)}
+                          className="p-2 rounded-xl bg-red-50"
+                          title="取消連結"
+                        >
+                          <Ban className="w-4 h-4 text-red-400" />
+                        </button>
+                      </div>
                     )}
                   </motion.div>
                 )

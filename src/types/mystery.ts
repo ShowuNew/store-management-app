@@ -5,9 +5,10 @@ export interface MysterySession {
   store_name: string
   created_by: string
   created_at: string
+  starts_at?: string
   expires_at: string
   submitted_at?: string
-  status: 'pending' | 'completed' | 'expired'
+  status: 'pending' | 'completed' | 'expired' | 'cancelled'
   form_data?: MysteryFormData
   total_score?: number
   visit_notes?: string

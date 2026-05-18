@@ -9,6 +9,7 @@ import AnomalyPage    from './AnomalyPage'
 import EquipmentPage  from './EquipmentPage'
 import StatsPage       from './admin/StatsPage'
 import CoffeeCheckPage from './CoffeeCheckPage'
+import RecordsPage     from './admin/RecordsPage'
 import BottomNav       from '../components/BottomNav'
 import type { User, Page } from '../types'
 
@@ -25,7 +26,7 @@ interface SubManagerSession {
   status: 'pending' | 'completed' | 'expired' | 'cancelled'
 }
 
-const NAV_PAGES: Page[] = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'coffee-check']
+const NAV_PAGES: Page[] = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'coffee-check', 'admin-records']
 
 export default function SubManagerFormPage({ token }: Props) {
   const [session, setSession]     = useState<SubManagerSession | null>(null)
@@ -124,8 +125,9 @@ export default function SubManagerFormPage({ token }: Props) {
       case 'anomaly':     return <AnomalyPage     user={user} onBack={goBack} />
       case 'equipment':   return <EquipmentPage   user={user} onBack={goBack} />
       case 'stats':        return <StatsPage       user={user} onBack={goBack} />
-      case 'coffee-check': return <CoffeeCheckPage user={user} onBack={goBack} />
-      default:             return <DashboardPage   user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />
+      case 'coffee-check':  return <CoffeeCheckPage user={user} onBack={goBack} />
+      case 'admin-records': return <RecordsPage     user={user} onBack={goBack} />
+      default:              return <DashboardPage   user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />
     }
   }
 

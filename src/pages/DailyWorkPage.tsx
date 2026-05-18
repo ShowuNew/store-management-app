@@ -284,6 +284,8 @@ function serializeHandover(fields: Record<HandoverKey, string>): string {
 export default function DailyWorkPage({ user, onBack }: Props) {
   const [view, setView]             = useState<ViewType>('overview')
   const [selectedShift, setSelectedShift] = useState(0)
+  const [manualDate, setManualDate] = useState('')
+  const isManager = ['manager', 'supervisor', 'admin'].includes(user.role)
   const todayStr = useMemo(() => {
     const now = new Date()
     const taiwanHour = Number(
@@ -297,6 +299,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     }
     return now.toLocaleDateString('sv', { timeZone: 'Asia/Taipei' })
   }, [selectedShift])
+  // 店長可手動指定日期補填；否則使用自動計算值
+  const logDate = (isManager && manualDate) ? manualDate : todayStr
   const [tempData, setTempData]     = useState<TempData>({})
   const [waste, setWaste]           = useState<WasteState>(defaultWaste)
   const [cleaning, setCleaning]     = useState<Record<string, string>>({})
@@ -346,7 +350,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       setLoading(true)
       const { data: allData } = await supabase
         .from('daily_work_logs').select('*')
-        .eq('store_id', user.storeId).eq('log_date', todayStr)
+        .eq('store_id', user.storeId).eq('log_date', logDate)
       const allLogs: any[] = allData || []
 
       const shiftLog = allLogs.find((l: any) => l.shift === shifts[selectedShift])
@@ -454,7 +458,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       setLoading(false)
     }
     load()
-  }, [selectedShift, todayStr, user.storeId])
+  }, [selectedShift, logDate, user.storeId])
 
   // When cardIdx changes or entering swipe mode, pre-fill cardValue with last reading
   useEffect(() => {
@@ -528,7 +532,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
   const getElapsedMinutes = (timeHHMM: string): number => {
     const [h, m] = timeHHMM.split(':').map(Number)
-    const then = new Date(todayStr)
+    const then = new Date(logDate)
     then.setHours(h, m, 0, 0)
     return Math.floor((now.getTime() - then.getTime()) / 60000)
   }
@@ -562,7 +566,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       }),
     }))
     const payload = {
-      store_id: user.storeId, staff_name: user.name, log_date: todayStr,
+      store_id: user.storeId, staff_name: user.name, log_date: logDate,
       shift: shifts[selectedShift], temperatures: temperaturesPayload,
       tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _signature: shiftSignature, _manager_signature: managerSignature },
       handover_note: handoverNote,
@@ -679,6 +683,33 @@ export default function DailyWorkPage({ user, onBack }: Props) {
 
     return (
       <div className="space-y-4">
+        {/* 日期選擇（店長補填用） */}
+        {isManager && (
+          <div className="bg-white rounded-2xl p-4" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-base font-semibold text-gray-400">日期</p>
+              {manualDate && (
+                <button
+                  onClick={() => setManualDate('')}
+                  className="text-sm font-bold text-green-600"
+                >
+                  回到今天
+                </button>
+              )}
+            </div>
+            <input
+              type="date"
+              value={manualDate || todayStr}
+              max={new Date().toLocaleDateString('sv', { timeZone: 'Asia/Taipei' })}
+              onChange={e => setManualDate(e.target.value === todayStr ? '' : e.target.value)}
+              className="w-full text-base font-medium border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-green-500 bg-gray-50"
+            />
+            {manualDate && (
+              <p className="text-sm text-amber-600 mt-2">⚠ 補填模式：儲存將寫入 {manualDate}</p>
+            )}
+          </div>
+        )}
+
         {/* 班次選擇 */}
         <div className="bg-white rounded-2xl p-4" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
           <p className="text-base font-semibold text-gray-400 mb-3">選擇班次</p>

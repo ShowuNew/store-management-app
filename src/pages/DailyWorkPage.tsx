@@ -282,9 +282,21 @@ function serializeHandover(fields: Record<HandoverKey, string>): string {
 }
 
 export default function DailyWorkPage({ user, onBack }: Props) {
-  const todayStr = new Date().toISOString().split('T')[0]
   const [view, setView]             = useState<ViewType>('overview')
   const [selectedShift, setSelectedShift] = useState(0)
+  const todayStr = useMemo(() => {
+    const now = new Date()
+    const taiwanHour = Number(
+      new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Taipei', hour: 'numeric', hour12: false }).format(now)
+    )
+    // 大夜班 (shift 2) + 台灣時間 00:00-07:59 → 歸屬前一天
+    if (selectedShift === 2 && taiwanHour < 8) {
+      const d = new Date(now)
+      d.setDate(d.getDate() - 1)
+      return d.toLocaleDateString('sv', { timeZone: 'Asia/Taipei' })
+    }
+    return now.toLocaleDateString('sv', { timeZone: 'Asia/Taipei' })
+  }, [selectedShift])
   const [tempData, setTempData]     = useState<TempData>({})
   const [waste, setWaste]           = useState<WasteState>(defaultWaste)
   const [cleaning, setCleaning]     = useState<Record<string, string>>({})
@@ -442,7 +454,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       setLoading(false)
     }
     load()
-  }, [selectedShift, user.storeId])
+  }, [selectedShift, todayStr, user.storeId])
 
   // When cardIdx changes or entering swipe mode, pre-fill cardValue with last reading
   useEffect(() => {

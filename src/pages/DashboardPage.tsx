@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ClipboardList, ShieldCheck, Zap, AlertTriangle, CheckSquare,
-  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus, Coffee, X, BookOpen,
+  Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus, Coffee, X, BookOpen,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -42,12 +42,6 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   const [shiftFillStatus, setShiftFillStatus] = useState<
     { shift: string; submitted: boolean; staffName: string; time: string }[]
   >([])
-
-  const [tempStatus, setTempStatus] = useState([
-    { label: '冷藏', value: '—', ok: true },
-    { label: '冷凍', value: '—', ok: true },
-    { label: '熱食', value: '—', ok: true },
-  ])
 
   const [counts, setCounts] = useState({
     dailyWork:  { done: 0, total: 3 },  // 3 班次
@@ -108,25 +102,6 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         const temps: TempEntry[] = latestLog.temperatures || []
 
         const fmt = (v: number | null) => v === null ? '—' : `${v > 0 ? '+' : ''}${v}°C`
-
-        // 取每個設備最新一筆有效 reading（支援新格式 readings[]，也兼容舊格式 value/isNormal）
-        const latestReading = (t: TempEntry): { value: number | null; isNormal: boolean | null } => {
-          if (Array.isArray(t.readings) && t.readings.length > 0) {
-            const filled = [...t.readings].reverse().find(r => r.value !== null)
-            return filled ? { value: filled.value, isNormal: filled.isNormal } : { value: null, isNormal: null }
-          }
-          return { value: t.value ?? null, isNormal: t.isNormal ?? null }
-        }
-
-        const coldItem   = temps.find(t => t.location.includes('4°C') || t.location.includes('WI'))
-        const frozenItem = temps.find(t => t.location.includes('冷凍') && !t.location.includes('冰淇淋'))
-        const hotItem    = temps.find(t => t.location.includes('蒸箱') || t.location.includes('關東煮') || t.location.includes('鮮食'))
-
-        setTempStatus([
-          { label: '冷藏', value: coldItem   ? fmt(latestReading(coldItem).value)   : '—', ok: coldItem   ? latestReading(coldItem).isNormal   !== false : true },
-          { label: '冷凍', value: frozenItem ? fmt(latestReading(frozenItem).value) : '—', ok: frozenItem ? latestReading(frozenItem).isNormal !== false : true },
-          { label: '熱食', value: hotItem    ? fmt(latestReading(hotItem).value)    : '—', ok: hotItem    ? latestReading(hotItem).isNormal    !== false : true },
-        ])
 
         // 溫度異常 → 只看最後一筆有效 reading，若最新已回正常則不通知
         temps.forEach(t => {
@@ -253,7 +228,6 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   const countable    = modules.filter(m => m.done !== null && m.total !== null && (m.total ?? 0) > 0)
   const allDoneCount = countable.filter(m => m.done === m.total).length
   const pct          = countable.length > 0 ? Math.round(allDoneCount / countable.length * 100) : 0
-  const tempAllOk    = tempStatus.every(t => t.ok)
   const roleLabel    = { staff: '店員', manager: '店長', 'sub-manager': '小店長', supervisor: '擔當', admin: '管理員' }[user.role]
 
   // 小店長連結模組（只對店長顯示）
@@ -310,31 +284,6 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           )}
         </motion.div>
 
-        {/* Temperature strip */}
-        <div className="bg-white rounded-2xl px-4 py-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#e8f7ee' }}>
-            <Thermometer className="w-5 h-5" style={{ color: '#00a040' }} />
-          </div>
-          <div className="flex-1 flex gap-4">
-            {tempStatus.map(t => (
-              <div key={t.label} className="flex flex-col items-center">
-                <span className="text-base text-gray-400">{t.label}</span>
-                <span className="text-base font-bold" style={{ color: t.value === '—' ? '#d1d5db' : t.ok ? '#10b981' : '#ef4444' }}>
-                  {t.value}
-                </span>
-                {t.value === '—' && <span className="text-xs text-gray-300 leading-tight">尚未記錄</span>}
-              </div>
-            ))}
-          </div>
-          {loading
-            ? <RefreshCw className="w-5 h-5 text-gray-300 animate-spin shrink-0" />
-            : (
-              <span className={`text-base font-semibold px-3 py-1.5 rounded-lg shrink-0 ${tempAllOk ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-500'}`}>
-                {tempAllOk ? '全部正常' : '有異常'}
-              </span>
-            )
-          }
-        </div>
 
         {/* Alerts */}
         <div className="space-y-2">

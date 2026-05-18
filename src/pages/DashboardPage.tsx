@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ClipboardList, ShieldCheck, Zap, AlertTriangle, CheckSquare,
-  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus, Coffee, X,
+  Thermometer, Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus, Coffee, X, BookOpen,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -261,6 +261,11 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
     ? { page: 'sub-manager-manage' as Page, icon: UserPlus, label: '小店長連結', desc: '產生臨時人員入口連結', color: '#7c3aed', bg: '#f5f3ff', done: null, total: null }
     : null
 
+  // 紀錄查閱模組（店長/小店長顯示）
+  const recordsModule: ModuleEntry | null = (user.role === 'manager' || user.role === 'sub-manager')
+    ? { page: 'admin-records' as Page, icon: BookOpen, label: '紀錄查閱', desc: '日誌・衛生・異常紀錄', color: '#0369a1', bg: '#e0f2fe', done: null, total: null }
+    : null
+
   return (
     <div className="min-h-dvh bg-gray-100">
       <PageHeader
@@ -403,7 +408,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
             <p className="ml-auto text-sm text-gray-400">點擊進入填寫</p>
           </div>
           <div className="flex flex-col gap-2">
-            {[...modules, ...(subManagerModule ? [subManagerModule] : [])].map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => {
+            {[...modules, ...(recordsModule ? [recordsModule] : []), ...(subManagerModule ? [subManagerModule] : [])].map(({ page, icon: Icon, label, desc, color, bg, done, total, badge }, i) => {
               const isCompleted = done !== null && total !== null && (total ?? 0) > 0 && done === total
               return (
               <motion.button

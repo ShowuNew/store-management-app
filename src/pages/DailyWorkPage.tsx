@@ -977,9 +977,9 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                             </div>
                             <div className="flex items-center border rounded-lg overflow-hidden flex-1 bg-white"
                               style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
-                              <input type="number" inputMode="decimal" step="any"
+                              <input type="text" inputMode="decimal"
                                 className="flex-1 text-center text-base font-bold outline-none bg-white py-1.5 px-2"
-                                style={{ color: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151' }}
+                                style={{ color: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151', WebkitTextFillColor: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151' }}
                                 placeholder="溫度" value={r.value}
                                 onChange={e => updateReading(slotKey, rIdx, 'value', e.target.value)} />
                               <span className="text-base text-gray-400 pr-2">°C</span>

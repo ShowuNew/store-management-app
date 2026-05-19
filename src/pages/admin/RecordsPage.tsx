@@ -8,11 +8,12 @@ interface Props { user: User; onBack: () => void }
 
 type Tab = 'daily-work' | 'hygiene' | 'equipment' | 'coffee-check' | 'c15-check'
 
-export default function RecordsPage({ onBack }: Props) {
+export default function RecordsPage({ user, onBack }: Props) {
   const todayStr = new Date().toISOString().split('T')[0]
+  const isManagerView = user.role === 'manager' || user.role === 'sub-manager'
   const [tab, setTab]           = useState<Tab>('daily-work')
   const [date, setDate]         = useState(todayStr)
-  const [storeFilter, setStoreFilter] = useState('')
+  const [storeFilter, setStoreFilter] = useState(isManagerView ? user.storeId : '')
   const [records, setRecords]   = useState<any[]>([])
   const [loading, setLoading]   = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -120,7 +121,7 @@ export default function RecordsPage({ onBack }: Props) {
           </button>
           <div>
             <h1 className="text-lg font-black text-gray-900">紀錄查閱</h1>
-            <p className="text-base text-gray-400">跨門市提交紀錄</p>
+            <p className="text-base text-gray-400">{isManagerView ? user.storeName : '跨門市提交紀錄'}</p>
           </div>
         </div>
 

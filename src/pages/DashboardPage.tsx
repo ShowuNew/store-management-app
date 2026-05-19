@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ClipboardList, ShieldCheck, Zap, AlertTriangle, CheckSquare,
-  Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus, Coffee, X, BookOpen,
+  Clock, TrendingUp, ChevronRight, RefreshCw, UserPlus, Coffee, X, BookOpen, ListChecks,
 } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
@@ -216,6 +216,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
     { page: 'hygiene',      icon: ShieldCheck,  label: '衛生自主管理', desc: '場所・品質・人員',   color: '#007d30', bg: '#d4efdf', done: counts.hygiene.done,    total: counts.hygiene.total    },
     { page: 'inspection',   icon: ClipboardList,label: '店鋪點檢',     desc: '年度稽查・評分',    color: '#00a040', bg: '#e8f7ee', done: null, total: null },
     { page: 'coffee-check', icon: Coffee,       label: '咖啡機自檢',   desc: '溫度・重量・狀態確認', color: '#7c3aed', bg: '#f5f3ff', done: null, total: null },
+    { page: 'c15-check',    icon: ListChecks,   label: 'C15確認',      desc: '品保・服務・環境確認', color: '#0891b2', bg: '#e0f7fa', done: null, total: null },
     { page: 'equipment',    icon: Zap,          label: '設備清潔保養', desc: '節電・週期保養',    color: '#f59e0b', bg: '#fffbeb', done: counts.equipment.done,  total: counts.equipment.total  },
     {
       page: 'anomaly', icon: AlertTriangle, label: '異常回報', desc: '事件・追蹤・結案',

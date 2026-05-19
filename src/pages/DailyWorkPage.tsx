@@ -754,7 +754,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         {/* #32 擔當/店長覆核欄位 */}
         <div className="bg-white rounded-2xl p-4" style={{ boxShadow: '0 1px 6px rgba(0,0,0,0.08)' }}>
           <p className="text-base font-bold text-gray-700 mb-3 flex items-center gap-2">
-            <PenLine className="w-4 h-4 text-gray-400" /> 擔當 / 店長覆核
+            <PenLine className="w-4 h-4 text-gray-400" /> 擔當 / 店長確認
           </p>
           <div className="space-y-2">
             {[
@@ -773,7 +773,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
               style={{ background: managerSignature ? '#ecfdf5' : '#fff7ed' }}>
               <span className="text-base font-bold" style={{ color: managerSignature ? '#059669' : '#c2410c' }}>
-                店長覆核
+                店長確認
               </span>
               <span className="text-base font-bold" style={{ color: managerSignature ? '#059669' : '#f97316' }}>
                 {managerSignature ? '✓ 已覆核簽名' : '⚠ 尚未覆核'}

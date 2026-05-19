@@ -111,7 +111,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
             if (lastFilled?.isNormal === false) {
               newAlerts.push({
                 type: 'error',
-                msg:  `${t.location} 溫度異常（${fmt(lastFilled.value)} @ ${lastFilled.time}），請30分鐘後複核`,
+                msg:  `${t.location} 溫度異常（${fmt(lastFilled.value)} @ ${lastFilled.time}），請30分鐘後複檢`,
                 time: logTime,
               })
             }
@@ -119,7 +119,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
             // 兼容舊格式
             newAlerts.push({
               type: 'error',
-              msg:  `${t.location} 溫度異常（${fmt(t.value ?? null)}），請30分鐘後複核`,
+              msg:  `${t.location} 溫度異常（${fmt(t.value ?? null)}），請30分鐘後複檢`,
               time: logTime,
             })
           }
@@ -175,7 +175,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           const time = new Date(c.created_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })
           newAlerts.push({
             type: 'error',
-            msg:  `咖啡機 ${machineNo} 自檢異常（${issues.length > 0 ? issues.join('、') : '整體異常'}），請30分鐘後複核`,
+            msg:  `咖啡機 ${machineNo} 自檢異常（${issues.length > 0 ? issues.join('、') : '整體異常'}），請30分鐘後複檢`,
             time,
           })
         }

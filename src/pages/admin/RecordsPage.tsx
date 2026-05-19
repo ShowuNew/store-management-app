@@ -89,9 +89,8 @@ export default function RecordsPage({ onBack }: Props) {
       return record.overall_ok ? '✓ 無異常' : '⚠ 有異常'
     }
     if (tab === 'c15-check') {
-      const pass = Object.values(record.results || {}).filter(v => v === 'pass').length
-      const fail = Object.values(record.results || {}).filter(v => v === 'fail').length
-      return `${pass} 符合 / ${fail} 缺失`
+      const done = Object.values(record.results || {}).filter(Boolean).length
+      return `${done} / 17 項確認`
     }
     const done = Object.values(record.done_items || {}).filter(Boolean).length
     return `${done} 項完成`

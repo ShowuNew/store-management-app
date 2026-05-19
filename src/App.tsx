@@ -2,6 +2,7 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import {
   Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench,
   ClipboardList, LayoutDashboard, BarChart2, Coffee, Building2, ArrowUp,
+  ListChecks,
 } from 'lucide-react'
 import BottomNav      from './components/BottomNav'
 import AdminBottomNav from './components/AdminBottomNav'
@@ -24,6 +25,7 @@ const MysteryFormPage      = lazy(() => import('./pages/MysteryFormPage'))
 const SubManagerManagePage = lazy(() => import('./pages/SubManagerManagePage'))
 const SubManagerFormPage   = lazy(() => import('./pages/SubManagerFormPage'))
 const CoffeeCheckPage      = lazy(() => import('./pages/CoffeeCheckPage'))
+const C15CheckPage         = lazy(() => import('./pages/C15CheckPage'))
 
 function PageLoading() {
   return (
@@ -38,7 +40,7 @@ const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
 // 若 URL 帶有 sub-token 參數，直接顯示小店長工作日誌（無需登入）
 const SUB_TOKEN = new URLSearchParams(window.location.search).get('sub-token')
 
-const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage', 'coffee-check', 'admin-records']
+const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage', 'coffee-check', 'c15-check', 'admin-records']
 const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage', 'admin-store-status']
 
 const staffTabs = [
@@ -49,6 +51,7 @@ const staffTabs = [
   { page: 'anomaly'      as Page, icon: AlertTriangle,  label: '異常回報' },
   { page: 'equipment'    as Page, icon: Wrench,         label: '設備保養' },
   { page: 'coffee-check' as Page, icon: Coffee,         label: '咖啡自檢' },
+  { page: 'c15-check'    as Page, icon: ListChecks,     label: 'C15確認'  },
 ]
 
 const managerExtraTabs = [
@@ -108,6 +111,7 @@ function App() {
       case 'admin-store-status': return <StoreStatusPage      user={user} onBack={goBack} />
       case 'sub-manager-manage': return <SubManagerManagePage user={user} onBack={goBack} />
       case 'coffee-check':       return <CoffeeCheckPage      user={user} onBack={goBack} />
+      case 'c15-check':          return <C15CheckPage         user={user} onBack={goBack} />
       default:                   return <DashboardPage        user={user} onNavigate={setCurrentPage} onLogout={handleLogout} />
     }
   }

@@ -6,7 +6,7 @@ import type { User } from '../../types'
 
 interface Props { user: User; onBack: () => void }
 
-type Tab = 'daily-work' | 'hygiene' | 'equipment' | 'coffee-check'
+type Tab = 'daily-work' | 'hygiene' | 'equipment' | 'coffee-check' | 'c15-check'
 
 export default function RecordsPage({ onBack }: Props) {
   const todayStr = new Date().toISOString().split('T')[0]
@@ -21,17 +21,19 @@ export default function RecordsPage({ onBack }: Props) {
   // 載入所有曾出現過的門市代號供下拉選擇
   useEffect(() => {
     const fetchStores = async () => {
-      const [r1, r2, r3, r4] = await Promise.all([
+      const [r1, r2, r3, r4, r5] = await Promise.all([
         supabase.from('daily_work_logs').select('store_id'),
         supabase.from('hygiene_records').select('store_id'),
         supabase.from('equipment_logs').select('store_id'),
         supabase.from('coffee_check_records').select('store_id'),
+        supabase.from('c15_records').select('store_id'),
       ])
       const all = [
         ...(r1.data || []),
         ...(r2.data || []),
         ...(r3.data || []),
         ...(r4.data || []),
+        ...(r5.data || []),
       ].map((r: any) => r.store_id).filter(Boolean)
       setStoreOptions([...new Set(all)].sort())
     }
@@ -50,6 +52,8 @@ export default function RecordsPage({ onBack }: Props) {
         query = supabase.from('hygiene_records').select('*').eq('record_date', date).order('saved_at', { ascending: false })
       } else if (tab === 'equipment') {
         query = supabase.from('equipment_logs').select('*').eq('log_date', date).order('saved_at', { ascending: false })
+      } else if (tab === 'c15-check') {
+        query = supabase.from('c15_records').select('*').eq('record_date', date).order('saved_at', { ascending: false })
       } else {
         query = supabase.from('coffee_check_records').select('*').eq('check_date', date).order('created_at', { ascending: false })
       }
@@ -68,6 +72,7 @@ export default function RecordsPage({ onBack }: Props) {
     { key: 'hygiene',       label: '衛生記錄' },
     { key: 'equipment',     label: '設備保養' },
     { key: 'coffee-check',  label: '咖啡自檢' },
+    { key: 'c15-check',     label: 'C15確認'  },
   ]
 
   const getDoneCount = (record: any): string => {
@@ -83,6 +88,11 @@ export default function RecordsPage({ onBack }: Props) {
     if (tab === 'coffee-check') {
       return record.overall_ok ? '✓ 無異常' : '⚠ 有異常'
     }
+    if (tab === 'c15-check') {
+      const pass = Object.values(record.results || {}).filter(v => v === 'pass').length
+      const fail = Object.values(record.results || {}).filter(v => v === 'fail').length
+      return `${pass} 符合 / ${fail} 缺失`
+    }
     const done = Object.values(record.done_items || {}).filter(Boolean).length
     return `${done} 項完成`
   }
@@ -97,6 +107,7 @@ export default function RecordsPage({ onBack }: Props) {
     if (tab === 'daily-work') return record.shift
     if (tab === 'hygiene')    return `${record.shift} 班`
     if (tab === 'coffee-check') return record.machine_no ? `機號 ${record.machine_no}` : '咖啡機'
+    if (tab === 'c15-check') return `${record.shift} 班`
     return record.zone
   }
 
@@ -264,6 +275,56 @@ const hygieneCategories = [
       '不可將菸盒代替隔熱紙夾付消費者使用，違反者店鋪將處 10～50 萬不等罰鍰',
       '菸品或菸品容器之展示，應以使消費者獲知菸品品牌及價格之必要者為限',
       '應於明顯處標示「吸菸有害健康」、「免費戒菸專線 0800-636363」等法定警示圖文',
+    ],
+  },
+]
+
+const c15Categories = [
+  {
+    name: '服務現現',
+    items: [
+      '服裝儀容符合規定（制服整潔、名牌配戴、髮型整齊）',
+      '進入食品作業區前完成手部清潔消毒',
+    ],
+  },
+  {
+    name: '櫃台區',
+    items: [
+      '結帳櫃台前緣保留 90cm 通道空間，無商品堆置',
+      '後結帳台面整潔，無私人物品或雜物',
+      '洗手台清潔，皂液器、擦手紙補充充足',
+      '結帳區上方層架或架頂無堆放商品或雜物',
+    ],
+  },
+  {
+    name: 'FF區',
+    items: [
+      'FF 機台及周邊備品架保持整齊清潔',
+      '溫層設備罩蓋完整關閉，無外露或破損',
+      '商品陳列符合公司規範，POP 標示正確且完整',
+    ],
+  },
+  {
+    name: '全店貨架',
+    items: [
+      '貨架商品面向一致（面向前），無倒置或歪斜',
+      '貨架本體及商品表面定期清潔，無積灰或污漬',
+      '臥式冰櫃頂端無堆放任何物品（箱子、袋子等）',
+    ],
+  },
+  {
+    name: 'EC商品',
+    items: [
+      'EC 取件商品存放位置不阻礙客用走道或結帳動線',
+      'EC 商品依規定溫層（常溫／冷藏）分類存放，無落地',
+    ],
+  },
+  {
+    name: '客用空間',
+    items: [
+      '用餐座位區桌椅保持清潔整齊，無殘留食物或垃圾',
+      '客用廁所清潔，無異味，備有洗潔劑及擦手紙',
+      '自助服務機台（咖啡機、ATM 等）台面及周邊整潔',
     ],
   },
 ]
@@ -438,6 +499,39 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
                     }`}>
                       {result === 'pass' ? '符合' : result === 'fail' ? '缺失' : '—'}
                     </span>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  if (tab === 'c15-check') {
+    return (
+      <div className="px-4 py-3 space-y-3">
+        {c15Categories.map((cat, ci) => (
+          <div key={ci}>
+            <p className="text-base font-bold text-gray-400 mb-1.5">{cat.name}</p>
+            <div className="space-y-1">
+              {cat.items.map((item, ii) => {
+                const key = `${ci}-${ii}`
+                const result = record.results?.[key]
+                const note = record.fail_notes?.[key]
+                return (
+                  <div key={key}>
+                    <div className="flex items-center justify-between">
+                      <span className="text-base text-gray-600 flex-1 truncate">{item}</span>
+                      <span className={`text-base font-bold px-2 py-0.5 rounded-md ml-2 shrink-0 ${
+                        result === 'pass' ? 'bg-green-50 text-green-600' :
+                        result === 'fail' ? 'bg-red-50 text-red-500' : 'text-gray-300'
+                      }`}>
+                        {result === 'pass' ? '符合' : result === 'fail' ? '缺失' : '—'}
+                      </span>
+                    </div>
+                    {note && <p className="text-sm text-red-400 mt-0.5 pl-0.5">{note}</p>}
                   </div>
                 )
               })}

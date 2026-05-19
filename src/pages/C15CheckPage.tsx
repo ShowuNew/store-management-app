@@ -58,7 +58,7 @@ const categories = [
 
 const shifts      = ['07:00', '15:00', '23:00']
 const shiftLabels = ['早班 07:00–15:00', '晚班 15:00–23:00', '大夜班 23:00–07:00']
-const totalItems  = categories.reduce((s, c) => s + c.items.length, 0)
+const totalItems  = categories.length
 
 export default function C15CheckPage({ user, onBack }: Props) {
   const todayStr = new Date().toISOString().split('T')[0]
@@ -304,39 +304,33 @@ export default function C15CheckPage({ user, onBack }: Props) {
         ) : (
           <>
             {categories.map((cat, ci) => {
-              const catChecked = cat.items.filter((_, i) => checked[`${ci}-${i}`]).length
+              const key       = `${ci}`
+              const isChecked = !!checked[key]
               return (
                 <div key={ci} className="bg-white rounded-2xl overflow-hidden">
-                  {/* Section header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-gray-50">
-                    <p className="text-base font-bold text-gray-800">{cat.name}</p>
-                    <span className="text-sm font-semibold" style={{ color: catChecked === cat.items.length ? '#00a040' : '#9ca3af' }}>
-                      {catChecked}/{cat.items.length}
-                    </span>
-                  </div>
+                  {/* Section header — single checkbox per category */}
+                  <motion.button
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => toggle(key)}
+                    className="w-full flex items-center justify-between px-4 py-3 text-left transition-colors"
+                    style={{ background: isChecked ? '#f0fdf4' : 'white' }}
+                  >
+                    <p className="text-base font-bold" style={{ color: isChecked ? '#166534' : '#1f2937' }}>{cat.name}</p>
+                    {isChecked
+                      ? <CheckCircle2 className="w-6 h-6 shrink-0" style={{ color: '#00a040' }} />
+                      : <Circle       className="w-6 h-6 shrink-0 text-gray-200" />
+                    }
+                  </motion.button>
 
-                  {/* Items */}
-                  {cat.items.map((item, ii) => {
-                    const key     = `${ci}-${ii}`
-                    const isChecked = !!checked[key]
-                    return (
-                      <motion.button
-                        key={key}
-                        whileTap={{ scale: 0.98 }}
-                        onClick={() => toggle(key)}
-                        className="w-full flex items-start gap-3 px-4 py-3.5 text-left transition-colors"
-                        style={{ background: isChecked ? '#f0fdf4' : 'white', borderTop: ii > 0 ? '1px solid #f9fafb' : 'none' }}
-                      >
-                        {isChecked
-                          ? <CheckCircle2 className="w-6 h-6 shrink-0 mt-0.5" style={{ color: '#00a040' }} />
-                          : <Circle       className="w-6 h-6 shrink-0 mt-0.5 text-gray-200" />
-                        }
-                        <p className="text-sm leading-relaxed flex-1" style={{ color: isChecked ? '#166534' : '#374151' }}>
-                          {item}
-                        </p>
-                      </motion.button>
-                    )
-                  })}
+                  {/* Items as read-only bullet list */}
+                  <div className="border-t border-gray-50">
+                    {cat.items.map((item, ii) => (
+                      <div key={ii} className="flex items-start gap-2 px-4 py-2.5" style={{ borderTop: ii > 0 ? '1px solid #f9fafb' : 'none' }}>
+                        <span className="text-gray-300 text-sm shrink-0 mt-0.5">•</span>
+                        <p className="text-sm leading-relaxed text-gray-500">{item}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )
             })}

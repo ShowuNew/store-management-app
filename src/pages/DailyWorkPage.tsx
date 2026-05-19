@@ -975,10 +975,10 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                               <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-16"
                                 value={r.time} onChange={e => updateReading(slotKey, rIdx, 'time', e.target.value)} />
                             </div>
-                            <div className="flex items-center border rounded-lg overflow-hidden flex-1"
+                            <div className="flex items-center border rounded-lg overflow-hidden flex-1 bg-white"
                               style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
                               <input type="number" inputMode="decimal" step="any"
-                                className="flex-1 text-center text-base font-bold outline-none bg-transparent py-1.5 px-2"
+                                className="flex-1 text-center text-base font-bold outline-none bg-white py-1.5 px-2"
                                 style={{ color: normal === false ? '#ef4444' : normal === true ? '#10b981' : '#374151' }}
                                 placeholder="溫度" value={r.value}
                                 onChange={e => updateReading(slotKey, rIdx, 'value', e.target.value)} />

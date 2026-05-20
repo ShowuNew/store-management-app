@@ -93,7 +93,12 @@ export default function LoginPage({ onLogin }: Props) {
   const handlePickStore = () => {
     const selected = storeOptions.find(s => s.store_id === selectedStoreId)
     if (!selected) return
-    doLogin(selected.store_id, selected.store_name)
+    onLogin({
+      id: '1', name: roleLabels[role], role,
+      storeId: selected.store_id,
+      storeName: selected.store_name,
+      managedStores: storeOptions,
+    })
   }
 
   return (

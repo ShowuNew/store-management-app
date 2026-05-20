@@ -25,4 +25,5 @@ export interface User {
   role: Role
   storeId: string
   storeName: string
+  managedStores?: { store_id: string; store_name: string }[]
 }

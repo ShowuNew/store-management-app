@@ -2,7 +2,7 @@ import { useState, useEffect, lazy, Suspense } from 'react'
 import {
   Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench,
   ClipboardList, LayoutDashboard, BarChart2, Coffee, Building2, ArrowUp,
-  ListChecks,
+  ListChecks, Store, ChevronDown,
 } from 'lucide-react'
 import BottomNav, { managerBottomTabs } from './components/BottomNav'
 import AdminBottomNav from './components/AdminBottomNav'
@@ -70,6 +70,8 @@ function App() {
   const [user, setUser]               = useState<User | null>(null)
   const [currentPage, setCurrentPage] = useState<Page>('login')
   const [showScrollTop, setShowScrollTop] = useState(false)
+  const [showStorePicker, setShowStorePicker] = useState(false)
+  const [switchStoreId, setSwitchStoreId]     = useState('')
 
   useEffect(() => {
     const handler = () => setShowScrollTop(window.scrollY > 320)
@@ -82,6 +84,18 @@ function App() {
     setCurrentPage(u.role === 'supervisor' || u.role === 'admin' ? 'admin-dashboard' : 'dashboard')
   }
   const handleLogout = () => { setUser(null); setCurrentPage('login') }
+  const openStorePicker = () => {
+    setSwitchStoreId(user?.storeId ?? '')
+    setShowStorePicker(true)
+  }
+  const confirmSwitchStore = () => {
+    if (!user || !switchStoreId) return
+    const target = user.managedStores?.find(s => s.store_id === switchStoreId)
+    if (!target) return
+    setUser({ ...user, storeId: target.store_id, storeName: target.store_name })
+    setShowStorePicker(false)
+    setCurrentPage('dashboard')
+  }
   const isManager    = user?.role === 'manager' || user?.role === 'sub-manager'
   const goBack       = () => setCurrentPage(
     ADMIN_NAV_PAGES.includes(currentPage) && !isManager ? 'admin-dashboard' : 'dashboard'
@@ -148,6 +162,22 @@ function App() {
               )
             })}
           </div>
+          {/* 多門市切換 */}
+          {user?.managedStores && user.managedStores.length > 1 && (
+            <div className="px-2 pb-4 border-t border-gray-100 pt-3">
+              <button
+                onClick={openStorePicker}
+                className="w-full flex items-center gap-2 px-3 py-2.5 rounded-xl bg-green-50 text-green-700 hover:bg-green-100 transition-all"
+              >
+                <Store className="w-4 h-4 shrink-0" />
+                <div className="flex-1 text-left min-w-0">
+                  <p className="text-xs text-green-500">目前門市</p>
+                  <p className="text-sm font-semibold truncate">{user.storeName}</p>
+                </div>
+                <ChevronDown className="w-4 h-4 shrink-0" />
+              </button>
+            </div>
+          )}
         </aside>
       )}
 
@@ -175,6 +205,46 @@ function App() {
         >
           <ArrowUp className="w-5 h-5 text-white" />
         </button>
+      )}
+      {/* 切換門市 modal */}
+      {showStorePicker && user?.managedStores && (
+        <div className="fixed inset-0 z-50 flex items-end md:items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.45)' }}>
+          <div className="w-full bg-white rounded-3xl p-6 space-y-4" style={{ maxWidth: 400 }}>
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-green-50 flex items-center justify-center shrink-0">
+                <Store className="w-5 h-5 text-green-600" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-gray-800">切換操作門市</p>
+                <p className="text-sm text-gray-400">目前：{user.storeName}</p>
+              </div>
+            </div>
+            <div className="relative border-2 border-gray-100 rounded-2xl px-4 bg-gray-50" style={{ minHeight: '52px' }}>
+              <select
+                className="w-full bg-transparent text-base text-gray-800 outline-none appearance-none py-3"
+                style={{ minHeight: '52px' }}
+                value={switchStoreId}
+                onChange={e => setSwitchStoreId(e.target.value)}
+              >
+                {user.managedStores.map(s => (
+                  <option key={s.store_id} value={s.store_id}>{s.store_id} {s.store_name}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowStorePicker(false)}
+                className="flex-1 py-3.5 rounded-2xl font-bold text-base bg-gray-100 text-gray-600"
+              >取消</button>
+              <button
+                onClick={confirmSwitchStore}
+                className="flex-1 py-3.5 rounded-2xl font-bold text-base text-white"
+                style={{ background: 'linear-gradient(135deg, #00a040, #007d30)' }}
+              >確認切換</button>
+            </div>
+          </div>
+        </div>
       )}
       </Suspense>
     </div>

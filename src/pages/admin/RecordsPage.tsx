@@ -18,16 +18,20 @@ export default function RecordsPage({ user, onBack }: Props) {
   const [loading, setLoading]   = useState(true)
   const [expanded, setExpanded] = useState<string | null>(null)
   const [storeOptions, setStoreOptions] = useState<string[]>([])
+  const [storeNames, setStoreNames]     = useState<Record<string, string>>({})
 
-  // 載入所有曾出現過的門市代號供下拉選擇
+  const storeLabel = (id: string) => storeNames[id] ? `${id} ${storeNames[id]}` : `${id} 店`
+
+  // 載入所有曾出現過的門市代號供下拉選擇，並對應門市名稱
   useEffect(() => {
     const fetchStores = async () => {
-      const [r1, r2, r3, r4, r5] = await Promise.all([
+      const [r1, r2, r3, r4, r5, rNames] = await Promise.all([
         supabase.from('daily_work_logs').select('store_id'),
         supabase.from('hygiene_records').select('store_id'),
         supabase.from('equipment_logs').select('store_id'),
         supabase.from('coffee_check_records').select('store_id'),
         supabase.from('c15_records').select('store_id'),
+        supabase.from('stores').select('store_id, store_name'),
       ])
       const all = [
         ...(r1.data || []),
@@ -37,6 +41,11 @@ export default function RecordsPage({ user, onBack }: Props) {
         ...(r5.data || []),
       ].map((r: any) => r.store_id).filter(Boolean)
       setStoreOptions([...new Set(all)].sort())
+      if (rNames.data) {
+        const map: Record<string, string> = {}
+        rNames.data.forEach((r: any) => { map[r.store_id] = r.store_name })
+        setStoreNames(map)
+      }
     }
     fetchStores()
   }, [])
@@ -156,7 +165,7 @@ export default function RecordsPage({ user, onBack }: Props) {
               >
                 <option value="">全部門市</option>
                 {storeOptions.map(s => (
-                  <option key={s} value={s}>{s}</option>
+                  <option key={s} value={s}>{storeLabel(s)}</option>
                 ))}
               </select>
               <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
@@ -194,7 +203,7 @@ export default function RecordsPage({ user, onBack }: Props) {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-base font-bold text-gray-800 truncate">{r.store_id}</span>
+                    <span className="text-base font-bold text-gray-800 truncate">{storeLabel(r.store_id)}</span>
                     <span className="text-base text-gray-400 shrink-0">{getSubtitle(r)}</span>
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">

@@ -45,8 +45,8 @@ export default function LoginPage({ onLogin }: Props) {
   const isHQ = role === 'supervisor' || role === 'admin'
 
   const handleLogin = () => {
-    if (!isHQ && !storeCode.trim()) {
-      setError('請輸入店號')
+    if (!isHQ && !/^\d{6}$/.test(storeCode.trim())) {
+      setError('店號須為 6 位數字')
       return
     }
     if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
@@ -117,8 +117,9 @@ export default function LoginPage({ onLogin }: Props) {
                 inputMode="numeric"
                 className="flex-1 bg-transparent text-base text-gray-800 outline-none placeholder-gray-300 py-3"
                 placeholder="請輸入店號"
+                maxLength={6}
                 value={storeCode}
-                onChange={e => { setStoreCode(e.target.value); setError('') }}
+                onChange={e => { setStoreCode(e.target.value.replace(/\D/g, '')); setError('') }}
                 onKeyDown={e => e.key === 'Enter' && handleLogin()}
               />
             </div>

@@ -1,12 +1,15 @@
-import { Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench } from 'lucide-react'
+import { Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench, ListChecks, ClipboardList } from 'lucide-react'
 import type { Page } from '../types'
+
+interface TabDef { page: Page; icon: React.ElementType; label: string }
 
 interface Props {
   currentPage: Page
   onNavigate: (page: Page) => void
+  tabs?: TabDef[]
 }
 
-const tabs = [
+const defaultTabs: TabDef[] = [
   { page: 'dashboard'  as Page, icon: Home,           label: '首頁' },
   { page: 'daily-work' as Page, icon: ClipboardCheck, label: '每日' },
   { page: 'hygiene'    as Page, icon: ShieldCheck,    label: '衛生' },
@@ -14,7 +17,15 @@ const tabs = [
   { page: 'equipment'  as Page, icon: Wrench,         label: '設備' },
 ]
 
-export default function BottomNav({ currentPage, onNavigate }: Props) {
+export const managerBottomTabs: TabDef[] = [
+  { page: 'dashboard'    as Page, icon: Home,          label: '首頁' },
+  { page: 'daily-work'   as Page, icon: ClipboardCheck, label: '每日' },
+  { page: 'c15-check'    as Page, icon: ListChecks,    label: 'C15' },
+  { page: 'admin-records'as Page, icon: ClipboardList, label: '紀錄' },
+  { page: 'anomaly'      as Page, icon: AlertTriangle, label: '異常' },
+]
+
+export default function BottomNav({ currentPage, onNavigate, tabs = defaultTabs }: Props) {
   return (
     <div className="fixed bottom-0 left-0 right-0 md:hidden bg-white border-t border-gray-100 z-20">
       <div className="flex items-center justify-around px-1 py-1">

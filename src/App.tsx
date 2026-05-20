@@ -4,7 +4,7 @@ import {
   ClipboardList, LayoutDashboard, BarChart2, Coffee, Building2, ArrowUp,
   ListChecks,
 } from 'lucide-react'
-import BottomNav      from './components/BottomNav'
+import BottomNav, { managerBottomTabs } from './components/BottomNav'
 import AdminBottomNav from './components/AdminBottomNav'
 import type { User, Page } from './types'
 
@@ -159,7 +159,7 @@ function App() {
       </main>
 
       {/* Mobile bottom nav */}
-      {showBottomNav      && <BottomNav      currentPage={currentPage} onNavigate={setCurrentPage} />}
+      {showBottomNav      && <BottomNav      currentPage={currentPage} onNavigate={setCurrentPage} tabs={isManager ? managerBottomTabs : undefined} />}
       {showAdminBottomNav && <AdminBottomNav currentPage={currentPage} onNavigate={setCurrentPage} />}
 
       {/* Scroll-to-top button */}

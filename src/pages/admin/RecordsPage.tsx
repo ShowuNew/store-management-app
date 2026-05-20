@@ -91,7 +91,7 @@ export default function RecordsPage({ user, onBack }: Props) {
     }
     if (tab === 'c15-check') {
       const done = Object.values(record.results || {}).filter(Boolean).length
-      return `${done} 項確認`
+      return `${done}/${c15Categories.length} 分類確認`
     }
     const done = Object.values(record.done_items || {}).filter(Boolean).length
     return `${done} 項完成`
@@ -147,19 +147,21 @@ export default function RecordsPage({ user, onBack }: Props) {
             onChange={e => setDate(e.target.value)}
             className="flex-1 border border-gray-200 rounded-xl px-3 py-2 text-base text-gray-700 bg-gray-50 outline-none"
           />
-          <div className="relative">
-            <select
-              value={storeFilter}
-              onChange={e => setStoreFilter(e.target.value)}
-              className="w-32 border border-gray-200 rounded-xl px-3 py-2 text-base text-gray-700 bg-gray-50 outline-none appearance-none pr-7"
-            >
-              <option value="">全部門市</option>
-              {storeOptions.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-          </div>
+          {!isManagerView && (
+            <div className="relative">
+              <select
+                value={storeFilter}
+                onChange={e => setStoreFilter(e.target.value)}
+                className="w-32 border border-gray-200 rounded-xl px-3 py-2 text-base text-gray-700 bg-gray-50 outline-none appearance-none pr-7"
+              >
+                <option value="">全部門市</option>
+                {storeOptions.map(s => (
+                  <option key={s} value={s}>{s}</option>
+                ))}
+              </select>
+              <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+            </div>
+          )}
         </div>
       </div>
 
@@ -510,33 +512,25 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
 
   if (tab === 'c15-check') {
     return (
-      <div className="px-4 py-3 space-y-3">
-        {c15Categories.map((cat, ci) => (
-          <div key={ci}>
-            <p className="text-base font-bold text-gray-400 mb-1.5">{cat.name}</p>
-            <div className="space-y-1">
-              {cat.items.map((item, ii) => {
-                const key = `${ci}-${ii}`
-                const result = record.results?.[key]
-                const note = record.fail_notes?.[key]
-                return (
-                  <div key={key}>
-                    <div className="flex items-center justify-between">
-                      <span className="text-base text-gray-600 flex-1 truncate">{item}</span>
-                      <span className={`text-base font-bold px-2 py-0.5 rounded-md ml-2 shrink-0 ${
-                        result === 'pass' ? 'bg-green-50 text-green-600' :
-                        result === 'fail' ? 'bg-red-50 text-red-500' : 'text-gray-300'
-                      }`}>
-                        {result === 'pass' ? '符合' : result === 'fail' ? '缺失' : '—'}
-                      </span>
-                    </div>
-                    {note && <p className="text-sm text-red-400 mt-0.5 pl-0.5">{note}</p>}
-                  </div>
-                )
-              })}
+      <div className="px-4 py-3 space-y-2">
+        {c15Categories.map((cat, ci) => {
+          const done = !!record.results?.[`${ci}`]
+          return (
+            <div key={ci} className="flex items-start gap-3 py-1.5">
+              <span className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${done ? 'bg-green-500 border-green-500' : 'border-gray-200'}`}>
+                {done && <span className="text-white text-xs leading-none">✓</span>}
+              </span>
+              <div className="flex-1">
+                <p className={`text-base font-bold ${done ? 'text-green-700' : 'text-gray-500'}`}>{cat.name}</p>
+                <div className="mt-0.5 space-y-0.5">
+                  {cat.items.map((item, ii) => (
+                    <p key={ii} className="text-sm text-gray-400 leading-relaxed">• {item}</p>
+                  ))}
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
     )
   }

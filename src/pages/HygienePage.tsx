@@ -56,6 +56,8 @@ const categories = [
 const shifts = ['07:00', '15:00', '23:00']
 export default function HygienePage({ user, onBack }: Props) {
   const todayStr = new Date().toISOString().split('T')[0]
+  const isManager = user.role === 'manager' || user.role === 'sub-manager'
+  const [selectedDate, setSelectedDate] = useState(todayStr)
   const [activeCategory, setActiveCategory] = useState(0)
   const [activeShift, setActiveShift]       = useState(0)
   const [results, setResults]               = useState<Record<string, Result>>({})
@@ -72,7 +74,7 @@ export default function HygienePage({ user, onBack }: Props) {
   const [confirmLeave, setConfirmLeave]     = useState(false)
 
   // BUG-003: use shift string not index so draft keys survive array reorder
-  const draftKey = `hygiene_${user.storeId}_${todayStr}_${shifts[activeShift]}`
+  const draftKey = `hygiene_${user.storeId}_${selectedDate}_${shifts[activeShift]}`
 
   // Load from Supabase (or restore draft)
   useEffect(() => {
@@ -85,7 +87,7 @@ export default function HygienePage({ user, onBack }: Props) {
         .from('hygiene_records')
         .select('*')
         .eq('store_id', user.storeId)
-        .eq('record_date', todayStr)
+        .eq('record_date', selectedDate)
         .eq('shift', shifts[activeShift])
         .maybeSingle()
 
@@ -129,7 +131,7 @@ export default function HygienePage({ user, onBack }: Props) {
     }
     load()
     return () => { cancelled = true }  // BUG-004: cleanup cancels in-flight request
-  }, [activeShift]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeShift, selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // Auto-save draft to localStorage whenever results or failNotes change
   useEffect(() => {
@@ -165,7 +167,7 @@ export default function HygienePage({ user, onBack }: Props) {
     const payload = {
       store_id:    user.storeId,
       staff_name:  user.name,
-      record_date: todayStr,
+      record_date: selectedDate,
       shift:       shifts[activeShift],
       results,
       fail_notes:  failNotes,
@@ -187,7 +189,7 @@ export default function HygienePage({ user, onBack }: Props) {
           .from('hygiene_records')
           .select('id')
           .eq('store_id', user.storeId)
-          .eq('record_date', todayStr)
+          .eq('record_date', selectedDate)
           .eq('shift', shifts[activeShift])
           .maybeSingle()
         if (inserted) setExistingId(inserted.id)
@@ -244,11 +246,25 @@ export default function HygienePage({ user, onBack }: Props) {
     <div className="min-h-dvh bg-gray-50">
       <PageHeader
         title="衛生自主管理"
-        subtitle={`${new Date().getMonth() + 1}月 ${new Date().getDate()}日・共${totalItems}項`}
+        subtitle={(() => { const [, sm, sd] = selectedDate.split('-'); return `${parseInt(sm)}月${parseInt(sd)}日・共${totalItems}項` })()}
         onBack={handleBack}
       />
 
       <div className="px-4 py-4 space-y-4 pb-8">
+        {/* Date picker (managers only) */}
+        {isManager && (
+          <div className="bg-white rounded-2xl px-4 py-3 flex items-center justify-between">
+            <p className="text-sm font-semibold text-gray-500">查閱日期</p>
+            <input
+              type="date"
+              value={selectedDate}
+              max={todayStr}
+              onChange={e => setSelectedDate(e.target.value)}
+              className="border border-gray-200 rounded-xl px-3 py-1.5 text-base text-gray-700 bg-gray-50 outline-none"
+            />
+          </div>
+        )}
+
         {/* Overall progress */}
         <div className="bg-white rounded-2xl p-4">
           <div className="flex items-center justify-between mb-2">

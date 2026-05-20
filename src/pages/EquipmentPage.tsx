@@ -41,10 +41,6 @@ const data: Record<Zone, EqItem[]> = {
   ],
 }
 
-const getMonthStart = () => {
-  const d = new Date()
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-01`
-}
 const getWeekStart = () => {
   const d = new Date()
   const day = d.getDay()
@@ -65,7 +61,17 @@ const calBadge: Record<CalStatus, { text: string; bg: string; color: string }> =
 
 export default function EquipmentPage({ user, onBack }: Props) {
   const todayStr   = new Date().toISOString().split('T')[0]
-  const dayOfMonth = new Date().getDate()
+  const isManager  = user.role === 'manager' || user.role === 'sub-manager'
+  const currentYearMonth = todayStr.slice(0, 7)
+  const [selectedYearMonth, setSelectedYearMonth] = useState(currentYearMonth)
+  const isCurrentMonth = selectedYearMonth === currentYearMonth
+  const [mY, mM] = selectedYearMonth.split('-').map(Number)
+  const monthEnd = isCurrentMonth
+    ? todayStr
+    : new Date(mY, mM, 0).toISOString().split('T')[0]
+  const loadDate   = isCurrentMonth ? todayStr : monthEnd
+  const dayOfMonth = isCurrentMonth ? new Date().getDate() : new Date(mY, mM, 0).getDate()
+  const [, dispM] = selectedYearMonth.split('-')
   const [activeZone, setActiveZone]       = useState<Zone>('FF區')
   const [doneMap, setDoneMap]             = useState<Record<string, boolean>>({})
   const [historicalDone, setHistoricalDone] = useState<Set<string>>(new Set())
@@ -74,17 +80,17 @@ export default function EquipmentPage({ user, onBack }: Props) {
   const [loading, setLoading]             = useState(true)
   const [existingId, setExistingId]       = useState<string | null>(null)
 
-  const monthStart = getMonthStart()
+  const monthStart = `${selectedYearMonth}-01`
   const weekStart  = getWeekStart()
 
   useEffect(() => {
     const load = async () => {
       setLoading(true)
 
-      // Today's record
+      // Today's record (or last day of selected month if not current month)
       const { data: row } = await supabase
         .from('equipment_logs').select('*')
-        .eq('store_id', user.storeId).eq('log_date', todayStr).eq('zone', activeZone)
+        .eq('store_id', user.storeId).eq('log_date', loadDate).eq('zone', activeZone)
         .maybeSingle()
 
       if (row) {
@@ -100,6 +106,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
         .from('equipment_logs').select('done_items, log_date')
         .eq('store_id', user.storeId).eq('zone', activeZone)
         .gte('log_date', monthStart)
+        .lte('log_date', monthEnd)
 
       const zoneItems = data[activeZone]
       const histKeys  = new Set<string>()
@@ -111,14 +118,14 @@ export default function EquipmentPage({ user, onBack }: Props) {
           const eq = zoneItems[idx]
           if (eq.freq === 'monthly') histKeys.add(k)
           if (eq.freq === 'weekly' && r.log_date >= weekStart) histKeys.add(k)
-          if (eq.freq === 'daily'  && r.log_date === todayStr)  histKeys.add(k)
+          if (eq.freq === 'daily'  && r.log_date === loadDate)  histKeys.add(k)
         })
       }
       setHistoricalDone(histKeys)
       setLoading(false)
     }
     load()
-  }, [activeZone, user.storeId])
+  }, [activeZone, user.storeId, selectedYearMonth]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const toggle = (key: string) => { setDoneMap(p => ({ ...p, [key]: !p[key] })); setSaved(false) }
 
@@ -126,7 +133,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
     setSaving(true)
     const payload = {
       store_id: user.storeId, staff_name: user.name,
-      log_date: todayStr, zone: activeZone,
+      log_date: loadDate, zone: activeZone,
       done_items: doneMap, saved_at: new Date().toISOString(),
     }
     if (existingId) {
@@ -168,7 +175,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
 
   return (
     <div className="min-h-dvh bg-gray-50">
-      <PageHeader title="設備清潔保養" subtitle={`${new Date().getMonth() + 1}月 保養紀錄`} onBack={onBack} />
+      <PageHeader title="設備清潔保養" subtitle={`${parseInt(dispM)}月 保養紀錄`} onBack={onBack} />
 
       <div className="px-4 py-4 space-y-4 pb-8">
 
@@ -183,6 +190,20 @@ export default function EquipmentPage({ user, onBack }: Props) {
           ))}
         </div>
 
+        {/* Month picker (managers only) */}
+        {isManager && (
+          <div className="bg-white rounded-2xl px-4 py-3 flex items-center justify-between">
+            <p className="text-sm font-semibold text-gray-500">查閱月份</p>
+            <input
+              type="month"
+              value={selectedYearMonth}
+              max={currentYearMonth}
+              onChange={e => setSelectedYearMonth(e.target.value)}
+              className="border border-gray-200 rounded-xl px-3 py-1.5 text-base text-gray-700 bg-gray-50 outline-none"
+            />
+          </div>
+        )}
+
         {/* Monthly overview card */}
         <div className="bg-white rounded-2xl p-4">
           <div className="flex items-center justify-between mb-3">
@@ -190,7 +211,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
               <Calendar className="w-4 h-4 text-amber-500" />
               <span className="text-base font-bold text-gray-700">{activeZone} 保養概覽</span>
             </div>
-            <span className="text-base text-gray-400">{new Date().getMonth() + 1}月</span>
+            <span className="text-base text-gray-400">{parseInt(dispM)}月</span>
           </div>
           <div className="grid grid-cols-3 gap-2 mb-3">
             {[
@@ -289,7 +310,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
               })}
             </div>
 
-            {!saved ? (
+            {isCurrentMonth && (!saved ? (
               <motion.button whileTap={{ scale: 0.97 }} onClick={handleSave} disabled={saving}
                 className="w-full rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition-opacity"
                 style={{ minHeight: '56px', background: 'linear-gradient(135deg, #f59e0b, #fbbf24)', opacity: saving ? 0.7 : 1 }}>
@@ -302,7 +323,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
                 <p className="text-amber-400 text-base mt-0.5">{new Date().toLocaleTimeString('zh-TW')}・{user.name}</p>
                 <button onClick={() => setSaved(false)} className="mt-2 text-base text-amber-500 underline">繼續編輯</button>
               </div>
-            )}
+            ))}
           </>
         )}
       </div>

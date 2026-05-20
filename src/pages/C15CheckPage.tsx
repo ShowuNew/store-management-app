@@ -62,6 +62,8 @@ const totalItems  = categories.length
 
 export default function C15CheckPage({ user, onBack }: Props) {
   const todayStr = new Date().toISOString().split('T')[0]
+  const isManager = user.role === 'manager' || user.role === 'sub-manager'
+  const [selectedDate, setSelectedDate] = useState(todayStr)
 
   const [activeShift, setActiveShift] = useState(0)
   const [checked, setChecked]         = useState<Record<string, boolean>>({})
@@ -76,10 +78,15 @@ export default function C15CheckPage({ user, onBack }: Props) {
   const [savedAt, setSavedAt]         = useState('')
   const [confirmLeave, setConfirmLeave] = useState(false)
 
-  const draftKey = `c15_${user.storeId}_${todayStr}_${shifts[activeShift]}`
+  const draftKey = `c15_${user.storeId}_${selectedDate}_${shifts[activeShift]}`
 
   useEffect(() => {
     let cancelled = false
+    setChecked({})
+    setSaved(false)
+    setExistingId(null)
+    setDraftRestored(null)
+    setDraftSavedAt(null)
     const load = async () => {
       setLoading(true)
       setDraftRestored(null)
@@ -90,7 +97,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
         .from('c15_records')
         .select('*')
         .eq('store_id', user.storeId)
-        .eq('record_date', todayStr)
+        .eq('record_date', selectedDate)
         .eq('shift', shifts[activeShift])
         .maybeSingle()
 
@@ -125,7 +132,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
     }
     load()
     return () => { cancelled = true }
-  }, [activeShift]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [activeShift, selectedDate]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (loading || saved) return
@@ -149,7 +156,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
     const payload = {
       store_id:    user.storeId,
       staff_name:  user.name,
-      record_date: todayStr,
+      record_date: selectedDate,
       shift:       shifts[activeShift],
       results:     checked,
       fail_notes:  {},
@@ -169,7 +176,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
           .from('c15_records')
           .select('id')
           .eq('store_id', user.storeId)
-          .eq('record_date', todayStr)
+          .eq('record_date', selectedDate)
           .eq('shift', shifts[activeShift])
           .maybeSingle()
         if (inserted) setExistingId(inserted.id)
@@ -215,7 +222,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
     <div className="min-h-dvh bg-gray-50">
       <PageHeader
         title="C15 店鋪品質確認"
-        subtitle={`${new Date().getMonth() + 1}月 ${new Date().getDate()}日`}
+        subtitle={(() => { const [, sm, sd] = selectedDate.split('-'); return `${parseInt(sm)}月${parseInt(sd)}日` })()}
         onBack={handleBack}
       />
 
@@ -237,6 +244,27 @@ export default function C15CheckPage({ user, onBack }: Props) {
             />
           </div>
         </div>
+
+        {/* Date picker (managers only) */}
+        {isManager && (
+          <div className="bg-white rounded-2xl px-4 py-3 flex items-center justify-between">
+            <p className="text-sm font-semibold text-gray-500">查閱日期</p>
+            <input
+              type="date"
+              value={selectedDate}
+              max={todayStr}
+              onChange={e => {
+                setSelectedDate(e.target.value)
+                setChecked({})
+                setSaved(false)
+                setExistingId(null)
+                setDraftRestored(null)
+                setDraftSavedAt(null)
+              }}
+              className="border border-gray-200 rounded-xl px-3 py-1.5 text-base text-gray-700 bg-gray-50 outline-none"
+            />
+          </div>
+        )}
 
         {/* Draft restored banner */}
         {draftRestored !== null && (

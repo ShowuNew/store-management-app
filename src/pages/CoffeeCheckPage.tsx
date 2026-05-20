@@ -30,6 +30,8 @@ const defaultDrink = (): DrinkCheck => ({ temp: '', tempOk: true, weight: '', we
 
 export default function CoffeeCheckPage({ user, onBack }: Props) {
   const todayStr = new Date().toISOString().split('T')[0]
+  const isManager = user.role === 'manager' || user.role === 'sub-manager'
+  const [selectedDate, setSelectedDate] = useState(todayStr)
 
   const [machineNo, setMachineNo]   = useState('')
   const [medHotSet, setMedHotSet]   = useState<DrinkCheck>(defaultDrink())
@@ -52,17 +54,18 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
 
   // 載入今日已有的自檢紀錄
   useEffect(() => {
+    setTodayRecords([])
     const load = async () => {
       const { data } = await supabase
         .from('coffee_check_records')
         .select('id, machine_no, overall_ok, created_at, medium_hot_set_temp_ok, medium_hot_set_weight_ok, medium_latte_temp_ok, medium_latte_weight_ok')
         .eq('store_id', user.storeId)
-        .eq('check_date', todayStr)
+        .eq('check_date', selectedDate)
         .order('created_at', { ascending: false })
       if (data) setTodayRecords(data as PastRecord[])
     }
     load()
-  }, [user.storeId, todayStr, saved])
+  }, [user.storeId, selectedDate, saved])
 
   const getElapsedMinutes = (isoTs: string) => {
     const diff = now.getTime() - new Date(isoTs).getTime()
@@ -89,7 +92,7 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
       store_id:   user.storeId,
       store_name: user.storeName,
       staff_name: user.name,
-      check_date: todayStr,
+      check_date: selectedDate,
       machine_no: machineNo.trim(),
       medium_hot_set_temp:      medHotSet.temp !== '' ? parseFloat(medHotSet.temp) : null,
       medium_hot_set_temp_ok:   medHotSet.tempOk,
@@ -214,9 +217,18 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
             style={{ background: '#fdf4ff' }}>
             <Coffee className="w-5 h-5" style={{ color: '#7c3aed' }} />
           </div>
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-base font-bold text-gray-800">{user.storeName}</p>
-            <p className="text-sm text-gray-400">{todayStr}・{user.name}</p>
+            <p className="text-sm text-gray-400">{selectedDate}・{user.name}</p>
+            {isManager && (
+              <input
+                type="date"
+                value={selectedDate}
+                max={todayStr}
+                onChange={e => setSelectedDate(e.target.value)}
+                className="mt-2 w-full border border-gray-200 rounded-xl px-3 py-1.5 text-base text-gray-700 bg-gray-50 outline-none"
+              />
+            )}
           </div>
         </div>
 

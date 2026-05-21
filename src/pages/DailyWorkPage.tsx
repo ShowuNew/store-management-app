@@ -978,7 +978,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                             <div className="flex items-center border rounded-lg flex-1 bg-white"
                               style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
                               <input type="text" inputMode="decimal"
-                                className="flex-1 text-center text-base font-bold outline-none rounded-l-lg bg-white py-1.5 px-2"
+                                className="flex-1 text-left text-base font-bold outline-none rounded-l-lg bg-white py-1.5 px-2"
                                 style={{ color: '#111827', WebkitTextFillColor: '#111827' }}
                                 placeholder="溫度" value={r.value}
                                 onChange={e => updateReading(slotKey, rIdx, 'value', e.target.value)} />

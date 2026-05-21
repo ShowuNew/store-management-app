@@ -975,7 +975,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                               <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-16"
                                 value={r.time} onChange={e => updateReading(slotKey, rIdx, 'time', e.target.value)} />
                             </div>
-                            <div className="flex items-center border rounded-lg flex-1 bg-white"
+                            <div className="flex items-center border rounded-lg flex-1 min-w-0 bg-white"
                               style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
                               <input type="text" inputMode="decimal"
                                 className="flex-1 text-left text-base font-bold outline-none rounded-l-lg bg-white py-1.5 px-2"

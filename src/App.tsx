@@ -47,11 +47,11 @@ const staffTabs = [
   { page: 'dashboard'    as Page, icon: Home,          label: '首頁'   },
   { page: 'daily-work'   as Page, icon: ClipboardCheck, label: '每日確認' },
   { page: 'hygiene'      as Page, icon: ShieldCheck,    label: '衛生管理' },
-  { page: 'inspection'   as Page, icon: ClipboardList,  label: '店鋪點檢' },
-  { page: 'anomaly'      as Page, icon: AlertTriangle,  label: '異常回報' },
   { page: 'equipment'    as Page, icon: Wrench,         label: '設備保養' },
   { page: 'coffee-check' as Page, icon: Coffee,         label: '咖啡自檢' },
   { page: 'c15-check'    as Page, icon: ListChecks,     label: 'C15確認'  },
+  { page: 'inspection'   as Page, icon: ClipboardList,  label: '店鋪點檢' },
+  { page: 'anomaly'      as Page, icon: AlertTriangle,  label: '異常回報' },
 ]
 
 const managerExtraTabs = [

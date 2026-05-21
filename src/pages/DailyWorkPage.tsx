@@ -1246,7 +1246,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             style={{ background: readyToRecheck ? '#f0fdf4' : '#fffbeb', color: readyToRecheck ? '#16a34a' : '#b45309', border: `1px solid ${readyToRecheck ? '#bbf7d0' : '#fde68a'}` }}>
             {readyToRecheck
               ? `✓ 已過 ${elapsed} 分鐘，可進行複核量測`
-              : elapsed !== null ? `⏱ 首次異常 ${elapsed} 分鐘前，建議 30 分後再複核` : '⏱ 請於 30 分鐘後再次量測確認'}
+              : elapsed !== null ? `⏱ 溫度檢查超過正常溫度範圍，應於30分鐘後重新確認機台是否正常，若仍超出範圍請立刻報修` : '⏱ 請於 30 分鐘後再次量測確認'}
           </div>
         )}
         {status === 'repair' && (

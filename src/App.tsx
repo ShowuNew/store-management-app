@@ -192,6 +192,19 @@ function App() {
       {showBottomNav      && <BottomNav      currentPage={currentPage} onNavigate={setCurrentPage} tabs={isManager ? managerBottomTabs : undefined} />}
       {showAdminBottomNav && <AdminBottomNav currentPage={currentPage} onNavigate={setCurrentPage} />}
 
+      {/* 手機版門市切換浮動按鈕 */}
+      {user?.managedStores && user.managedStores.length > 1 && showBottomNav && (
+        <button
+          onClick={openStorePicker}
+          aria-label="切換門市"
+          className="fixed left-4 z-40 md:hidden flex items-center gap-1.5 px-3 h-10 rounded-full shadow-lg bg-white border border-green-200 text-green-700 transition-all"
+          style={{ bottom: '76px' }}
+        >
+          <Store className="w-4 h-4 shrink-0" />
+          <span className="text-xs font-semibold max-w-[80px] truncate">{user.storeName}</span>
+        </button>
+      )}
+
       {/* Scroll-to-top button */}
       {showScrollTop && user && (
         <button

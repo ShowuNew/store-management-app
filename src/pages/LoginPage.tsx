@@ -147,6 +147,24 @@ export default function LoginPage({ onLogin }: Props) {
                 </div>
               )}
 
+              {/* 身份 */}
+              <div className="mb-4">
+                <label className="text-base font-semibold text-gray-600 mb-2 block">身份</label>
+                <div className="relative border-2 border-gray-100 rounded-2xl px-4 bg-gray-50 focus-within:border-green-400 transition-colors" style={{ minHeight: '52px' }}>
+                  <select
+                    className="w-full bg-transparent text-base text-gray-800 outline-none appearance-none py-3 h-full"
+                    style={{ minHeight: '52px' }}
+                    value={role}
+                    onChange={e => setRole(e.target.value as Role)}
+                  >
+                    {(Object.entries(loginRoles) as [Role, string][]).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
+                </div>
+              </div>
+
               {/* 店號 */}
               {!isHQ && (
                 <div className="mb-4">
@@ -168,24 +186,6 @@ export default function LoginPage({ onLogin }: Props) {
                   </div>
                 </div>
               )}
-
-              {/* 身份 */}
-              <div className="mb-4">
-                <label className="text-base font-semibold text-gray-600 mb-2 block">身份</label>
-                <div className="relative border-2 border-gray-100 rounded-2xl px-4 bg-gray-50 focus-within:border-green-400 transition-colors" style={{ minHeight: '52px' }}>
-                  <select
-                    className="w-full bg-transparent text-base text-gray-800 outline-none appearance-none py-3 h-full"
-                    style={{ minHeight: '52px' }}
-                    value={role}
-                    onChange={e => setRole(e.target.value as Role)}
-                  >
-                    {(Object.entries(loginRoles) as [Role, string][]).map(([val, label]) => (
-                      <option key={val} value={val}>{label}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 pointer-events-none" />
-                </div>
-              </div>
 
               {/* PIN 碼 */}
               <div className="mb-7">

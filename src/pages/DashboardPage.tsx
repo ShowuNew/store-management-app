@@ -18,6 +18,7 @@ interface AlertItem {
   type: 'error' | 'warn' | 'info'
   msg: string
   time: string
+  photoUrl?: string
 }
 
 interface Anomaly {
@@ -164,10 +165,13 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         .filter((a: any) => !['設備報修', '品質異常回報', '外部機關稽查'].includes(a.category))
         .forEach((a: any) => {
           const isUrgent = a.severity === 'critical' || a.severity === 'high'
+          const urlMatch = a.description.match(/(https?:\/\/[^\s\]）)]+)/)
+          const cleanDesc = a.description.replace(/(https?:\/\/[^\s\]）)]+)/g, '').replace(/\[現場照片：?\]?/g, '').trim()
           newAlerts.push({
             type: isUrgent ? 'error' : 'warn',
-            msg:  `[${a.category}] ${a.description.slice(0, 28)}${a.description.length > 28 ? '…' : ''}`,
+            msg:  `[${a.category}] ${cleanDesc.slice(0, 28)}${cleanDesc.length > 28 ? '…' : ''}`,
             time: new Date(a.reported_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' }),
+            photoUrl: urlMatch?.[1],
           })
         })
 
@@ -331,6 +335,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 >
                   <span className="text-xs font-bold px-1.5 py-0.5 rounded shrink-0" style={{ background: s.color, color: '#fff' }}>{s.label}</span>
                   <p className="flex-1 text-sm font-medium leading-snug line-clamp-2" style={{ color: s.color }}>{a.msg}</p>
+                  {a.photoUrl && <img src={a.photoUrl} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />}
                   {a.time && <span className="text-xs text-gray-400 shrink-0">{a.time}</span>}
                 </motion.div>
               )

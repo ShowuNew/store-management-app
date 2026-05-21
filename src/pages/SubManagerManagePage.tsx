@@ -25,26 +25,25 @@ function generateToken() {
   return crypto.randomUUID().replace(/-/g, '').slice(0, 16)
 }
 
-function toDatetimeLocal(date: Date): string {
+function toDateLocal(date: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`
 }
 
 function fmtDT(iso: string): string {
   const d = new Date(iso)
-  const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getMonth() + 1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${d.getMonth() + 1}/${d.getDate()}`
 }
 
 export default function SubManagerManagePage({ user, onBack }: Props) {
   const [tab, setTab] = useState<'create' | 'history'>('create')
 
   // ── Create ──
-  const [startsAt, setStartsAt] = useState(() => toDatetimeLocal(new Date()))
+  const [startsAt, setStartsAt] = useState(() => toDateLocal(new Date()))
   const [endsAt, setEndsAt] = useState(() => {
     const d = new Date()
     d.setDate(d.getDate() + 3)
-    return toDatetimeLocal(d)
+    return toDateLocal(d)
   })
   const [creating, setCreating]     = useState(false)
   const [generatedUrl, setGeneratedUrl] = useState<string | null>(null)
@@ -111,10 +110,10 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
     setGeneratedUrl(null)
     setCreatedRange(null)
     const now = new Date()
-    setStartsAt(toDatetimeLocal(now))
+    setStartsAt(toDateLocal(now))
     const end = new Date()
     end.setDate(end.getDate() + 3)
-    setEndsAt(toDatetimeLocal(end))
+    setEndsAt(toDateLocal(end))
     setCopied(false)
   }
 
@@ -170,18 +169,18 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
                 <div className="space-y-3">
                   <label className="text-base font-semibold text-gray-500 block">連結有效期間</label>
                   <div>
-                    <p className="text-sm text-gray-400 mb-1">開始時間</p>
+                    <p className="text-sm text-gray-400 mb-1">開始日期</p>
                     <input
-                      type="datetime-local"
+                      type="date"
                       value={startsAt}
                       onChange={e => setStartsAt(e.target.value)}
                       className="w-full text-base font-medium border-2 border-gray-200 rounded-xl px-4 py-3 outline-none focus:border-green-500 bg-gray-50"
                     />
                   </div>
                   <div>
-                    <p className="text-sm text-gray-400 mb-1">結束時間</p>
+                    <p className="text-sm text-gray-400 mb-1">結束日期</p>
                     <input
-                      type="datetime-local"
+                      type="date"
                       value={endsAt}
                       min={startsAt}
                       onChange={e => setEndsAt(e.target.value)}

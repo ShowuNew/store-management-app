@@ -975,16 +975,15 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                               <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-16"
                                 value={r.time} onChange={e => updateReading(slotKey, rIdx, 'time', e.target.value)} />
                             </div>
-                            <div className="flex items-center border rounded-lg overflow-hidden flex-1 bg-white"
+                            <div className="flex items-center border rounded-lg flex-1 bg-white"
                               style={{ borderColor: normal === false ? '#fca5a5' : normal === true ? '#6ee7b7' : '#e5e7eb' }}>
                               <input type="text" inputMode="decimal"
-                                className="flex-1 text-center text-base font-bold outline-none bg-white py-1.5 px-2"
+                                className="flex-1 text-center text-base font-bold outline-none rounded-l-lg bg-white py-1.5 px-2"
                                 style={{ color: '#111827', WebkitTextFillColor: '#111827' }}
                                 placeholder="溫度" value={r.value}
                                 onChange={e => updateReading(slotKey, rIdx, 'value', e.target.value)} />
                               <span className="text-base text-gray-400 pr-2">°C</span>
                             </div>
-                            {r.value.trim() && normal === false && <span className="text-base font-bold w-7 text-center shrink-0" style={{ color: '#ef4444' }}>異常</span>}
                             <button onClick={() => removeReading(slotKey, rIdx)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 shrink-0">
                               <Trash2 className="w-3 h-3 text-gray-400" />
                             </button>

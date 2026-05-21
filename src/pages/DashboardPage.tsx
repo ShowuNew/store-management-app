@@ -24,6 +24,19 @@ interface Anomaly {
   id: string; category: string; description: string; severity: string; reported_at: string; status: string
 }
 
+function renderDescription(text: string) {
+  const urlRe = /(https?:\/\/[^\s\]）)]+)/g
+  const parts = text.split(urlRe)
+  return parts.map((part, i) => {
+    if (urlRe.test(part)) {
+      urlRe.lastIndex = 0
+      return <img key={i} src={part} alt="現場照片" className="mt-2 w-full rounded-xl object-cover max-h-48" />
+    }
+    const clean = part.replace(/\[現場照片：?$/, '').replace(/^\s*\]?\s*/, '')
+    return clean ? <span key={i}>{clean}</span> : null
+  })
+}
+
 interface TempReading { time: string; value: number | null; isNormal: boolean | null }
 interface TempEntry { location: string; required: string; zone: string; readings?: TempReading[]; value?: number | null; isNormal?: boolean | null }
 
@@ -440,7 +453,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                           {new Date(a.reported_at).toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       </div>
-                      <p className="text-base text-gray-700 leading-snug">{a.description}</p>
+                      <p className="text-base text-gray-700 leading-snug">{renderDescription(a.description)}</p>
                     </div>
                   )
                 })}

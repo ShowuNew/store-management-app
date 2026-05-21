@@ -758,9 +758,9 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           </p>
           <div className="space-y-2">
             {[
-              { label: '早班 擔當簽名', sig: allShiftSigs.morning },
-              { label: '晚班 擔當簽名', sig: allShiftSigs.evening },
-              { label: '大夜班 擔當簽名', sig: allShiftSigs.lateNight },
+              { label: '早班簽名', sig: allShiftSigs.morning },
+              { label: '晚班簽名', sig: allShiftSigs.evening },
+              { label: '大夜班簽名', sig: allShiftSigs.lateNight },
             ].map(({ label, sig }) => (
               <div key={label} className="flex items-center justify-between px-3 py-2.5 rounded-xl"
                 style={{ background: sig ? '#f0fdf4' : '#f9fafb' }}>
@@ -773,7 +773,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
               style={{ background: managerSignature ? '#ecfdf5' : '#fff7ed' }}>
               <span className="text-base font-bold" style={{ color: managerSignature ? '#059669' : '#c2410c' }}>
-                店長確認
+                擔當/店長確認
               </span>
               <span className="text-base font-bold" style={{ color: managerSignature ? '#059669' : '#f97316' }}>
                 {managerSignature ? '✓ 已覆核簽名' : '⚠ 尚未覆核'}
@@ -1001,7 +1001,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                         <p className="text-base rounded-lg px-3 py-2" style={{ background: readyToRecheck ? '#f0fdf4' : '#fffbeb', color: readyToRecheck ? '#16a34a' : '#b45309' }}>
                           {readyToRecheck
                             ? `✓ 已過 ${elapsed} 分鐘，可進行複核量測`
-                            : elapsed !== null ? `⏱ 首次異常 ${elapsed} 分鐘前，建議 30 分後再複核` : '⏱ 請於 30 分鐘後再次量測確認'}
+                            : elapsed !== null ? `⏱ 溫度檢查超過正常溫度範圍，應於30分鐘後重新確認機台是否正常，若仍超出範圍請立刻報修` : '⏱ 請於 30 分鐘後再次量測確認'}
                         </p>
                       )}
                       {status === 'repair' && <p className="text-base text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複核後仍異常，請至「異常回報」提交報修申請</p>}

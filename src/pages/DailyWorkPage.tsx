@@ -984,7 +984,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                                 onChange={e => updateReading(slotKey, rIdx, 'value', e.target.value)} />
                               <span className="text-base text-gray-400 pr-2">°C</span>
                             </div>
-                            {r.value.trim() && <span className="text-base font-bold w-7 text-center shrink-0" style={{ color: normal === false ? '#ef4444' : '#10b981' }}>{normal === false ? '異常' : 'OK'}</span>}
+                            {r.value.trim() && normal === false && <span className="text-base font-bold w-7 text-center shrink-0" style={{ color: '#ef4444' }}>異常</span>}
                             <button onClick={() => removeReading(slotKey, rIdx)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 shrink-0">
                               <Trash2 className="w-3 h-3 text-gray-400" />
                             </button>

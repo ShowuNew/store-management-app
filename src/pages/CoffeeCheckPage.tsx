@@ -37,9 +37,10 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
   const [medHotSet, setMedHotSet]   = useState<DrinkCheck>(defaultDrink())
   const [medLatte,  setMedLatte]    = useState<DrinkCheck>(defaultDrink())
   const [note,      setNote]        = useState('')
-  const [saving,    setSaving]      = useState(false)
-  const [saved,     setSaved]       = useState(false)
-  const [saveError, setSaveError]   = useState<string | null>(null)
+  const [saving,       setSaving]      = useState(false)
+  const [saved,        setSaved]       = useState(false)
+  const [saveError,    setSaveError]   = useState<string | null>(null)
+  const [machineNoErr, setMachineNoErr] = useState(false)
   const [gpsInfo,   setGpsInfo]     = useState<string | null>(null)
   const [todayRecords, setTodayRecords] = useState<PastRecord[]>([])
   const [now, setNow]               = useState(new Date())
@@ -75,6 +76,10 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
   const overallOk = medHotSet.tempOk && medHotSet.weightOk && medLatte.tempOk && medLatte.weightOk
 
   const handleSave = async () => {
+    if (!machineNo.trim()) {
+      setMachineNoErr(true)
+      return
+    }
     setSaving(true)
     setSaveError(null)
 
@@ -119,7 +124,7 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
 
   const reset = () => {
     setMachineNo(''); setMedHotSet(defaultDrink()); setMedLatte(defaultDrink())
-    setNote(''); setSaved(false); setSaveError(null); setGpsInfo(null)
+    setNote(''); setSaved(false); setSaveError(null); setGpsInfo(null); setMachineNoErr(false)
   }
 
   // 依機號取最新一筆，判斷是否需要複核
@@ -234,14 +239,18 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
 
         {/* 機號 */}
         <div className="bg-white rounded-2xl p-4 shadow-sm">
-          <label className="text-base font-semibold text-gray-500 block mb-2">自檢機號</label>
+          <label className="text-base font-semibold text-gray-500 block mb-2">
+            自檢機號 <span className="text-red-500">*</span>
+          </label>
           <input
             type="text"
             placeholder="例：02"
             value={machineNo}
-            onChange={e => setMachineNo(e.target.value)}
-            className="w-full text-base font-bold border-2 border-gray-100 rounded-xl px-4 py-3 outline-none focus:border-purple-400 bg-gray-50"
+            onChange={e => { setMachineNo(e.target.value); setMachineNoErr(false) }}
+            className="w-full text-base font-bold border-2 rounded-xl px-4 py-3 outline-none bg-gray-50"
+            style={{ borderColor: machineNoErr ? '#f87171' : '#f3f4f6', background: machineNoErr ? '#fef2f2' : undefined }}
           />
+          {machineNoErr && <p className="text-red-500 text-sm mt-1.5 font-medium">請填寫自檢機號</p>}
         </div>
 
         {/* 中熱套式 */}

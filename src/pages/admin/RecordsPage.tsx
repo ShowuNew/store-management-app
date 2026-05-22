@@ -391,31 +391,69 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
   }
 
   if (tab === 'daily-work') {
-    const td       = record.tasks_done || {}
-    const waste    = td._waste    || {}
-    const cleaning = td._cleaning || {}
-    const friendly = td._friendly || {}
-    const uniform  = td._uniform  || {}
-    const signed   = !!td._signature
+    const td        = record.tasks_done || {}
+    const waste     = td._waste    || {}
+    const cleaning  = td._cleaning || {}
+    const friendly  = td._friendly || {}
+    const signed    = !!td._signature
     const mgrSigned = !!td._manager_signature
 
-    const friendlyKeys: { key: string; label: string }[] = [
-      { key: 't0930', label: '友善食光貼標（09:30）' },
-      { key: 't1600', label: '過期品下架（16:00）' },
-      { key: 't2000', label: '鮮食效期確認（20:00）' },
-    ]
+    const friendlyLabels: Record<string, string> = {
+      t0930: '友善食光貼標（09:30）',
+      t1600: '過期品下架（16:00）',
+      t1630: '友善食光貼標（16:30）',
+      t2300: '過期品下架（23:00）',
+      t2400: '過期品下架（24:00）',
+    }
 
     return (
       <div className="px-4 py-3 space-y-4">
-        {/* 廢棄物 */}
+        {/* 溫度記錄 */}
+        {Array.isArray(record.temperatures) && record.temperatures.length > 0 && (
+          <div>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">溫度記錄</p>
+            <div className="space-y-1">
+              {record.temperatures.map((t: any, i: number) => {
+                if (t.skipped) return (
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="text-base text-gray-500 flex-1 truncate">{t.location}</span>
+                    <span className="text-base text-gray-400 shrink-0 ml-2">{t.skipped === 'fault' ? '故障' : '無此機台'}</span>
+                  </div>
+                )
+                const filled = (t.readings || []).filter((r: any) => r.value !== null)
+                if (!filled.length) return (
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="text-base text-gray-500 flex-1 truncate">{t.location}</span>
+                    <span className="text-base text-gray-300 shrink-0 ml-2">未填</span>
+                  </div>
+                )
+                const last = filled[filled.length - 1]
+                return (
+                  <div key={i} className="flex items-center justify-between">
+                    <span className="text-base text-gray-500 flex-1 truncate">{t.location}</span>
+                    <div className="flex items-center gap-1.5 shrink-0 ml-2">
+                      <span className="text-base font-semibold text-gray-700">{last.value} °C</span>
+                      <OkBadge ok={last.isNormal !== false} />
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* 廢棄物 / 制服 */}
         <div>
-          <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">廢棄物處理</p>
+          <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">廢棄物 / 制服確認</p>
           <div className="space-y-1">
             {[
-              { label: '廚餘袋數', value: waste.foodWasteBags ?? '—' },
-              { label: '資源回收箱數', value: waste.recyclingCount ?? '—' },
-              { label: '廚餘完成時間', value: waste.leftoverFoodTime || '—' },
-              { label: '集杯完成時間', value: waste.cupCollectionTime || '—' },
+              { label: '一般垃圾', value: waste.generalWasteBags ? `${waste.generalWasteBags} 袋` : '—' },
+              { label: '廚餘',     value: waste.foodWasteBags    ? `${waste.foodWasteBags} 袋`    : '—' },
+              { label: '資源回收', value: waste.recyclingBags    ? `${waste.recyclingBags} 袋`    : '—' },
+              { label: '制服',     value: waste.uniformBags      ? `${waste.uniformBags} 袋`      : '—' },
+              { label: '廢棄物交付時間', value: waste.wasteDeliveryTime || '—' },
+              { label: '收退循環杯時間', value: waste.cupCollectionTime  || '—' },
+              { label: '制服（離店過刷）', value: waste.uniformScan       || '—' },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center justify-between">
                 <span className="text-base text-gray-500">{label}</span>
@@ -423,20 +461,20 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
               </div>
             ))}
             <div className="flex items-center gap-2 pt-1">
-              <CheckDot done={!!waste.verified} />
-              <span className="text-base text-gray-600">確認廢棄物數量</span>
+              <CheckDot done={!!waste.groundCleaning} />
+              <span className="text-base text-gray-600">地墊清潔</span>
             </div>
             <div className="flex items-center gap-2">
-              <CheckDot done={!!waste.groundCleaning} />
-              <span className="text-base text-gray-600">戶外地面清潔</span>
+              <CheckDot done={!!waste.tapeSafety} />
+              <span className="text-base text-gray-600">貼膠安全</span>
             </div>
           </div>
         </div>
 
-        {/* 設備清潔 */}
+        {/* 機器清潔 */}
         {Object.keys(cleaning).length > 0 && (
           <div>
-            <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">設備清潔</p>
+            <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">機器清潔</p>
             <div className="space-y-1">
               {Object.entries(cleaning).map(([machine, time]) => (
                 <div key={machine} className="flex items-center justify-between">
@@ -452,21 +490,12 @@ function DetailView({ record, tab }: { record: any; tab: Tab }) {
         <div>
           <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">友善食光 / 過期品下架</p>
           <div className="space-y-1">
-            {friendlyKeys.map(({ key, label }) => (
+            {Object.keys(friendlyLabels).map(key => (
               <div key={key} className="flex items-center gap-2">
                 <CheckDot done={!!friendly[key]} />
-                <span className="text-base text-gray-600">{label}</span>
+                <span className="text-base text-gray-600">{friendlyLabels[key]}</span>
               </div>
             ))}
-          </div>
-        </div>
-
-        {/* 儀容衛生 */}
-        <div>
-          <p className="text-sm font-bold text-gray-400 uppercase tracking-[0.08em] mb-1.5">儀容與衛生</p>
-          <div className="space-y-1">
-            <div className="flex items-center gap-2"><CheckDot done={!!uniform.appearance} /><span className="text-base text-gray-600">服裝儀容合規</span></div>
-            <div className="flex items-center gap-2"><CheckDot done={!!uniform.sanitize} /><span className="text-base text-gray-600">手部清潔消毒</span></div>
           </div>
         </div>
 

@@ -1383,6 +1383,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 <input type="number" inputMode="numeric"
                   className="flex-1 text-base font-medium text-gray-700 outline-none bg-transparent"
                   placeholder="0"
+                  min={0}
                   value={waste[key] as string}
                   onChange={e => { setWaste(p => ({ ...p, [key]: e.target.value })); setSubmitted(false) }} />
                 <span className="text-base text-gray-400">{unit}</span>
@@ -1396,13 +1397,22 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           {timeFields.map(({ label, key }) => (
             <div key={key}>
               <label className="text-base font-semibold text-gray-400 mb-1 block">{label}</label>
-              <div className="flex items-center border border-gray-200 rounded-xl px-3 py-2 bg-gray-50"
-                style={{ borderColor: (waste[key] as string)?.trim() ? '#6ee7b7' : '#e5e7eb' }}>
-                <input type="time"
-                  className="flex-1 text-base font-medium text-gray-700 outline-none bg-transparent"
-                  placeholder="--:--"
-                  value={waste[key] as string}
-                  onChange={e => { setWaste(p => ({ ...p, [key]: e.target.value })); setSubmitted(false) }} />
+              <div className="flex items-center gap-1">
+                <div className="flex-1 flex items-center border border-gray-200 rounded-xl px-3 py-2 bg-gray-50"
+                  style={{ borderColor: (waste[key] as string)?.trim() ? '#6ee7b7' : '#e5e7eb' }}>
+                  <input type="time"
+                    className="flex-1 text-base font-medium text-gray-700 outline-none bg-transparent"
+                    value={waste[key] as string}
+                    onChange={e => { setWaste(p => ({ ...p, [key]: e.target.value })); setSubmitted(false) }} />
+                </div>
+                {(waste[key] as string)?.trim() && (
+                  <button
+                    onClick={() => { setWaste(p => ({ ...p, [key]: '' })); setSubmitted(false) }}
+                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 shrink-0"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                  </button>
+                )}
               </div>
             </div>
           ))}

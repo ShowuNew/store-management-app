@@ -21,6 +21,7 @@ const AnomalyManagePage    = lazy(() => import('./pages/admin/AnomalyManagePage'
 const StatsPage            = lazy(() => import('./pages/admin/StatsPage'))
 const MysteryManagePage    = lazy(() => import('./pages/admin/MysteryManagePage'))
 const StoreStatusPage      = lazy(() => import('./pages/admin/StoreStatusPage'))
+const FillCheckPage        = lazy(() => import('./pages/admin/FillCheckPage'))
 const MysteryFormPage      = lazy(() => import('./pages/MysteryFormPage'))
 const SubManagerManagePage = lazy(() => import('./pages/SubManagerManagePage'))
 const SubManagerFormPage   = lazy(() => import('./pages/SubManagerFormPage'))
@@ -123,6 +124,7 @@ function App() {
       case 'admin-stats':     return <StatsPage         user={user} onBack={goBack} />
       case 'mystery-manage':      return <MysteryManagePage    user={user} onBack={goBack} />
       case 'admin-store-status': return <StoreStatusPage      user={user} onBack={goBack} />
+      case 'admin-fill-check':   return <FillCheckPage        user={user} onBack={goBack} />
       case 'sub-manager-manage': return <SubManagerManagePage user={user} onBack={goBack} />
       case 'coffee-check':       return <CoffeeCheckPage      user={user} onBack={goBack} />
       case 'c15-check':          return <C15CheckPage         user={user} onBack={goBack} />

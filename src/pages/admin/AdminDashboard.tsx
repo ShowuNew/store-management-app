@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { ClipboardList, AlertTriangle, BarChart2, ShieldCheck, RefreshCw, LogOut, UserSearch, Building2 } from 'lucide-react'
+import { ClipboardList, AlertTriangle, BarChart2, ShieldCheck, RefreshCw, LogOut, UserSearch, Building2, FileSearch } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
 import type { User, Page } from '../../types'
 
@@ -47,7 +47,8 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
     { page: 'admin-anomaly'  as Page, label: '異常管理', desc: '集中處理跨門市的異常事件與回報',         icon: <AlertTriangle  className="w-5 h-5" />, color: '#ef4444', bg: '#fef2f2' },
     { page: 'admin-stats'    as Page, label: '數據統計', desc: '查看近期完成率與合格率趨勢分析',         icon: <BarChart2      className="w-5 h-5" />, color: '#8b5cf6', bg: '#f5f3ff' },
     { page: 'mystery-manage'      as Page, label: '神秘客稽查', desc: '產生稽查連結，查看各門市評核結果', icon: <UserSearch  className="w-5 h-5" />, color: '#0891b2', bg: '#ecfeff' },
-    { page: 'admin-store-status'  as Page, label: '店鋪完成狀況', desc: '即時查看各店鋪每日作業提交情形', icon: <Building2   className="w-5 h-5" />, color: '#16a34a', bg: '#f0fdf4' },
+    { page: 'admin-store-status'  as Page, label: '店鋪完成狀況', desc: '即時查看各店鋪每日作業提交情形', icon: <Building2    className="w-5 h-5" />, color: '#16a34a', bg: '#f0fdf4' },
+    { page: 'admin-fill-check'    as Page, label: '每日填報查核', desc: '統計當日各班次未填寫的項目明細', icon: <FileSearch   className="w-5 h-5" />, color: '#f59e0b', bg: '#fffbeb' },
   ]
 
   return (

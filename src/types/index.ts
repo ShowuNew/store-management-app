@@ -18,6 +18,7 @@ export type Page =
   | 'coffee-check'
   | 'c15-check'
   | 'admin-store-status'
+  | 'admin-fill-check'
 
 export interface User {
   id: string

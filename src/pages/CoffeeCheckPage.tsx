@@ -28,6 +28,80 @@ interface PastRecord {
 
 const defaultDrink = (): DrinkCheck => ({ temp: '', tempOk: true, weight: '', weightOk: true })
 
+function DrinkSection({ label, data, onChange }: {
+  label: string
+  data: DrinkCheck
+  onChange: (d: DrinkCheck) => void
+}) {
+  return (
+    <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
+      <p className="text-base font-bold text-gray-700">【{label}】</p>
+
+      {/* 溫度 */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <label className="text-sm font-semibold text-gray-400 block mb-1">溫度（°C）</label>
+          <div className="flex items-center border-2 rounded-xl px-3 py-2 gap-2"
+            style={{ borderColor: data.tempOk ? '#86efac' : '#fca5a5', background: data.tempOk ? '#f0fdf4' : '#fef2f2' }}>
+            <input
+              type="number" inputMode="decimal" step="any"
+              placeholder="例：77.8"
+              value={data.temp}
+              onChange={e => onChange({ ...data, temp: e.target.value })}
+              className="flex-1 outline-none bg-transparent text-base font-bold text-gray-800"
+            />
+            <span className="text-base text-gray-400 shrink-0">°C</span>
+          </div>
+        </div>
+        <div className="shrink-0 mt-5">
+          <button
+            onClick={() => onChange({ ...data, tempOk: !data.tempOk })}
+            className="px-4 py-2.5 rounded-xl text-base font-bold border-2 transition-all"
+            style={{
+              borderColor: data.tempOk ? '#10b981' : '#ef4444',
+              background:  data.tempOk ? '#f0fdf4' : '#fef2f2',
+              color:       data.tempOk ? '#10b981' : '#ef4444',
+            }}
+          >
+            {data.tempOk ? '✓ 正常' : '✗ 異常'}
+          </button>
+        </div>
+      </div>
+
+      {/* 重量 */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1">
+          <label className="text-sm font-semibold text-gray-400 block mb-1">重量（g）</label>
+          <div className="flex items-center border-2 rounded-xl px-3 py-2 gap-2"
+            style={{ borderColor: data.weightOk ? '#86efac' : '#fca5a5', background: data.weightOk ? '#f0fdf4' : '#fef2f2' }}>
+            <input
+              type="number" inputMode="decimal" step="any"
+              placeholder="例：311.9"
+              value={data.weight}
+              onChange={e => onChange({ ...data, weight: e.target.value })}
+              className="flex-1 outline-none bg-transparent text-base font-bold text-gray-800"
+            />
+            <span className="text-base text-gray-400 shrink-0">g</span>
+          </div>
+        </div>
+        <div className="shrink-0 mt-5">
+          <button
+            onClick={() => onChange({ ...data, weightOk: !data.weightOk })}
+            className="px-4 py-2.5 rounded-xl text-base font-bold border-2 transition-all"
+            style={{
+              borderColor: data.weightOk ? '#10b981' : '#ef4444',
+              background:  data.weightOk ? '#f0fdf4' : '#fef2f2',
+              color:       data.weightOk ? '#10b981' : '#ef4444',
+            }}
+          >
+            {data.weightOk ? '✓ 正常' : '✗ 異常'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CoffeeCheckPage({ user, onBack }: Props) {
   const todayStr = new Date().toISOString().split('T')[0]
   const isManager = user.role === 'manager' || user.role === 'sub-manager'
@@ -135,81 +209,6 @@ export default function CoffeeCheckPage({ user, onBack }: Props) {
   }, {})
 
   const recheckEntries = Object.entries(latestByMachine).filter(([, r]) => !r.overall_ok)
-
-  // ── 飲品輸入區塊 ──
-  const DrinkSection = ({
-    label, data, onChange,
-  }: {
-    label: string
-    data: DrinkCheck
-    onChange: (d: DrinkCheck) => void
-  }) => (
-    <div className="bg-white rounded-2xl p-4 shadow-sm space-y-3">
-      <p className="text-base font-bold text-gray-700">【{label}】</p>
-
-      {/* 溫度 */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <label className="text-sm font-semibold text-gray-400 block mb-1">溫度（°C）</label>
-          <div className="flex items-center border-2 rounded-xl px-3 py-2 gap-2"
-            style={{ borderColor: data.tempOk ? '#86efac' : '#fca5a5', background: data.tempOk ? '#f0fdf4' : '#fef2f2' }}>
-            <input
-              type="number" inputMode="decimal" step="any"
-              placeholder="例：77.8"
-              value={data.temp}
-              onChange={e => onChange({ ...data, temp: e.target.value })}
-              className="flex-1 outline-none bg-transparent text-base font-bold text-gray-800"
-            />
-            <span className="text-base text-gray-400 shrink-0">°C</span>
-          </div>
-        </div>
-        <div className="shrink-0 mt-5">
-          <button
-            onClick={() => onChange({ ...data, tempOk: !data.tempOk })}
-            className="px-4 py-2.5 rounded-xl text-base font-bold border-2 transition-all"
-            style={{
-              borderColor: data.tempOk ? '#10b981' : '#ef4444',
-              background:  data.tempOk ? '#f0fdf4' : '#fef2f2',
-              color:       data.tempOk ? '#10b981' : '#ef4444',
-            }}
-          >
-            {data.tempOk ? '✓ 正常' : '✗ 異常'}
-          </button>
-        </div>
-      </div>
-
-      {/* 重量 */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1">
-          <label className="text-sm font-semibold text-gray-400 block mb-1">重量（g）</label>
-          <div className="flex items-center border-2 rounded-xl px-3 py-2 gap-2"
-            style={{ borderColor: data.weightOk ? '#86efac' : '#fca5a5', background: data.weightOk ? '#f0fdf4' : '#fef2f2' }}>
-            <input
-              type="number" inputMode="decimal" step="any"
-              placeholder="例：311.9"
-              value={data.weight}
-              onChange={e => onChange({ ...data, weight: e.target.value })}
-              className="flex-1 outline-none bg-transparent text-base font-bold text-gray-800"
-            />
-            <span className="text-base text-gray-400 shrink-0">g</span>
-          </div>
-        </div>
-        <div className="shrink-0 mt-5">
-          <button
-            onClick={() => onChange({ ...data, weightOk: !data.weightOk })}
-            className="px-4 py-2.5 rounded-xl text-base font-bold border-2 transition-all"
-            style={{
-              borderColor: data.weightOk ? '#10b981' : '#ef4444',
-              background:  data.weightOk ? '#f0fdf4' : '#fef2f2',
-              color:       data.weightOk ? '#10b981' : '#ef4444',
-            }}
-          >
-            {data.weightOk ? '✓ 正常' : '✗ 異常'}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
 
   return (
     <div className="min-h-dvh bg-gray-50">

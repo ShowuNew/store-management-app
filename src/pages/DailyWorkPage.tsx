@@ -1034,8 +1034,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                         </div>
                       </div>
 
-                      {/* Multi-unit controls (non-custom specs) */}
-                      {!isCustom && (
+                      {/* Multi-unit controls (non-custom specs) — 店長限定 */}
+                      {!isCustom && isManager && (
                         <div className="flex gap-2 pt-1 border-t border-gray-100">
                           {spec.unitIndex > 0 && (
                             <button onClick={() => adjustCount(spec.specKey, -1)}
@@ -1052,8 +1052,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                         </div>
                       )}
 
-                      {/* Delete custom spec */}
-                      {isCustom && (
+                      {/* Delete custom spec — 店長限定 */}
+                      {isCustom && isManager && (
                         <button onClick={() => removeCustomSpec(spec.specKey)}
                           className="w-full py-1.5 rounded-lg text-sm font-bold border border-red-200 text-red-500 bg-red-50 flex items-center justify-center gap-1">
                           <Trash2 className="w-3 h-3" /> 刪除此自訂機台
@@ -1067,8 +1067,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           )
         })}
 
-        {/* Add custom machine */}
-        {addCustomOpen ? (
+        {/* Add custom machine — 店長限定 */}
+        {isManager && addCustomOpen ? (
           <div className="border border-dashed border-green-300 rounded-xl p-3 space-y-2 bg-green-50">
             <p className="text-sm font-bold text-green-700">新增其他機台</p>
             <input type="text" placeholder="機台名稱（例：哈根達斯冰箱）" value={customName}
@@ -1085,12 +1085,12 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 style={{ background: 'linear-gradient(135deg, #00a040, #007d30)' }}>確認新增</button>
             </div>
           </div>
-        ) : (
+        ) : isManager ? (
           <button onClick={() => setAddCustomOpen(true)}
             className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-dashed border-green-300 text-base font-semibold text-green-600 bg-green-50">
             <Plus className="w-3.5 h-3.5" /> 新增其他機台
           </button>
-        )}
+        ) : null}
       </div>
     </>
   )
@@ -1166,8 +1166,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         )}
         <p className="text-base text-gray-400 mb-4">標準：{spec.required}</p>
 
-        {/* Multi-unit count adjuster */}
-        {!isCustom && (
+        {/* Multi-unit count adjuster — 店長限定 */}
+        {!isCustom && isManager && (
           <div className="flex items-center gap-2 mb-3">
             <span className="text-sm text-gray-400">此機型台數：</span>
             <button onClick={() => adjustCount(spec.specKey, -1)} disabled={(equipmentCounts[spec.specKey] ?? 1) <= 1}

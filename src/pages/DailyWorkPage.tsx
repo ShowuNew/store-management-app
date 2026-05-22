@@ -646,7 +646,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         icon: <Thermometer className="w-5 h-5" style={{ color: statusColor[tempStatus] }} />,
         title: '溫度記錄',
         sub: tempRepairCount > 0 ? `⚠ ${tempRepairCount} 項需報修`
-           : tempRecheckCount > 0 ? `⏱ ${tempRecheckCount} 項需複核`
+           : tempRecheckCount > 0 ? `⏱ ${tempRecheckCount} 項需複檢`
            : tempFilledCount > 0 ? `${tempFilledCount}/${effectiveSpecs.length} 台已填`
            : '尚未填寫',
         status: tempStatus,
@@ -948,7 +948,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 <div className="flex items-center gap-2 shrink-0">
                   {tempSkipped[slotKey] === 'no-machine' && <span className="text-base font-bold text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded">無此機台</span>}
                   {tempSkipped[slotKey] === 'fault'      && <span className="text-base font-bold text-orange-600 bg-orange-50 px-1.5 py-0.5 rounded">故障</span>}
-                  {status === 'recheck'  && <span className="text-base font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">需複核</span>}
+                  {status === 'recheck'  && <span className="text-base font-bold text-yellow-600 bg-yellow-50 px-1.5 py-0.5 rounded">需複檢</span>}
                   {status === 'repair'   && <span className="text-base font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">需報修</span>}
                   {status === 'resolved' && <span className="text-base font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">已正常</span>}
                   {lastFilled
@@ -999,16 +999,16 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                       {status === 'recheck' && (
                         <p className="text-base rounded-lg px-3 py-2" style={{ background: readyToRecheck ? '#f0fdf4' : '#fffbeb', color: readyToRecheck ? '#16a34a' : '#b45309' }}>
                           {readyToRecheck
-                            ? `✓ 已過 ${elapsed} 分鐘，可進行複核量測`
+                            ? `✓ 已過 ${elapsed} 分鐘，可進行複檢量測`
                             : elapsed !== null ? `⏱ 溫度檢查超過正常溫度範圍，應於30分鐘後重新確認機台是否正常，若仍超出範圍請立刻報修` : '⏱ 請於 30 分鐘後再次量測確認'}
                         </p>
                       )}
-                      {status === 'repair' && <p className="text-base text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複核後仍異常，請至「異常回報」提交報修申請</p>}
+                      {status === 'repair' && <p className="text-base text-red-600 bg-red-50 rounded-lg px-3 py-2">⚠ 複檢後仍異常，請至「異常回報」提交報修申請</p>}
 
                       {(status === 'recheck' || status === 'repair') && (
                         <div>
                           <label className="text-sm font-semibold text-gray-500 block mb-1">📝 處理措施 / 說明</label>
-                          <textarea rows={2} placeholder="記錄複核結果、處理措施或備注…"
+                          <textarea rows={2} placeholder="記錄複檢結果、處理措施或備注…"
                             className="w-full text-base text-gray-700 border border-yellow-200 rounded-xl px-3 py-2 bg-yellow-50 outline-none focus:ring-2 focus:ring-yellow-400 resize-none leading-relaxed"
                             value={tempNotes[slotKey] ?? ''}
                             onChange={e => { setTempNotes(p => ({ ...p, [slotKey]: e.target.value })); setSubmitted(false) }}
@@ -1244,19 +1244,19 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           <div className="rounded-xl px-3 py-2 mb-2 text-base font-semibold"
             style={{ background: readyToRecheck ? '#f0fdf4' : '#fffbeb', color: readyToRecheck ? '#16a34a' : '#b45309', border: `1px solid ${readyToRecheck ? '#bbf7d0' : '#fde68a'}` }}>
             {readyToRecheck
-              ? `✓ 已過 ${elapsed} 分鐘，可進行複核量測`
+              ? `✓ 已過 ${elapsed} 分鐘，可進行複檢量測`
               : elapsed !== null ? `⏱ 溫度檢查超過正常溫度範圍，應於30分鐘後重新確認機台是否正常，若仍超出範圍請立刻報修` : '⏱ 請於 30 分鐘後再次量測確認'}
           </div>
         )}
         {status === 'repair' && (
           <div className="bg-red-50 border border-red-200 rounded-xl px-3 py-2 mb-2 text-base font-semibold text-red-700">
-            ⚠ 複核後仍異常，請至「異常回報」提交報修申請
+            ⚠ 複檢後仍異常，請至「異常回報」提交報修申請
           </div>
         )}
         {(status === 'recheck' || status === 'repair') && (
           <div className="mb-3">
             <label className="text-sm font-semibold text-gray-500 block mb-1">📝 處理措施 / 說明</label>
-            <textarea rows={2} placeholder="記錄複核結果、處理措施或備注…"
+            <textarea rows={2} placeholder="記錄複檢結果、處理措施或備注…"
               className="w-full text-base text-gray-700 border border-yellow-200 rounded-xl px-3 py-2 bg-yellow-50 outline-none focus:ring-2 focus:ring-yellow-400 resize-none leading-relaxed"
               value={tempNotes[slotKey] ?? ''}
               onChange={e => { setTempNotes(p => ({ ...p, [slotKey]: e.target.value })); setSubmitted(false) }}
@@ -1438,7 +1438,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             <div className="flex items-center border border-gray-200 rounded-xl px-3 py-1.5 bg-gray-50 gap-1 shrink-0"
               style={{ borderColor: cleaning[machine]?.trim() ? '#6ee7b7' : '#e5e7eb' }}>
               <Clock className="w-3 h-3 text-gray-300" />
-              <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-16"
+              <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-28"
                 value={cleaning[machine] ?? ''}
                 onChange={e => { setCleaning(p => ({ ...p, [machine]: e.target.value })); setSubmitted(false) }} />
             </div>

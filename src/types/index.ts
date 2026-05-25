@@ -19,6 +19,7 @@ export type Page =
   | 'c15-check'
   | 'admin-store-status'
   | 'admin-fill-check'
+  | 'admin-feature-clicks'
 
 export interface User {
   id: string

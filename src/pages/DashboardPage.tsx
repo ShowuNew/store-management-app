@@ -418,9 +418,6 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-bold text-gray-800 leading-tight">{label}</p>
                   <p className="text-sm text-gray-400 mt-0.5">{desc}</p>
-                  {(clickCounts[page] ?? 0) > 0 && (
-                    <p className="text-xs text-gray-300 mt-0.5">今日進入 {clickCounts[page]} 次</p>
-                  )}
                   {done !== null && total !== null && (
                     <div className="mt-1.5">
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">

@@ -63,7 +63,6 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
     equipment:  { done: 0, total: 4 },  // 4 區域
     openAnomaly: 0,                      // 待處理異常數
   })
-  const [clickCounts, setClickCounts] = useState<Record<string, number>>({})
 
   useEffect(() => {
     const load = async () => {
@@ -219,26 +218,11 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
       setLoading(false)
     }
 
-    const loadClicks = async () => {
-      const { data } = await supabase
-        .from('feature_usage_logs')
-        .select('feature')
-        .eq('store_id', user.storeId)
-        .gte('clicked_at', todayStr)
-      if (data) {
-        const map: Record<string, number> = {}
-        data.forEach((r: any) => { map[r.feature] = (map[r.feature] ?? 0) + 1 })
-        setClickCounts(map)
-      }
-    }
-
     load()
-    loadClicks()
   }, [user.storeId])
 
-  const trackClick = async (page: Page) => {
-    setClickCounts(prev => ({ ...prev, [page]: (prev[page] ?? 0) + 1 }))
-    await supabase.from('feature_usage_logs').insert({
+  const trackClick = (page: Page) => {
+    supabase.from('feature_usage_logs').insert({
       store_id: user.storeId,
       user_name: user.name,
       feature: page,

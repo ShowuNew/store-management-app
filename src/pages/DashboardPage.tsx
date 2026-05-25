@@ -63,6 +63,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
     equipment:  { done: 0, total: 4 },  // 4 區域
     openAnomaly: 0,                      // 待處理異常數
   })
+  const [clickCounts, setClickCounts] = useState<Record<string, number>>({})
 
   useEffect(() => {
     const load = async () => {
@@ -218,8 +219,31 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
       setLoading(false)
     }
 
+    const loadClicks = async () => {
+      const { data } = await supabase
+        .from('feature_usage_logs')
+        .select('feature')
+        .eq('store_id', user.storeId)
+        .gte('clicked_at', todayStr)
+      if (data) {
+        const map: Record<string, number> = {}
+        data.forEach((r: any) => { map[r.feature] = (map[r.feature] ?? 0) + 1 })
+        setClickCounts(map)
+      }
+    }
+
     load()
+    loadClicks()
   }, [user.storeId])
+
+  const trackClick = async (page: Page) => {
+    setClickCounts(prev => ({ ...prev, [page]: (prev[page] ?? 0) + 1 }))
+    await supabase.from('feature_usage_logs').insert({
+      store_id: user.storeId,
+      user_name: user.name,
+      feature: page,
+    })
+  }
 
   type ModuleEntry = {
     page: Page; icon: React.ElementType; label: string; desc: string
@@ -385,7 +409,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: i * 0.04 }}
                 whileTap={{ scale: 0.98 }}
-                onClick={() => onNavigate(page)}
+                onClick={() => { trackClick(page); onNavigate(page) }}
                 className={`rounded-2xl p-4 text-left shadow-sm flex items-center gap-4 ${isCompleted ? 'bg-green-50' : 'bg-white'}`}
               >
                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style={{ background: bg }}>
@@ -394,6 +418,9 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
                 <div className="flex-1 min-w-0">
                   <p className="text-base font-bold text-gray-800 leading-tight">{label}</p>
                   <p className="text-sm text-gray-400 mt-0.5">{desc}</p>
+                  {(clickCounts[page] ?? 0) > 0 && (
+                    <p className="text-xs text-gray-300 mt-0.5">今日進入 {clickCounts[page]} 次</p>
+                  )}
                   {done !== null && total !== null && (
                     <div className="mt-1.5">
                       <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">

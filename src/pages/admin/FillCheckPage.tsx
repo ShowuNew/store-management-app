@@ -38,17 +38,18 @@ function analyzeMissing(record: any): MissingGroup[] {
   const wasteMissing: string[] = []
   if (!waste.wasteDeliveryTime) wasteMissing.push('廢棄物交付時間')
   if (!waste.cupCollectionTime) wasteMissing.push('收退循環杯時間')
+  if (!waste.uniformScan)       wasteMissing.push('制服離店過刷時間')
   if (!waste.groundCleaning)    wasteMissing.push('地墊清潔')
   if (!waste.tapeSafety)        wasteMissing.push('貼膠安全')
   if (wasteMissing.length) groups.push({ category: '廢棄物 / 制服', items: wasteMissing })
 
   const cleaning = record.tasks_done?._cleaning || {}
   const cleaningEntries = Object.entries(cleaning)
-  if (cleaningEntries.length === 0) {
+  const emptyMachines = cleaningEntries.filter(([, v]) => !v).map(([k]) => k)
+  if (cleaningEntries.length === 0 || emptyMachines.length === cleaningEntries.length) {
     groups.push({ category: '機器清潔', items: ['未填寫任何清潔時間'] })
-  } else {
-    const empty = cleaningEntries.filter(([, v]) => !v).map(([k]) => k)
-    if (empty.length) groups.push({ category: '機器清潔', items: empty })
+  } else if (emptyMachines.length) {
+    groups.push({ category: '機器清潔', items: emptyMachines })
   }
 
   const friendly = record.tasks_done?._friendly || {}

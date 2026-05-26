@@ -58,6 +58,9 @@ export default function LoginPage({ onLogin }: Props) {
       store_id: storeId,
       role,
       user_agent: navigator.userAgent,
+    }).then(({ error }) => {
+      if (error) console.error('[login] insert 失敗', error)
+      else console.log('[login] insert 成功')
     })
   }
 

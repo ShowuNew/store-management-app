@@ -25,10 +25,12 @@ function decryptAth(source: string): Record<string, string> | null {
 
 export function logAthParams(): void {
   const ath = new URLSearchParams(window.location.search).get('ath')
-  if (!ath) return
+  if (!ath) { console.log('[ath] 無 ath 參數'); return }
 
   const params = decryptAth(ath)
-  if (!params) return
+  if (!params) { console.error('[ath] 解密失敗'); return }
+
+  console.log('[ath] 解密成功', params)
 
   supabase.from('ath_logs').insert({
     u_user_id:    params['U_USER_ID']    ?? null,
@@ -42,5 +44,8 @@ export function logAthParams(): void {
     device_uuid:  params['DEVICE_UUID']  ?? null,
     os_type:      params['OS_TYPE']      ?? null,
     params,
+  }).then(({ error }) => {
+    if (error) console.error('[ath] insert 失敗', error)
+    else console.log('[ath] insert 成功')
   })
 }

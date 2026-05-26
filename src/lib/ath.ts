@@ -24,8 +24,10 @@ function decryptAth(source: string): Record<string, string> | null {
 }
 
 export function logAthParams(): void {
+  alert('[URL] ' + window.location.href)
+
   const ath = new URLSearchParams(window.location.search).get('ath')
-  if (!ath) { alert('[ath] 無 ath 參數'); return }
+  if (!ath) return
 
   const params = decryptAth(ath)
   if (!params) { alert('[ath] 解密失敗'); return }

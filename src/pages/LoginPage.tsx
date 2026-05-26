@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, Lock, Store } from 'lucide-react'
 import type { User, Role } from '../types'
 import { supabase } from '../lib/supabase'
+import { logAthParams } from '../lib/ath'
 
 interface Props {
   onLogin: (user: User) => void
@@ -48,9 +49,20 @@ export default function LoginPage({ onLogin }: Props) {
   const [storeOptions, setStoreOptions] = useState<{ store_id: string; store_name: string }[]>([])
   const [selectedStoreId, setSelectedStoreId] = useState('')
 
+  useEffect(() => { logAthParams() }, [])
+
   const isHQ = role === 'supervisor' || role === 'admin'
 
+  const writeLoginLog = (storeId: string) => {
+    supabase.from('login_logs').insert({
+      store_id: storeId,
+      role,
+      user_agent: navigator.userAgent,
+    })
+  }
+
   const doLogin = (storeId: string, storeName: string) => {
+    writeLoginLog(storeId)
     onLogin({ id: '1', name: roleLabels[role], role, storeId, storeName })
   }
 
@@ -93,6 +105,7 @@ export default function LoginPage({ onLogin }: Props) {
   const handlePickStore = () => {
     const selected = storeOptions.find(s => s.store_id === selectedStoreId)
     if (!selected) return
+    writeLoginLog(selected.store_id)
     onLogin({
       id: '1', name: roleLabels[role], role,
       storeId: selected.store_id,

@@ -321,7 +321,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [loading, setLoading]       = useState(true)
   const [existingId, setExistingId] = useState<string | null>(null)
   const [tempZone, setTempZone]     = useState('全部')
-  const [expandedIdx, setExpandedIdx] = useState<string | null>(null)
+  const [expandedIdx, setExpandedIdx] = useState<Set<string>>(new Set())
   const [prevTempData, setPrevTempData] = useState<Record<string, string>>({})
   const [gpsAccuracy,  setGpsAccuracy]  = useState<number | null>(null)
   const [tempSkipped,  setTempSkipped]  = useState<Record<string, 'fault' | 'no-machine'>>({})
@@ -477,7 +477,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const lastFilled = [...existing].reverse().find(r => r.value.trim())
     const defaultVal = lastFilled?.value ?? prevTempData[slotKey] ?? spec.standard ?? ''
     setTempData(p => ({ ...p, [slotKey]: [...(p[slotKey] ?? []), { time: nowTimeStr(), value: defaultVal }] }))
-    setExpandedIdx(slotKey); setSubmitted(false)
+    setExpandedIdx(prev => { const s = new Set(prev); s.add(slotKey); return s }); setSubmitted(false)
   }
   const updateReading = (slotKey: string, rIdx: number, field: keyof TempReading, val: string) => {
     setTempData(p => { const list = [...(p[slotKey] ?? [])]; list[rIdx] = { ...list[rIdx], [field]: val }; return { ...p, [slotKey]: list } })
@@ -911,9 +911,11 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // ────────────────────────────────────────────────
   // 溫度記錄 - List mode
   // ────────────────────────────────────────────────
-  const renderTempList = () => (
+  const renderTempList = () => {
+    const allExpanded = filteredSpecs.length > 0 && filteredSpecs.every(s => expandedIdx.has(s.slotKey))
+    return (
     <>
-      <div className="flex gap-1.5 mb-3 overflow-x-auto pb-0.5">
+      <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-0.5">
         {zones.filter(z => z === '全部' || effectiveSpecs.some(s => s.zone === z)).map(z => (
           <button key={z} onClick={() => setTempZone(z)}
             className="shrink-0 px-3 py-1.5 rounded-lg text-base font-bold transition-all"
@@ -921,12 +923,18 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             {z}
           </button>
         ))}
+        <button
+          onClick={() => setExpandedIdx(allExpanded ? new Set() : new Set(filteredSpecs.map(s => s.slotKey)))}
+          className="shrink-0 ml-auto px-3 py-1.5 rounded-lg text-base font-bold transition-all"
+          style={{ background: allExpanded ? '#00a040' : '#f3f4f6', color: allExpanded ? 'white' : '#6b7280' }}>
+          {allExpanded ? '⊟ 收合全部' : '⊞ 展開全部'}
+        </button>
       </div>
       <div className="space-y-2">
         {filteredSpecs.map(spec => {
           const { slotKey } = spec
           const readings   = getReadings(slotKey)
-          const isExpanded = expandedIdx === slotKey
+          const isExpanded = expandedIdx.has(slotKey)
           const status     = anomalyStatus(spec, readings)
           const lastFilled = [...readings].reverse().find(r => r.value.trim())
           const lastNormal = lastFilled ? evalReading(spec, lastFilled) : null
@@ -941,7 +949,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             <div key={slotKey} className="border border-gray-100 rounded-xl overflow-hidden">
               <button className="w-full flex items-center justify-between px-3 py-2.5"
                 style={{ background: bgHeader }}
-                onClick={() => setExpandedIdx(isExpanded ? null : slotKey)}>
+                onClick={() => setExpandedIdx(prev => { const s = new Set(prev); isExpanded ? s.delete(slotKey) : s.add(slotKey); return s })}>
                 <div className="text-left">
                   <p className="text-base font-semibold text-gray-700">
                     {spec.location}{spec.unitLabel}
@@ -1096,7 +1104,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         ) : null}
       </div>
     </>
-  )
+  )}
 
   // ────────────────────────────────────────────────
   // 溫度記錄 - Card (swipe) mode

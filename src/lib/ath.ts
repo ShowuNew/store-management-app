@@ -24,15 +24,15 @@ function decryptAth(source: string): Record<string, string> | null {
 }
 
 export function logAthParams(): void {
-  alert('[URL] ' + window.location.href)
+  // alert('[URL] ' + window.location.href)
 
   const ath = new URLSearchParams(window.location.search).get('ath')
   if (!ath) return
 
   const params = decryptAth(ath)
-  if (!params) { alert('[ath] 解密失敗'); return }
+  if (!params) { /* alert('[ath] 解密失敗') */ return }
 
-  alert('[ath] 解密成功\n' + JSON.stringify(params, null, 2))
+  // alert('[ath] 解密成功\n' + JSON.stringify(params, null, 2))
 
   supabase.from('ath_logs').insert({
     u_user_id:    params['U_USER_ID']    ?? null,
@@ -46,8 +46,8 @@ export function logAthParams(): void {
     device_uuid:  params['DEVICE_UUID']  ?? null,
     os_type:      params['OS_TYPE']      ?? null,
     params,
-  }).then(({ error }) => {
-    if (error) alert('[ath] insert 失敗\n' + JSON.stringify(error))
-    else alert('[ath] insert 成功')
+  }).then(() => {
+    // if (error) alert('[ath] insert 失敗\n' + JSON.stringify(error))
+    // else alert('[ath] insert 成功')
   })
 }

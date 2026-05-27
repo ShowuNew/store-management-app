@@ -322,6 +322,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [existingId, setExistingId] = useState<string | null>(null)
   const [tempZone, setTempZone]     = useState('全部')
   const [expandedIdx, setExpandedIdx] = useState<Set<string>>(new Set())
+  const [activeSlotKey, setActiveSlotKey] = useState<string | null>(null)
+  const itemRefs = useRef<Map<string, HTMLDivElement>>(new Map())
   const [prevTempData, setPrevTempData] = useState<Record<string, string>>({})
   const [gpsAccuracy,  setGpsAccuracy]  = useState<number | null>(null)
   const [tempSkipped,  setTempSkipped]  = useState<Record<string, 'fault' | 'no-machine'>>({})
@@ -470,6 +472,23 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const lastFilled = [...readings].reverse().find(r => r.value.trim())
     setCardValue(lastFilled?.value ?? prevTempData[spec.slotKey] ?? spec.standard ?? '')
   }, [cardIdx, swipeMode, effectiveSpecs]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (view !== 'temperature' || expandedIdx.size === 0) { setActiveSlotKey(null); return }
+    const focusLine = window.innerHeight * 0.35
+    const check = () => {
+      let bestKey: string | null = null
+      let bestDist = Infinity
+      itemRefs.current.forEach((el, key) => {
+        const dist = Math.abs(el.getBoundingClientRect().top - focusLine)
+        if (dist < bestDist) { bestDist = dist; bestKey = key }
+      })
+      setActiveSlotKey(bestKey)
+    }
+    window.addEventListener('scroll', check, { passive: true })
+    check()
+    return () => window.removeEventListener('scroll', check)
+  }, [view, expandedIdx]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const getReadings = (slotKey: string) => tempData[slotKey] ?? []
   const addReading = (slotKey: string, spec: TempSpec) => {
@@ -945,8 +964,18 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           const elapsed = anomalyTime !== null ? getElapsedMinutes(anomalyTime) : null
           const readyToRecheck = elapsed !== null && elapsed >= 30
 
+          const isActive = activeSlotKey === slotKey && expandedIdx.size > 1
+
           return (
-            <div key={slotKey} className="border border-gray-100 rounded-xl overflow-hidden">
+            <div
+              key={slotKey}
+              ref={el => { if (el) itemRefs.current.set(slotKey, el); else itemRefs.current.delete(slotKey) }}
+              className="rounded-xl overflow-hidden transition-all duration-300"
+              style={{
+                border: isActive ? '1.5px solid #6ee7b7' : '1px solid #f3f4f6',
+                boxShadow: isActive ? 'inset 4px 0 0 #00a040, 0 4px 16px rgba(0,160,64,0.12)' : 'none',
+              }}
+            >
               <button className="w-full flex items-center justify-between px-3 py-2.5"
                 style={{ background: bgHeader }}
                 onClick={() => setExpandedIdx(prev => { const s = new Set(prev); isExpanded ? s.delete(slotKey) : s.add(slotKey); return s })}>

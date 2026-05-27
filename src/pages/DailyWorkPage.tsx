@@ -477,11 +477,14 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     if (view !== 'temperature' || expandedIdx.size === 0) { setActiveSlotKey(null); return }
     const focusLine = window.innerHeight * 0.35
     const check = () => {
+      const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 80
       let bestKey: string | null = null
-      let bestDist = Infinity
+      let bestScore = Infinity
       itemRefs.current.forEach((el, key) => {
-        const dist = Math.abs(el.getBoundingClientRect().top - focusLine)
-        if (dist < bestDist) { bestDist = dist; bestKey = key }
+        const rect = el.getBoundingClientRect()
+        if (rect.bottom < 0 || rect.top > window.innerHeight) return
+        const score = atBottom ? -rect.top : Math.abs(rect.top - focusLine)
+        if (score < bestScore) { bestScore = score; bestKey = key }
       })
       setActiveSlotKey(bestKey)
     }

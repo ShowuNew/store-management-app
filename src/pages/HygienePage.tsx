@@ -78,10 +78,13 @@ export default function HygienePage({ user, onBack }: Props) {
   useEffect(() => {
     const focusLine = window.innerHeight * 0.35
     const check = () => {
-      let bestKey: string | null = null; let bestDist = Infinity
+      const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 80
+      let bestKey: string | null = null; let bestScore = Infinity
       hygRefs.current.forEach((el, k) => {
-        const dist = Math.abs(el.getBoundingClientRect().top - focusLine)
-        if (dist < bestDist) { bestDist = dist; bestKey = k }
+        const rect = el.getBoundingClientRect()
+        if (rect.bottom < 0 || rect.top > window.innerHeight) return
+        const score = atBottom ? -rect.top : Math.abs(rect.top - focusLine)
+        if (score < bestScore) { bestScore = score; bestKey = k }
       })
       setActiveHygKey(bestKey)
     }

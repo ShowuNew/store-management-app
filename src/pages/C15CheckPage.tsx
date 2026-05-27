@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Circle, Save, RefreshCw, AlertTriangle } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -77,6 +77,23 @@ export default function C15CheckPage({ user, onBack }: Props) {
   const [saveError, setSaveError]     = useState<string | null>(null)
   const [savedAt, setSavedAt]         = useState('')
   const [confirmLeave, setConfirmLeave] = useState(false)
+  const [activeC15Key, setActiveC15Key] = useState<string | null>(null)
+  const c15Refs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  useEffect(() => {
+    const focusLine = window.innerHeight * 0.35
+    const check = () => {
+      let bestKey: string | null = null; let bestDist = Infinity
+      c15Refs.current.forEach((el, k) => {
+        const dist = Math.abs(el.getBoundingClientRect().top - focusLine)
+        if (dist < bestDist) { bestDist = dist; bestKey = k }
+      })
+      setActiveC15Key(bestKey)
+    }
+    window.addEventListener('scroll', check, { passive: true })
+    check()
+    return () => window.removeEventListener('scroll', check)
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const draftKey = `c15_${user.storeId}_${selectedDate}_${shifts[activeShift]}`
 
@@ -335,7 +352,10 @@ export default function C15CheckPage({ user, onBack }: Props) {
               const key       = `${ci}`
               const isChecked = !!checked[key]
               return (
-                <div key={ci} className="bg-white rounded-2xl overflow-hidden">
+                <div key={ci} className="bg-white rounded-2xl overflow-hidden transition-shadow duration-300"
+                  ref={el => { if (el) c15Refs.current.set(`${ci}`, el); else c15Refs.current.delete(`${ci}`) }}
+                  style={{ boxShadow: activeC15Key === `${ci}` ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : 'none' }}
+                >
                   {/* Section header — single checkbox per category */}
                   <motion.button
                     whileTap={{ scale: 0.98 }}

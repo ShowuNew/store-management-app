@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, XCircle, MinusCircle, Save, RefreshCw, AlertTriangle } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -72,6 +72,23 @@ export default function HygienePage({ user, onBack }: Props) {
   const [saveError, setSaveError]           = useState<string | null>(null)
   const [savedAt, setSavedAt]               = useState<string>('')
   const [confirmLeave, setConfirmLeave]     = useState(false)
+  const [activeHygKey, setActiveHygKey] = useState<string | null>(null)
+  const hygRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  useEffect(() => {
+    const focusLine = window.innerHeight * 0.35
+    const check = () => {
+      let bestKey: string | null = null; let bestDist = Infinity
+      hygRefs.current.forEach((el, k) => {
+        const dist = Math.abs(el.getBoundingClientRect().top - focusLine)
+        if (dist < bestDist) { bestDist = dist; bestKey = k }
+      })
+      setActiveHygKey(bestKey)
+    }
+    window.addEventListener('scroll', check, { passive: true })
+    check()
+    return () => window.removeEventListener('scroll', check)
+  }, [activeCategory]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // BUG-003: use shift string not index so draft keys survive array reorder
   const draftKey = `hygiene_${user.storeId}_${selectedDate}_${shifts[activeShift]}`
@@ -417,6 +434,8 @@ export default function HygienePage({ user, onBack }: Props) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
                     className="bg-white rounded-2xl p-4"
+                    ref={(el: HTMLDivElement | null) => { if (el) hygRefs.current.set(key, el); else hygRefs.current.delete(key) }}
+                    style={{ boxShadow: activeHygKey === key ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : 'none', transition: 'box-shadow 0.3s' }}
                   >
                     <div className="flex gap-2 mb-3">
                       <span className="w-5 h-5 rounded-full bg-gray-100 text-base font-bold text-gray-500 flex items-center justify-center shrink-0 mt-0.5">

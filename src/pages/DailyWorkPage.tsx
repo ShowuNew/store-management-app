@@ -930,11 +930,9 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   // ────────────────────────────────────────────────
   // 溫度記錄 - List mode
   // ────────────────────────────────────────────────
-  const renderTempList = () => {
-    const allExpanded = filteredSpecs.length > 0 && filteredSpecs.every(s => expandedIdx.has(s.slotKey))
-    return (
+  const renderTempList = () => (
     <>
-      <div className="flex items-center gap-1.5 mb-3 overflow-x-auto pb-0.5">
+      <div className="flex gap-1.5 mb-3 overflow-x-auto pb-0.5">
         {zones.filter(z => z === '全部' || effectiveSpecs.some(s => s.zone === z)).map(z => (
           <button key={z} onClick={() => setTempZone(z)}
             className="shrink-0 px-3 py-1.5 rounded-lg text-base font-bold transition-all"
@@ -942,12 +940,6 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             {z}
           </button>
         ))}
-        <button
-          onClick={() => setExpandedIdx(allExpanded ? new Set() : new Set(filteredSpecs.map(s => s.slotKey)))}
-          className="shrink-0 ml-auto px-3 py-1.5 rounded-lg text-base font-bold transition-all"
-          style={{ background: allExpanded ? '#00a040' : '#f3f4f6', color: allExpanded ? 'white' : '#6b7280' }}>
-          {allExpanded ? '⊟ 收合全部' : '⊞ 展開全部'}
-        </button>
       </div>
       <div className="space-y-2">
         {filteredSpecs.map(spec => {
@@ -1133,7 +1125,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         ) : null}
       </div>
     </>
-  )}
+  )
 
   // ────────────────────────────────────────────────
   // 溫度記錄 - Card (swipe) mode
@@ -1354,6 +1346,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       const s = anomalyStatus(spec, getReadings(spec.slotKey))
       return s === 'recheck' || s === 'repair'
     })
+    const allExpanded = filteredSpecs.length > 0 && filteredSpecs.every(s => expandedIdx.has(s.slotKey))
 
     return (
       <div className="space-y-4">
@@ -1366,6 +1359,15 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 <span className="text-base text-red-500 font-semibold flex items-center gap-1">
                   <AlertCircle className="w-3.5 h-3.5" /> 有異常
                 </span>
+              )}
+              {!swipeMode && (
+                <button
+                  onClick={() => setExpandedIdx(allExpanded ? new Set() : new Set(filteredSpecs.map(s => s.slotKey)))}
+                  className="px-3 py-1.5 rounded-xl text-base font-bold transition-all"
+                  style={{ background: allExpanded ? '#00a040' : '#f3f4f6', color: allExpanded ? 'white' : '#6b7280' }}
+                >
+                  {allExpanded ? '⊟ 收合全部' : '⊞ 展開全部'}
+                </button>
               )}
               <button
                 onClick={() => setSwipeMode(m => !m)}

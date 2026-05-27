@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle2, Circle, Calendar, Save, RefreshCw, AlertTriangle, Clock } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -79,6 +79,23 @@ export default function EquipmentPage({ user, onBack }: Props) {
   const [saving, setSaving]               = useState(false)
   const [loading, setLoading]             = useState(true)
   const [existingId, setExistingId]       = useState<string | null>(null)
+  const [activeEqKey, setActiveEqKey] = useState<string | null>(null)
+  const eqRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  useEffect(() => {
+    const focusLine = window.innerHeight * 0.35
+    const check = () => {
+      let bestKey: string | null = null; let bestDist = Infinity
+      eqRefs.current.forEach((el, k) => {
+        const dist = Math.abs(el.getBoundingClientRect().top - focusLine)
+        if (dist < bestDist) { bestDist = dist; bestKey = k }
+      })
+      setActiveEqKey(bestKey)
+    }
+    window.addEventListener('scroll', check, { passive: true })
+    check()
+    return () => window.removeEventListener('scroll', check)
+  }, [activeZone]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const monthStart = `${selectedYearMonth}-01`
   const weekStart  = getWeekStart()
@@ -266,7 +283,8 @@ export default function EquipmentPage({ user, onBack }: Props) {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.04 }}
                     className="bg-white rounded-2xl overflow-hidden shadow-sm"
-                    style={{ border: isOverdue ? '1.5px solid #fca5a5' : undefined }}
+                    ref={(el: HTMLDivElement | null) => { if (el) eqRefs.current.set(key, el); else eqRefs.current.delete(key) }}
+                    style={{ border: isOverdue ? '1.5px solid #fca5a5' : undefined, boxShadow: activeEqKey === key ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : undefined, transition: 'box-shadow 0.3s' }}
                   >
                     <div className="flex items-center px-4 py-3.5 gap-3 border-b border-gray-50">
                       <button onClick={() => toggle(key)} className="shrink-0" style={{ minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>

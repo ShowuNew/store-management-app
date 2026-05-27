@@ -132,6 +132,7 @@ function SignaturePad({ value, onChange, label, canvasHeight = 220 }: SignatureP
 interface Props { user: User; onBack: () => void }
 
 type ViewType = 'overview' | 'temperature' | 'waste' | 'cleaning' | 'friendly' | 'handover'
+const SUB_VIEWS: Exclude<ViewType, 'overview'>[] = ['temperature', 'waste', 'cleaning', 'friendly', 'handover']
 
 const shifts = ['早班 07:00–15:00', '晚班 15:00–23:00', '大夜班 23:00–07:00']
 
@@ -615,6 +616,8 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     handover:    '交接班紀錄',
   }
   const handleBack = () => view === 'overview' ? onBack() : setView('overview')
+  const subViewIdx = view !== 'overview' ? SUB_VIEWS.indexOf(view as Exclude<ViewType, 'overview'>) : -1
+  const nextView = subViewIdx >= 0 && subViewIdx < SUB_VIEWS.length - 1 ? SUB_VIEWS[subViewIdx + 1] : null
 
   // ────────────────────────────────────────────────
   // Overview
@@ -1606,7 +1609,24 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           <div className="flex items-center justify-center py-20 gap-2 text-gray-400">
             <RefreshCw className="w-4 h-4 animate-spin" /><span className="text-base">載入紀錄...</span>
           </div>
-        ) : view === 'overview' ? renderOverview() : renderSection()}
+        ) : view === 'overview' ? renderOverview() : (
+          <>
+            {renderSection()}
+            {nextView && (
+              <div className="mt-4">
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setView(nextView)}
+                  className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2"
+                  style={{ background: 'linear-gradient(135deg, #00a040, #007d30)' }}
+                >
+                  <span>下一項：{viewTitles[nextView]}</span>
+                  <ChevronRight className="w-5 h-5" />
+                </motion.button>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   )

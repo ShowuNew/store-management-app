@@ -43,7 +43,7 @@ const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
 const SUB_TOKEN = new URLSearchParams(window.location.search).get('sub-token')
 
 const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage', 'coffee-check', 'c15-check', 'admin-records']
-const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage', 'admin-store-status']
+const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage', 'admin-store-status', 'admin-feature-clicks', 'admin-fill-check']
 
 const staffTabs = [
   { page: 'dashboard'    as Page, icon: Home,          label: '首頁'   },

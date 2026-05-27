@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, Award, AlertTriangle, Save } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -91,27 +91,6 @@ export default function InspectionPage({ user, onBack }: Props) {
   const [saveError, setSaveError] = useState('')
   const [existingId, setExistingId] = useState<string | null>(null)
   const [draftRestored, setDraftRestored] = useState(false)
-  const [activeInspKey, setActiveInspKey] = useState<string | null>(null)
-  const inspRefs = useRef<Map<string, HTMLDivElement>>(new Map())
-
-  useEffect(() => {
-    const focusLine = window.innerHeight * 0.35
-    const check = () => {
-      const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 80
-      let bestKey: string | null = null; let bestScore = Infinity
-      inspRefs.current.forEach((el, k) => {
-        const rect = el.getBoundingClientRect()
-        if (rect.bottom < 0 || rect.top > window.innerHeight) return
-        const score = atBottom ? -rect.top : Math.abs(rect.top - focusLine)
-        if (score < bestScore) { bestScore = score; bestKey = k }
-      })
-      setActiveInspKey(bestKey)
-    }
-    window.addEventListener('scroll', check, { passive: true })
-    check()
-    return () => window.removeEventListener('scroll', check)
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
   // 載入今日既有紀錄
   useEffect(() => {
     const load = async () => {
@@ -290,8 +269,7 @@ export default function InspectionPage({ user, onBack }: Props) {
 
           return (
             <div key={ci} className="bg-white rounded-2xl overflow-hidden transition-shadow duration-300"
-              ref={el => { if (el) inspRefs.current.set(`${ci}`, el); else inspRefs.current.delete(`${ci}`) }}
-              style={{ boxShadow: activeInspKey === `${ci}` ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : 'none' }}
+              style={{ boxShadow: isOpen ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : 'none' }}
             >
               <button
                 onClick={() => setOpenCat(isOpen ? null : ci)}

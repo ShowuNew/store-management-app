@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, Award, AlertTriangle, Save } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -91,6 +91,27 @@ export default function InspectionPage({ user, onBack }: Props) {
   const [saveError, setSaveError] = useState('')
   const [existingId, setExistingId] = useState<string | null>(null)
   const [draftRestored, setDraftRestored] = useState(false)
+  const [activeInspKey, setActiveInspKey] = useState<string | null>(null)
+  const inspRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+
+  useEffect(() => {
+    const focusLine = window.innerHeight * 0.35
+    const check = () => {
+      const atBottom = window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 80
+      let bestKey: string | null = null; let bestScore = Infinity
+      inspRefs.current.forEach((el, k) => {
+        const rect = el.getBoundingClientRect()
+        if (rect.bottom < 0 || rect.top > window.innerHeight) return
+        const score = atBottom ? -rect.top : Math.abs(rect.top - focusLine)
+        if (score < bestScore) { bestScore = score; bestKey = k }
+      })
+      setActiveInspKey(bestKey)
+    }
+    window.addEventListener('scroll', check, { passive: true })
+    const timer = setTimeout(check, 350)
+    return () => { window.removeEventListener('scroll', check); clearTimeout(timer) }
+  }, [openCat]) // eslint-disable-line react-hooks/exhaustive-deps
+
   // 載入今日既有紀錄
   useEffect(() => {
     const load = async () => {
@@ -268,8 +289,7 @@ export default function InspectionPage({ user, onBack }: Props) {
           const isOpen      = openCat === ci
 
           return (
-            <div key={ci} className="bg-white rounded-2xl overflow-hidden transition-shadow duration-300"
-              style={{ boxShadow: isOpen ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : 'none' }}
+            <div key={ci} className="bg-white rounded-2xl overflow-hidden shadow-sm"
             >
               <button
                 onClick={() => setOpenCat(isOpen ? null : ci)}
@@ -299,9 +319,11 @@ export default function InspectionPage({ user, onBack }: Props) {
                       {cat.items.map((item, ii) => (
                         <div
                           key={ii}
-                          className={`px-4 py-3.5 border-b border-gray-50 last:border-0 ${
+                          ref={el => { const k = `${ci}-${ii}`; if (el) inspRefs.current.set(k, el); else inspRefs.current.delete(k) }}
+                          className={`px-4 py-3.5 border-b border-gray-50 last:border-0 transition-all duration-300 ${
                             item.isCritical ? 'bg-red-50/60' : item.isImportant ? 'bg-amber-50/50' : ''
                           }`}
+                          style={{ boxShadow: activeInspKey === `${ci}-${ii}` ? 'inset 4px 0 0 #00a040' : 'none' }}
                         >
                           <div className="flex gap-2 mb-3">
                             <span

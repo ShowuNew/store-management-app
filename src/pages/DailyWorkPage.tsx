@@ -472,7 +472,9 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     if (!spec) return
     const readings = getReadings(spec.slotKey)
     const lastFilled = [...readings].reverse().find(r => r.value.trim())
-    setCardValue(lastFilled?.value ?? prevTempData[spec.slotKey] ?? spec.standard ?? '')
+    const rawCard = lastFilled?.value ?? prevTempData[spec.slotKey] ?? spec.standard ?? ''
+    const nCard = parseFloat(rawCard)
+    setCardValue(spec.decimal && rawCard && !isNaN(nCard) ? nCard.toFixed(1) : rawCard)
   }, [cardIdx, swipeMode, effectiveSpecs]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -499,7 +501,9 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const addReading = (slotKey: string, spec: TempSpec) => {
     const existing   = tempData[slotKey] ?? []
     const lastFilled = [...existing].reverse().find(r => r.value.trim())
-    const defaultVal = lastFilled?.value ?? prevTempData[slotKey] ?? spec.standard ?? ''
+    const rawDefault = lastFilled?.value ?? prevTempData[slotKey] ?? spec.standard ?? ''
+    const nDefault = parseFloat(rawDefault)
+    const defaultVal = spec.decimal && rawDefault && !isNaN(nDefault) ? nDefault.toFixed(1) : rawDefault
     setTempData(p => ({ ...p, [slotKey]: [...(p[slotKey] ?? []), { time: nowTimeStr(), value: defaultVal }] }))
     setExpandedIdx(prev => { const s = new Set(prev); s.add(slotKey); return s }); setSubmitted(false)
   }

@@ -137,30 +137,30 @@ const SUB_VIEWS: Exclude<ViewType, 'overview'>[] = ['temperature', 'waste', 'cle
 const shifts = ['早班 07:00–15:00', '晚班 15:00–23:00', '大夜班 23:00–07:00']
 
 // ── 溫度設備規格 ──
-interface TempSpec { specKey: string; location: string; required: string; zone: string; check: (v: number) => boolean; standard?: string; hint?: string }
+interface TempSpec { specKey: string; location: string; required: string; zone: string; check: (v: number) => boolean; standard?: string; hint?: string; unit?: string; decimal?: boolean }
 interface EffectiveSpec extends TempSpec { unitIndex: number; slotKey: string; unitLabel: string }
 
 const BASE_SPECS: TempSpec[] = [
   // ── 店舖賣場 ──
-  { specKey: 'shelf-18c',       location: '18°C開放櫃',              required: '16-20°C',   zone: '賣場', check: v => v >= 16 && v <= 20,  standard: '18'  },
-  { specKey: 'fridge-4c',       location: '4°C開放櫃（壁型、中島）', required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'OC',              location: 'OC',                      required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'WI',              location: 'WI',                      required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'RI',              location: 'RI立式冷藏櫃',            required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'freezer-chest',   location: '臥式冰櫃（含子母櫃）',   required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18' },
-  { specKey: 'freezer-v',       location: '立式冷凍櫃（含走入式）',  required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18' },
-  { specKey: 'light-food',      location: '輕食櫃',                  required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'sapporo-fridge',  location: '金色三麥冷藏冰箱',        required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'haagen-dazs',     location: '哈根達斯冰箱',            required: '-20°C以下', zone: '賣場', check: v => v <= -20,            standard: '-20' },
+  { specKey: 'shelf-18c',       location: '18°C開放櫃',              required: '16-20°C',   zone: '賣場', check: v => v >= 16 && v <= 20,  standard: '18',   decimal: true },
+  { specKey: 'fridge-4c',       location: '4°C開放櫃（壁型、中島）', required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4',    decimal: true },
+  { specKey: 'OC',              location: 'OC',                      required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4',    decimal: true },
+  { specKey: 'WI',              location: 'WI',                      required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4',    decimal: true },
+  { specKey: 'RI',              location: 'RI立式冷藏櫃',            required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4',    decimal: true },
+  { specKey: 'freezer-chest',   location: '臥式冰櫃（含子母櫃）',   required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18',  decimal: true },
+  { specKey: 'freezer-v',       location: '立式冷凍櫃（含走入式）',  required: '-18°C以下', zone: '賣場', check: v => v <= -18,            standard: '-18',  decimal: true },
+  { specKey: 'light-food',      location: '輕食櫃',                  required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4',    decimal: true },
+  { specKey: 'sapporo-fridge',  location: '金色三麥冷藏冰箱',        required: '0~7°C',     zone: '賣場', check: v => v >= 0  && v <= 7,   standard: '4',    decimal: true },
+  { specKey: 'haagen-dazs',     location: '哈根達斯冰箱',            required: '-20°C以下', zone: '賣場', check: v => v <= -20,            standard: '-20',  decimal: true },
   // ── 咖啡櫃檯區 ──
-  { specKey: 'milk-fridge',     location: '牛奶冰箱',                required: '0~7°C',     zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'coffee-fridge',   location: '抽屜式冷藏冰箱',          required: '0~7°C',     zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'freezer-c',       location: '冷凍冰箱',                required: '-18°C以下', zone: '咖啡', check: v => v <= -18,            standard: '-18' },
+  { specKey: 'milk-fridge',     location: '牛奶冰箱',                required: '0~7°C',     zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4',    decimal: true },
+  { specKey: 'coffee-fridge',   location: '抽屜式冷藏冰箱',          required: '0~7°C',     zone: '咖啡', check: v => v >= 0  && v <= 7,   standard: '4',    decimal: true },
+  { specKey: 'freezer-c',       location: '冷凍冰箱',                required: '-18°C以下', zone: '咖啡', check: v => v <= -18,            standard: '-18',  decimal: true },
   // ── 店舖後場／倉庫區 ──
-  { specKey: 'backroom-fridge',  location: '冷藏冰箱',               required: '0~7°C',     zone: '後場', check: v => v >= 0  && v <= 7,   standard: '4'   },
-  { specKey: 'backroom-freezer', location: '冷凍冰箱／立式冰箱',     required: '-18°C以下', zone: '後場', check: v => v <= -18,            standard: '-18' },
+  { specKey: 'backroom-fridge',  location: '冷藏冰箱',               required: '0~7°C',     zone: '後場', check: v => v >= 0  && v <= 7,   standard: '4',    decimal: true },
+  { specKey: 'backroom-freezer', location: '冷凍冰箱／立式冰箱',     required: '-18°C以下', zone: '後場', check: v => v <= -18,            standard: '-18',  decimal: true },
   // ── FF區機台 ──
-  { specKey: 'hotdog',          location: '熱狗機刻度',               required: '3~3.5',     zone: 'FF區', check: v => v >= 3  && v <= 3.5, standard: '3.5' },
+  { specKey: 'hotdog',          location: '熱狗機刻度',               required: '3~3.5',     zone: 'FF區', check: v => v >= 3  && v <= 3.5, standard: '3.5',  unit: '' },
   { specKey: 'tea-egg',         location: '茶葉蛋鍋',                 required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
   { specKey: 'steamer',         location: '蒸箱',                     required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
   { specKey: 'ff-warmer',       location: '保溫櫃（單溫／雙溫）',     required: '65°C以上',  zone: 'FF區', check: v => v >= 65,             standard: '65'  },
@@ -988,7 +988,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                   {status === 'resolved' && <span className="text-base font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">已正常</span>}
                   {lastFilled
                     ? <span className="text-base font-bold" style={{ color: lastNormal === false ? '#ef4444' : '#10b981' }}>
-                        {parseFloat(lastFilled.value) > 0 ? '+' : ''}{parseFloat(lastFilled.value)}°C
+                        {((spec.unit ?? '°C') === '°C' && parseFloat(lastFilled.value) > 0) ? '+' : ''}{spec.decimal ? parseFloat(lastFilled.value).toFixed(1) : parseFloat(lastFilled.value)}{spec.unit ?? '°C'}
                       </span>
                     : <span className="text-base text-gray-300">未填</span>
                   }
@@ -1015,9 +1015,10 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                               <input type="text" inputMode="decimal"
                                 className="flex-1 text-left text-base font-bold outline-none rounded-l-lg bg-white py-1.5 px-2"
                                 style={{ color: '#111827', WebkitTextFillColor: '#111827' }}
-                                placeholder="溫度" value={r.value}
-                                onChange={e => updateReading(slotKey, rIdx, 'value', e.target.value)} />
-                              <span className="text-base text-gray-400 pr-2">°C</span>
+                                placeholder={spec.decimal ? '0.0' : '溫度'} value={r.value}
+                                onChange={e => updateReading(slotKey, rIdx, 'value', e.target.value)}
+                                onBlur={e => { if (spec.decimal && e.target.value.trim()) { const n = parseFloat(e.target.value); if (!isNaN(n)) updateReading(slotKey, rIdx, 'value', n.toFixed(1)) } }} />
+                              {(spec.unit ?? '°C') && <span className="text-base text-gray-400 pr-2">{spec.unit ?? '°C'}</span>}
                             </div>
                             <button onClick={() => removeReading(slotKey, rIdx)} className="w-6 h-6 flex items-center justify-center rounded-lg bg-gray-100 shrink-0">
                               <Trash2 className="w-3 h-3 text-gray-400" />

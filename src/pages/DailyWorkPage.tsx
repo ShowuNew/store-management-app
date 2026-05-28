@@ -305,6 +305,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const [tempData, setTempData]     = useState<TempData>({})
   const [waste, setWaste]           = useState<WasteState>(defaultWaste)
   const [cleaning, setCleaning]     = useState<Record<string, string>>({})
+  const [cleaningSkipped, setCleaningSkipped] = useState<Record<string, boolean>>({})
   const [friendly, setFriendly]     = useState<Record<string, boolean>>({})
   const [shiftSignature, setShiftSignature]     = useState('')
   const [managerSignature, setManagerSignature] = useState('')
@@ -451,6 +452,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
       )
       setWaste(sorted.find((l: any) => l.tasks_done?._waste)?.tasks_done._waste ?? defaultWaste)
       setCleaning(sorted.find((l: any) => l.tasks_done?._cleaning)?.tasks_done._cleaning ?? {})
+      setCleaningSkipped(sorted.find((l: any) => l.tasks_done?._cleaning_skipped)?.tasks_done._cleaning_skipped ?? {})
       setFriendly(sorted.find((l: any) => l.tasks_done?._friendly)?.tasks_done._friendly ?? {})
       setManagerSignature(sorted.find((l: any) => l.tasks_done?._manager_signature)?.tasks_done._manager_signature ?? '')
       setAllShiftSigs({
@@ -591,7 +593,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const payload = {
       store_id: user.storeId, staff_name: user.name, log_date: logDate,
       shift: shifts[selectedShift], temperatures: temperaturesPayload,
-      tasks_done: { _waste: waste, _cleaning: cleaning, _friendly: friendly, _signature: shiftSignature, _manager_signature: managerSignature },
+      tasks_done: { _waste: waste, _cleaning: cleaning, _cleaning_skipped: cleaningSkipped, _friendly: friendly, _signature: shiftSignature, _manager_signature: managerSignature },
       handover_note: handoverNote,
       submitted_at: new Date().toISOString(),
     }
@@ -617,7 +619,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
   const tempFilledCount  = effectiveSpecs.filter(spec => getReadings(spec.slotKey).some(r => r.value.trim())).length
   const tempRepairCount  = effectiveSpecs.filter(spec => anomalyStatus(spec, getReadings(spec.slotKey)) === 'repair').length
   const tempRecheckCount = effectiveSpecs.filter(spec => anomalyStatus(spec, getReadings(spec.slotKey)) === 'recheck').length
-  const cleaningFilled   = cleaningMachines.filter(m => cleaning[m]?.trim()).length
+  const cleaningFilled   = cleaningMachines.filter(m => cleaning[m]?.trim() || cleaningSkipped[m]).length
   const shiftFriendlyKeys = selectedShift === 0 ? ['t0930'] : selectedShift === 1 ? ['t1600', 't1630'] : ['t2300', 't2400']
   const shiftFriendlyTasks = friendlyTasks.filter(t => shiftFriendlyKeys.includes(t.key))
   const friendlyDone     = shiftFriendlyTasks.filter(t => friendly[t.key]).length
@@ -1152,11 +1154,13 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     const saveCurrentCard = () => {
       if (!cardValue.trim()) return
       const time = nowTimeStr()
+      const n = parseFloat(cardValue.trim())
+      const val = spec.decimal && !isNaN(n) ? n.toFixed(1) : cardValue
       setTempData(p => {
         const existing = [...(p[slotKey] ?? [])]
         const last = [...existing].reverse().find(r => r.value.trim())
-        if (last && last.value === cardValue) return p
-        return { ...p, [slotKey]: [...existing, { time, value: cardValue }] }
+        if (last && last.value === val) return p
+        return { ...p, [slotKey]: [...existing, { time, value: val }] }
       })
       setSubmitted(false)
     }
@@ -1224,6 +1228,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             <div className="flex items-end justify-center gap-2 mb-2">
               <input type="number" inputMode="decimal" placeholder="—" value={cardValue}
                 onChange={e => setCardValue(e.target.value)}
+                onBlur={() => { if (spec.decimal && cardValue.trim()) { const n = parseFloat(cardValue); if (!isNaN(n)) setCardValue(n.toFixed(1)) } }}
                 enterKeyHint={isLast ? 'done' : 'next'}
                 onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (isLast) saveCurrentCard(); else goCard(cardIdx + 1) } }}
                 className="outline-none bg-transparent text-center font-black"
@@ -1488,26 +1493,58 @@ export default function DailyWorkPage({ user, onBack }: Props) {
     <div className="bg-white rounded-2xl p-4">
       <p className="text-base text-gray-300 text-right mb-3">不分班次</p>
       <div className="space-y-2">
-        {cleaningMachines.map(machine => (
-          <div key={machine} className="flex items-center gap-3">
-            <p className="flex-1 text-base text-gray-700 font-medium">{machine}</p>
-            <div className="flex items-center border border-gray-200 rounded-xl px-3 py-1.5 bg-gray-50 gap-1 shrink-0"
-              style={{ borderColor: cleaning[machine]?.trim() ? '#6ee7b7' : '#e5e7eb' }}>
-              <Clock className="w-3 h-3 text-gray-300" />
-              <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-28"
-                value={cleaning[machine] ?? ''}
-                onChange={e => { setCleaning(p => ({ ...p, [machine]: e.target.value })); setSubmitted(false) }} />
+        {cleaningMachines.map(machine => {
+          const skipped = !!cleaningSkipped[machine]
+          return (
+            <div key={machine} className="flex items-center gap-3" style={{ opacity: skipped ? 0.55 : 1 }}>
+              <p className="flex-1 text-base font-medium"
+                style={{ color: skipped ? '#9ca3af' : '#374151', textDecoration: skipped ? 'line-through' : 'none' }}>
+                {machine}
+              </p>
+              {skipped ? (
+                <>
+                  <span className="text-base px-2 py-1 rounded-lg bg-gray-100 text-gray-400 font-semibold shrink-0">無此設備</span>
+                  {isManager && (
+                    <button
+                      onClick={() => { setCleaningSkipped(p => ({ ...p, [machine]: false })); setSubmitted(false) }}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-blue-50 shrink-0"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-blue-400" />
+                    </button>
+                  )}
+                </>
+              ) : (
+                <>
+                  <div className="flex items-center border border-gray-200 rounded-xl px-3 py-1.5 bg-gray-50 gap-1 shrink-0"
+                    style={{ borderColor: cleaning[machine]?.trim() ? '#6ee7b7' : '#e5e7eb' }}>
+                    <Clock className="w-3 h-3 text-gray-300" />
+                    <input type="time" className="text-base font-medium text-gray-700 outline-none bg-transparent w-28"
+                      value={cleaning[machine] ?? ''}
+                      onChange={e => { setCleaning(p => ({ ...p, [machine]: e.target.value })); setSubmitted(false) }} />
+                  </div>
+                  {cleaning[machine]?.trim() ? (
+                    <button
+                      onClick={() => { setCleaning(p => ({ ...p, [machine]: '' })); setSubmitted(false) }}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 shrink-0"
+                    >
+                      <Trash2 className="w-3.5 h-3.5 text-red-400" />
+                    </button>
+                  ) : isManager ? (
+                    <button
+                      onClick={() => { setCleaningSkipped(p => ({ ...p, [machine]: true })); setSubmitted(false) }}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-gray-100 shrink-0"
+                      title="標記無此設備"
+                    >
+                      <span className="text-sm text-gray-400 font-black leading-none select-none">✕</span>
+                    </button>
+                  ) : (
+                    <div className="w-7 h-7 shrink-0" />
+                  )}
+                </>
+              )}
             </div>
-            {cleaning[machine]?.trim() && (
-              <button
-                onClick={() => { setCleaning(p => ({ ...p, [machine]: '' })); setSubmitted(false) }}
-                className="w-7 h-7 flex items-center justify-center rounded-lg bg-red-50 shrink-0"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-red-400" />
-              </button>
-            )}
-          </div>
-        ))}
+          )
+        })}
       </div>
     </div>
   )

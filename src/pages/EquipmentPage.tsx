@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle2, Circle, Calendar, Save, RefreshCw, AlertTriangle, Clock } from 'lucide-react'
+import { CheckCircle2, Circle, Calendar, Save, RefreshCw, AlertTriangle, Clock, Ban, RotateCcw } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
 import { supabase } from '../lib/supabase'
 import type { User } from '../types'
@@ -74,6 +74,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
   const [, dispM] = selectedYearMonth.split('-')
   const [activeZone, setActiveZone]       = useState<Zone>('FF區')
   const [doneMap, setDoneMap]             = useState<Record<string, boolean>>({})
+  const [skippedMap, setSkippedMap]       = useState<Record<string, boolean>>({})
   const [historicalDone, setHistoricalDone] = useState<Set<string>>(new Set())
   const [saved, setSaved]                 = useState(false)
   const [saving, setSaving]               = useState(false)
@@ -115,10 +116,18 @@ export default function EquipmentPage({ user, onBack }: Props) {
 
       if (row) {
         setExistingId(row.id)
-        setDoneMap(row.done_items || {})
+        const rawDone = row.done_items || {}
+        const newDoneMap: Record<string, boolean> = {}
+        const newSkipped: Record<string, boolean> = {}
+        Object.entries(rawDone).forEach(([k, v]) => {
+          if (k.startsWith('_skip_')) newSkipped[k.slice(6)] = !!v
+          else newDoneMap[k] = !!v
+        })
+        setDoneMap(newDoneMap)
+        setSkippedMap(newSkipped)
         setSaved(true)
       } else {
-        setExistingId(null); setDoneMap({}); setSaved(false)
+        setExistingId(null); setDoneMap({}); setSkippedMap({}); setSaved(false)
       }
 
       // Historical records this month (to track monthly/weekly completion)
@@ -151,10 +160,12 @@ export default function EquipmentPage({ user, onBack }: Props) {
 
   const handleSave = async () => {
     setSaving(true)
+    const mergedItems: Record<string, boolean> = { ...doneMap }
+    Object.entries(skippedMap).forEach(([k, v]) => { if (v) mergedItems[`_skip_${k}`] = true })
     const payload = {
       store_id: user.storeId, staff_name: user.name,
       log_date: loadDate, zone: activeZone,
-      done_items: doneMap, saved_at: new Date().toISOString(),
+      done_items: mergedItems, saved_at: new Date().toISOString(),
     }
     if (existingId) {
       await supabase.from('equipment_logs').update(payload).eq('id', existingId)
@@ -185,8 +196,8 @@ export default function EquipmentPage({ user, onBack }: Props) {
     return dayOfMonth > 7 ? 'overdue' : 'pending-month'
   }
 
-  const overdueCount  = items.filter((eq, i) => getCalStatus(eq, `${activeZone}-${i}`) === 'overdue').length
-  const doneThisMonth = items.filter((eq, i) => getCalStatus(eq, `${activeZone}-${i}`) === 'done').length
+  const overdueCount  = items.filter((eq, i) => !skippedMap[`${activeZone}-${i}`] && getCalStatus(eq, `${activeZone}-${i}`) === 'overdue').length
+  const doneThisMonth = items.filter((eq, i) => skippedMap[`${activeZone}-${i}`] || getCalStatus(eq, `${activeZone}-${i}`) === 'done').length
   const todayDone     = items.filter((_, i) => doneMap[`${activeZone}-${i}`]).length
 
   const freqLabel: Record<Freq, string> = { daily: '每日', weekly: '每週', monthly: '每月5日' }
@@ -274,11 +285,12 @@ export default function EquipmentPage({ user, onBack }: Props) {
             {/* Equipment cards */}
             <div className="space-y-3">
               {items.map((eq, i) => {
-                const key    = `${activeZone}-${i}`
-                const done   = !!doneMap[key]
-                const status = getCalStatus(eq, key)
-                const badge  = calBadge[status]
-                const isOverdue = status === 'overdue'
+                const key       = `${activeZone}-${i}`
+                const done      = !!doneMap[key]
+                const skipped   = !!skippedMap[key]
+                const status    = getCalStatus(eq, key)
+                const badge     = calBadge[status]
+                const isOverdue = !skipped && status === 'overdue'
 
                 return (
                   <motion.div key={key}
@@ -287,45 +299,76 @@ export default function EquipmentPage({ user, onBack }: Props) {
                     transition={{ delay: i * 0.04 }}
                     className="bg-white rounded-2xl overflow-hidden shadow-sm"
                     ref={(el: HTMLDivElement | null) => { if (el) eqRefs.current.set(key, el); else eqRefs.current.delete(key) }}
-                    style={{ border: isOverdue ? '1.5px solid #fca5a5' : undefined, boxShadow: activeEqKey === key ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : undefined, transition: 'box-shadow 0.3s' }}
+                    style={{ border: isOverdue ? '1.5px solid #fca5a5' : undefined, boxShadow: activeEqKey === key ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : undefined, transition: 'box-shadow 0.3s', opacity: skipped ? 0.6 : 1 }}
                   >
-                    <div className="flex items-center px-4 py-3.5 gap-3 border-b border-gray-50">
-                      <button onClick={() => toggle(key)} className="shrink-0" style={{ minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                        {done
-                          ? <CheckCircle2 className="w-6 h-6 text-green-500" />
-                          : <Circle className="w-6 h-6 text-gray-200" />
-                        }
-                      </button>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-base font-bold"
-                          style={{ color: done ? '#9ca3af' : '#111827', textDecoration: done ? 'line-through' : 'none' }}>
-                          {eq.equipment}
-                        </p>
-                        {/* Calendar status badge */}
-                        <span className="inline-flex items-center gap-1 text-base font-semibold mt-1 px-2 py-0.5 rounded-lg"
-                          style={{ background: badge.bg, color: badge.color }}>
-                          <Clock className="w-3 h-3" />
-                          {badge.text}
-                        </span>
+                    {skipped ? (
+                      <div className="flex items-center px-4 py-3.5 gap-3">
+                        <Ban className="w-5 h-5 text-gray-300 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-base font-bold text-gray-400 line-through">{eq.equipment}</p>
+                          <span className="text-base font-semibold text-gray-400">無此設備</span>
+                        </div>
+                        {isManager && (
+                          <button
+                            onClick={() => { setSkippedMap(p => ({ ...p, [key]: false })); setSaved(false) }}
+                            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-blue-50 text-blue-500 text-base font-semibold shrink-0"
+                          >
+                            <RotateCcw className="w-3.5 h-3.5" />
+                            復原
+                          </button>
+                        )}
                       </div>
-                      <span className="text-base px-2 py-1 rounded-lg font-bold shrink-0"
-                        style={{ background: freqBg[eq.freq], color: freqColor[eq.freq] }}>
-                        {freqLabel[eq.freq]}
-                      </span>
-                    </div>
-                    <div className="px-4 py-3 space-y-1.5">
-                      {eq.items.map((item, ii) => (
-                        <p key={ii} className="text-base text-gray-500 flex items-start gap-2">
-                          <span className="mt-2 w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
-                          {item}
-                        </p>
-                      ))}
-                      {done && (
-                        <p className="text-base text-green-500 font-semibold mt-1">
-                          ✓ {new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })} 完成（{user.name}）
-                        </p>
-                      )}
-                    </div>
+                    ) : (
+                      <>
+                        <div className="flex items-center px-4 py-3.5 gap-3 border-b border-gray-50">
+                          <button onClick={() => toggle(key)} className="shrink-0" style={{ minHeight: '44px', minWidth: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            {done
+                              ? <CheckCircle2 className="w-6 h-6 text-green-500" />
+                              : <Circle className="w-6 h-6 text-gray-200" />
+                            }
+                          </button>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-base font-bold"
+                              style={{ color: done ? '#9ca3af' : '#111827', textDecoration: done ? 'line-through' : 'none' }}>
+                              {eq.equipment}
+                            </p>
+                            <span className="inline-flex items-center gap-1 text-base font-semibold mt-1 px-2 py-0.5 rounded-lg"
+                              style={{ background: badge.bg, color: badge.color }}>
+                              <Clock className="w-3 h-3" />
+                              {badge.text}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-base px-2 py-1 rounded-lg font-bold"
+                              style={{ background: freqBg[eq.freq], color: freqColor[eq.freq] }}>
+                              {freqLabel[eq.freq]}
+                            </span>
+                            {isManager && (
+                              <button
+                                onClick={() => { setSkippedMap(p => ({ ...p, [key]: true })); setSaved(false) }}
+                                className="flex items-center gap-1 px-2 py-1 rounded-xl bg-gray-100 text-gray-400 text-base font-semibold"
+                                title="標記無此設備"
+                              >
+                                <Ban className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                        <div className="px-4 py-3 space-y-1.5">
+                          {eq.items.map((item, ii) => (
+                            <p key={ii} className="text-base text-gray-500 flex items-start gap-2">
+                              <span className="mt-2 w-1.5 h-1.5 rounded-full bg-gray-300 shrink-0" />
+                              {item}
+                            </p>
+                          ))}
+                          {done && (
+                            <p className="text-base text-green-500 font-semibold mt-1">
+                              ✓ {new Date().toLocaleTimeString('zh-TW', { hour: '2-digit', minute: '2-digit' })} 完成（{user.name}）
+                            </p>
+                          )}
+                        </div>
+                      </>
+                    )}
                   </motion.div>
                 )
               })}

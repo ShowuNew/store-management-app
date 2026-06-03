@@ -74,6 +74,13 @@ export default function HygienePage({ user, onBack }: Props) {
   const [confirmLeave, setConfirmLeave]     = useState(false)
   const [activeHygKey, setActiveHygKey] = useState<string | null>(null)
   const hygRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const [scrollToFirst, setScrollToFirst] = useState(false)
+
+  useEffect(() => {
+    if (!scrollToFirst) return
+    setScrollToFirst(false)
+    setTimeout(() => hygRefs.current.get(`${activeCategory}-0`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80)
+  }, [activeCategory]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const focusLine = window.innerHeight * 0.35
@@ -173,16 +180,22 @@ export default function HygienePage({ user, onBack }: Props) {
       setFailNotes(p => { const n = { ...p }; delete n[key]; return n })
     }
     setSaved(false)
-    // 選符合後自動捲到下一道未填題目
+    // 選符合後自動捲到下一道未填題目；該分類最後一題則切到下一分類
     if (newVal === 'pass') {
       const ii = parseInt(key.split('-')[1])
       const cat = categories[activeCategory]
+      let foundNext = false
       for (let next = ii + 1; next < cat.items.length; next++) {
         const nextKey = `${activeCategory}-${next}`
         if (!results[nextKey]) {
           setTimeout(() => hygRefs.current.get(nextKey)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80)
+          foundNext = true
           break
         }
+      }
+      if (!foundNext && activeCategory < categories.length - 1) {
+        setScrollToFirst(true)
+        setActiveCategory(c => c + 1)
       }
     }
   }

@@ -74,9 +74,11 @@ export default function HygienePage({ user, onBack }: Props) {
   const [confirmLeave, setConfirmLeave]     = useState(false)
   const [activeHygKey, setActiveHygKey] = useState<string | null>(null)
   const hygRefs = useRef<Map<string, HTMLDivElement>>(new Map())
+  const tabRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
   const [scrollToFirst, setScrollToFirst] = useState(false)
 
   useEffect(() => {
+    tabRefs.current.get(activeCategory)?.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' })
     if (!scrollToFirst) return
     setScrollToFirst(false)
     setTimeout(() => hygRefs.current.get(`${activeCategory}-0`)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80)
@@ -389,6 +391,7 @@ export default function HygienePage({ user, onBack }: Props) {
               return (
                 <button
                   key={i}
+                  ref={(el: HTMLButtonElement | null) => { if (el) tabRefs.current.set(i, el); else tabRefs.current.delete(i) }}
                   onClick={() => { setScrollToFirst(true); setActiveCategory(i) }}
                   className="shrink-0 px-3 py-2 rounded-xl text-left transition-all whitespace-nowrap"
                   style={{

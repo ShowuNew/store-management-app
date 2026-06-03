@@ -389,7 +389,7 @@ export default function HygienePage({ user, onBack }: Props) {
               return (
                 <button
                   key={i}
-                  onClick={() => setActiveCategory(i)}
+                  onClick={() => { setScrollToFirst(true); setActiveCategory(i) }}
                   className="shrink-0 px-3 py-2 rounded-xl text-left transition-all whitespace-nowrap"
                   style={{
                     background: isActive ? '#005f3b' : 'white',

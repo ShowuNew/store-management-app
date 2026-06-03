@@ -173,6 +173,18 @@ export default function HygienePage({ user, onBack }: Props) {
       setFailNotes(p => { const n = { ...p }; delete n[key]; return n })
     }
     setSaved(false)
+    // 選符合後自動捲到下一道未填題目
+    if (newVal === 'pass') {
+      const ii = parseInt(key.split('-')[1])
+      const cat = categories[activeCategory]
+      for (let next = ii + 1; next < cat.items.length; next++) {
+        const nextKey = `${activeCategory}-${next}`
+        if (!results[nextKey]) {
+          setTimeout(() => hygRefs.current.get(nextKey)?.scrollIntoView({ behavior: 'smooth', block: 'center' }), 80)
+          break
+        }
+      }
+    }
   }
 
   const setFailNote = (key: string, note: string) => {

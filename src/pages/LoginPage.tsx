@@ -58,9 +58,9 @@ export default function LoginPage({ onLogin }: Props) {
       store_id: storeId,
       role,
       user_agent: navigator.userAgent,
-    }).then(() => {
-      // if (error) alert('[login] insert 失敗\n' + JSON.stringify(error))
-      // else alert('[login] insert 成功')
+    }).then(({ error }) => {
+      if (error) alert('[login] insert 失敗\n' + JSON.stringify(error))
+      else alert('[login] insert 成功')
     })
   }
 

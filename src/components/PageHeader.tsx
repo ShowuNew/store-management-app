@@ -60,7 +60,7 @@ export default function PageHeader({ title, subtitle, onBack, onLogout, rightEle
           aria-label="返回"
           className="fixed z-30 flex items-center gap-1.5 px-3.5 py-2.5 rounded-2xl text-sm font-bold text-gray-700 transition-all"
           style={{
-            bottom: '84px',   // 底部 nav (64px) + 間距
+            bottom: 'calc(var(--nav-bottom-height, 64px) + 20px)',
             left: '16px',
             background: 'rgba(255,255,255,0.92)',
             backdropFilter: 'blur(8px)',

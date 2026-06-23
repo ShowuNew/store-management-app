@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, XCircle, MinusCircle, Save, RefreshCw, AlertTriangle } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -323,7 +323,7 @@ export default function HygienePage({ user, onBack }: Props) {
               className="h-2 rounded-full transition-all"
               style={{
                 width: `${totalItems > 0 ? Math.round((allPassCount + allFailCount) / totalItems * 100) : 0}%`,
-                background: 'linear-gradient(90deg, #00a040, #007d30)',
+                background: 'linear-gradient(90deg, var(--brand), var(--brand-dark))',
               }}
             />
           </div>
@@ -440,7 +440,7 @@ export default function HygienePage({ user, onBack }: Props) {
             {/* Stats */}
             <div className="grid grid-cols-3 gap-2">
               {[
-                { label: '符合', count: passCount, color: '#10b981', bg: '#ecfdf5' },
+                { label: '符合', count: passCount, color: '#10b981', bg: 'var(--color-green-50)' },
                 { label: '缺失', count: failCount, color: '#ef4444', bg: '#fef2f2' },
                 { label: '未填', count: pendCount, color: '#9ca3af', bg: '#f9fafb' },
               ].map(s => (
@@ -466,7 +466,7 @@ export default function HygienePage({ user, onBack }: Props) {
                     transition={{ delay: i * 0.04 }}
                     className="bg-white rounded-2xl p-4"
                     ref={(el: HTMLDivElement | null) => { if (el) hygRefs.current.set(key, el); else hygRefs.current.delete(key) }}
-                    style={{ boxShadow: activeHygKey === key ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : 'none', transition: 'box-shadow 0.3s' }}
+                    style={{ boxShadow: activeHygKey === key ? '0 0 0 2px var(--brand), 0 4px 16px var(--brand-shadow)' : 'none', transition: 'box-shadow 0.3s' }}
                   >
                     <div className="flex gap-2 mb-3">
                       <span className="w-5 h-5 rounded-full bg-gray-100 text-base font-bold text-gray-500 flex items-center justify-center shrink-0 mt-0.5">
@@ -539,7 +539,7 @@ export default function HygienePage({ user, onBack }: Props) {
                 onClick={handleSave}
                 disabled={saving}
                 className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition-opacity"
-                style={{ background: 'linear-gradient(135deg, #00a040, #007d30)', opacity: saving ? 0.7 : 1 }}
+                style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))', opacity: saving ? 0.7 : 1 }}
               >
                 <Save className="w-4 h-4" />
                 {saving ? '儲存中...' : `儲存 ${shifts[activeShift]} 衛生紀錄（${user.name}）`}
@@ -591,7 +591,7 @@ export default function HygienePage({ user, onBack }: Props) {
                 <button
                   onClick={() => setConfirmLeave(false)}
                   className="flex-1 py-3.5 rounded-2xl font-bold text-base"
-                  style={{ background: 'linear-gradient(135deg, #00a040, #007d30)', color: 'white' }}
+                  style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))', color: 'white' }}
                 >
                   繼續填寫
                 </button>

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle2, AlertCircle, RefreshCw, Send, Camera, X } from 'lucide-react'
 import { supabase } from '../lib/supabase'
@@ -152,7 +152,7 @@ export default function MysteryFormPage({ token }: Props) {
         <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-4" />
         <h2 className="text-xl font-black text-gray-800 mb-2">評核完成！</h2>
         <p className="text-base text-gray-500 mb-6">{session?.store_name || session?.store_id} 門市</p>
-        <div className="rounded-2xl py-6 mb-4" style={{ background: 'linear-gradient(135deg,#007d30,#00a040)' }}>
+        <div className="rounded-2xl py-6 mb-4" style={{ background: 'linear-gradient(135deg,var(--brand-dark),var(--brand))' }}>
           <p className="text-white text-base mb-1">總分</p>
           <p className="text-white font-black" style={{ fontSize: 64 }}>{totalScore}</p>
           <p className="text-green-200 text-base">/ {MAX_TOTAL} 分</p>
@@ -167,7 +167,7 @@ export default function MysteryFormPage({ token }: Props) {
     <div className="min-h-dvh bg-gray-50">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
-        <div className="h-1" style={{ background: 'linear-gradient(90deg,#00a040,#007d30)' }} />
+        <div className="h-1" style={{ background: 'linear-gradient(90deg,var(--brand),var(--brand-dark))' }} />
         <div className="px-4 py-3">
           <h1 className="text-xl font-bold text-gray-800">115年店舖服務評核訪查表</h1>
           <p className="text-base text-gray-400 mt-0.5">
@@ -198,7 +198,7 @@ export default function MysteryFormPage({ token }: Props) {
                 onClick={() => openCamera(si)}
                 disabled={uploadingIdx === si}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition-all"
-                style={{ background: '#dcfce7', color: '#007d30' }}
+                style={{ background: 'var(--color-green-100)', color: 'var(--brand-dark)' }}
               >
                 {uploadingIdx === si
                   ? <RefreshCw className="w-4 h-4 animate-spin" />
@@ -317,7 +317,7 @@ export default function MysteryFormPage({ token }: Props) {
       <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-4 py-3 z-20">
         <div className="flex items-center justify-between mb-2">
           <span className="text-base text-gray-500">目前總分</span>
-          <span className="text-xl font-black" style={{ color: '#007d30' }}>
+          <span className="text-xl font-black" style={{ color: 'var(--brand-dark)' }}>
             {total} <span className="text-base font-normal text-gray-400">/ {MAX_TOTAL}</span>
           </span>
         </div>
@@ -325,7 +325,7 @@ export default function MysteryFormPage({ token }: Props) {
           onClick={handleSubmit}
           disabled={saving}
           className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2"
-          style={{ background: 'linear-gradient(135deg,#00a040,#007d30)', opacity: saving ? 0.7 : 1 }}
+          style={{ background: 'linear-gradient(135deg,var(--brand),var(--brand-dark))', opacity: saving ? 0.7 : 1 }}
         >
           <Send className="w-5 h-5" />
           {saving ? '送出中...' : '送出評核結果'}

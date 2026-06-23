@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { CheckCircle2, Circle, Save, RefreshCw, AlertTriangle } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -259,7 +259,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
               className="h-2 rounded-full transition-all duration-300"
               style={{
                 width: `${Math.round(checkedCount / totalItems * 100)}%`,
-                background: 'linear-gradient(90deg, #00a040, #007d30)',
+                background: 'linear-gradient(90deg, var(--brand), var(--brand-dark))',
               }}
             />
           </div>
@@ -357,7 +357,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
               return (
                 <div key={ci} className="bg-white rounded-2xl overflow-hidden transition-shadow duration-300"
                   ref={el => { if (el) c15Refs.current.set(`${ci}`, el); else c15Refs.current.delete(`${ci}`) }}
-                  style={{ boxShadow: activeC15Key === `${ci}` ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : 'none' }}
+                  style={{ boxShadow: activeC15Key === `${ci}` ? '0 0 0 2px var(--brand), 0 4px 16px var(--brand-shadow)' : 'none' }}
                 >
                   {/* Section header — single checkbox per category */}
                   <motion.button
@@ -368,7 +368,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
                   >
                     <p className="text-base font-bold" style={{ color: isChecked ? '#166534' : '#1f2937' }}>{cat.name}</p>
                     {isChecked
-                      ? <CheckCircle2 className="w-6 h-6 shrink-0" style={{ color: '#00a040' }} />
+                      ? <CheckCircle2 className="w-6 h-6 shrink-0" style={{ color: 'var(--brand)' }} />
                       : <Circle       className="w-6 h-6 shrink-0 text-gray-200" />
                     }
                   </motion.button>
@@ -393,7 +393,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
                 onClick={handleSave}
                 disabled={saving}
                 className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2"
-                style={{ background: 'linear-gradient(135deg, #00a040, #007d30)', opacity: saving ? 0.7 : 1 }}
+                style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))', opacity: saving ? 0.7 : 1 }}
               >
                 <Save className="w-4 h-4" />
                 {saving ? '儲存中...' : `儲存 ${shifts[activeShift]} C15確認（${user.name}）`}
@@ -440,7 +440,7 @@ export default function C15CheckPage({ user, onBack }: Props) {
                 <button
                   onClick={() => setConfirmLeave(false)}
                   className="flex-1 py-3.5 rounded-2xl font-bold text-base"
-                  style={{ background: 'linear-gradient(135deg, #00a040, #007d30)', color: 'white' }}
+                  style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))', color: 'white' }}
                 >
                   繼續填寫
                 </button>

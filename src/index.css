@@ -40,3 +40,49 @@ button {
   font-size: 1rem;
   font-weight: 700;
 }
+
+/* ── 品牌色主題變數 ── */
+:root {
+  --brand:        #00a040;
+  --brand-dark:   #007d30;
+  --brand-bg:     #f4faf6;
+  --brand-shadow: rgba(0, 160, 64, 0.12);
+}
+
+/* 平板：藍色系 — Tailwind green-* → sky-* */
+[data-theme="tablet"] {
+  --brand:        #0ea5e9;
+  --brand-dark:   #0284c7;
+  --brand-bg:     #f0f9ff;
+  --brand-shadow: rgba(14, 165, 233, 0.12);
+  --color-green-50:  var(--color-sky-50);
+  --color-green-100: var(--color-sky-100);
+  --color-green-200: var(--color-sky-200);
+  --color-green-300: var(--color-sky-300);
+  --color-green-400: var(--color-sky-400);
+  --color-green-500: var(--color-sky-500);
+  --color-green-600: var(--color-sky-600);
+  --color-green-700: var(--color-sky-700);
+  --color-green-800: var(--color-sky-800);
+  --color-green-900: var(--color-sky-900);
+  --color-green-950: var(--color-sky-950);
+}
+
+/* 桌電：靛藍色系 — Tailwind green-* → indigo-* */
+[data-theme="desktop"] {
+  --brand:        #4f46e5;
+  --brand-dark:   #3730a3;
+  --brand-bg:     #eef2ff;
+  --brand-shadow: rgba(79, 70, 229, 0.12);
+  --color-green-50:  var(--color-indigo-50);
+  --color-green-100: var(--color-indigo-100);
+  --color-green-200: var(--color-indigo-200);
+  --color-green-300: var(--color-indigo-300);
+  --color-green-400: var(--color-indigo-400);
+  --color-green-500: var(--color-indigo-500);
+  --color-green-600: var(--color-indigo-600);
+  --color-green-700: var(--color-indigo-700);
+  --color-green-800: var(--color-indigo-800);
+  --color-green-900: var(--color-indigo-900);
+  --color-green-950: var(--color-indigo-950);
+}

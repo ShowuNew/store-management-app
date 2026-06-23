@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   ClipboardList, ShieldCheck, Zap, AlertTriangle, CheckSquare,
@@ -237,9 +237,9 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
   }
 
   const modules: ModuleEntry[] = [
-    { page: 'daily-work',   icon: CheckSquare,  label: '每日工作確認', desc: '班次・溫度・清單',   color: '#00a040', bg: '#e8f7ee', done: counts.dailyWork.done,  total: counts.dailyWork.total  },
-    { page: 'hygiene',      icon: ShieldCheck,  label: '衛生自主管理', desc: '場所・品質・人員',   color: '#007d30', bg: '#d4efdf', done: counts.hygiene.done,    total: counts.hygiene.total    },
-    { page: 'inspection',   icon: ClipboardList,label: '店鋪點檢',     desc: '年度稽查・評分',    color: '#00a040', bg: '#e8f7ee', done: null, total: null },
+    { page: 'daily-work',   icon: CheckSquare,  label: '每日工作確認', desc: '班次・溫度・清單',   color: 'var(--brand)', bg: 'var(--color-green-100)', done: counts.dailyWork.done,  total: counts.dailyWork.total  },
+    { page: 'hygiene',      icon: ShieldCheck,  label: '衛生自主管理', desc: '場所・品質・人員',   color: 'var(--brand-dark)', bg: 'var(--color-green-200)', done: counts.hygiene.done,    total: counts.hygiene.total    },
+    { page: 'inspection',   icon: ClipboardList,label: '店鋪點檢',     desc: '年度稽查・評分',    color: 'var(--brand)', bg: 'var(--color-green-100)', done: null, total: null },
     { page: 'coffee-check', icon: Coffee,       label: '咖啡機自檢',   desc: '溫度・重量・狀態確認', color: '#7c3aed', bg: '#f5f3ff', done: null, total: null },
     { page: 'c15-check',    icon: ListChecks,   label: 'C15確認',      desc: '品保・服務・環境確認', color: '#0891b2', bg: '#e0f7fa', done: null, total: null },
     { page: 'equipment',    icon: Zap,          label: '設備清潔保養', desc: '節電・週期保養',    color: '#f59e0b', bg: '#fffbeb', done: counts.equipment.done,  total: counts.equipment.total  },
@@ -248,7 +248,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
       color: '#ef4444', bg: '#fef2f2', done: null, total: null,
       badge: counts.openAnomaly > 0 ? `${counts.openAnomaly} 待處理` : undefined,
     },
-    { page: 'stats',        icon: TrendingUp,   label: '月報統計',     desc: '數據・績效分析',    color: '#007d30', bg: '#d4efdf', done: null, total: null },
+    { page: 'stats',        icon: TrendingUp,   label: '月報統計',     desc: '數據・績效分析',    color: 'var(--brand-dark)', bg: 'var(--color-green-200)', done: null, total: null },
   ]
 
   const countable    = modules.filter(m => m.done !== null && m.total !== null && (m.total ?? 0) > 0)
@@ -280,7 +280,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
           className="rounded-3xl p-6 text-white overflow-hidden"
-          style={{ background: 'linear-gradient(135deg, #007d30 0%, #00a040 100%)' }}
+          style={{ background: 'linear-gradient(135deg, var(--brand-dark) 0%, var(--brand) 100%)' }}
         >
           <div className="flex items-start justify-between">
             <div>
@@ -358,7 +358,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
             <div className="space-y-2">
               {shiftFillStatus.map(s => (
                 <div key={s.shift} className="flex items-center gap-3 px-3 py-2.5 rounded-xl"
-                  style={{ background: s.submitted ? '#ecfdf5' : '#f9fafb' }}>
+                  style={{ background: s.submitted ? 'var(--color-green-50)' : '#f9fafb' }}>
                   <span className="text-base" style={{ color: s.submitted ? '#10b981' : '#d1d5db' }}>
                     {s.submitted ? '✓' : '○'}
                   </span>
@@ -379,7 +379,7 @@ export default function DashboardPage({ user, onNavigate, onLogout }: Props) {
         {/* Module grid */}
         <div>
           <div className="flex items-center gap-2 px-1 mb-3">
-            <span className="w-1 h-5 rounded-full" style={{ background: '#00a040' }} />
+            <span className="w-1 h-5 rounded-full" style={{ background: 'var(--brand)' }} />
             <p className="text-base font-bold text-gray-700">今日填寫項目</p>
             <p className="ml-auto text-sm text-gray-400">點擊進入填寫</p>
           </div>

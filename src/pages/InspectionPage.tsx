@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, Award, AlertTriangle, Save } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -212,7 +212,7 @@ export default function InspectionPage({ user, onBack }: Props) {
             background: criticalFailed
               ? 'linear-gradient(135deg,#1f2937,#374151)'
               : pass
-              ? 'linear-gradient(135deg,#007d30,#00a040)'
+              ? 'linear-gradient(135deg,var(--brand-dark),var(--brand))'
               : 'linear-gradient(135deg,#7f1d1d,#dc2626)',
           }}
         >
@@ -323,7 +323,7 @@ export default function InspectionPage({ user, onBack }: Props) {
                           className={`px-4 py-3.5 border-b border-gray-50 last:border-0 transition-all duration-300 ${
                             item.isCritical ? 'bg-red-50/60' : item.isImportant ? 'bg-amber-50/50' : ''
                           }`}
-                          style={{ boxShadow: activeInspKey === `${ci}-${ii}` ? 'inset 4px 0 0 #00a040' : 'none' }}
+                          style={{ boxShadow: activeInspKey === `${ci}-${ii}` ? 'inset 4px 0 0 var(--brand)' : 'none' }}
                         >
                           <div className="flex gap-2 mb-3">
                             <span
@@ -414,7 +414,7 @@ export default function InspectionPage({ user, onBack }: Props) {
           onClick={handleSave}
           disabled={saving}
           className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 disabled:opacity-60"
-          style={{ background: saved ? 'linear-gradient(135deg,#00a040,#007d30)' : 'linear-gradient(135deg,#8b5cf6,#a78bfa)' }}
+          style={{ background: saved ? 'linear-gradient(135deg,var(--brand),var(--brand-dark))' : 'linear-gradient(135deg,#8b5cf6,#a78bfa)' }}
         >
           <Save className="w-4 h-4" />
           {saving ? '儲存中...' : saved ? '已儲存 ✓' : `提交點檢結果（${user.role === 'supervisor' ? '擔當' : user.name}簽署）`}

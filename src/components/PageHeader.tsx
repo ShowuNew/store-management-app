@@ -1,4 +1,4 @@
-import { ArrowLeft, LogOut } from 'lucide-react'
+﻿import { ArrowLeft, LogOut } from 'lucide-react'
 import { useState, useEffect } from 'react'
 
 interface Props {
@@ -23,7 +23,7 @@ export default function PageHeader({ title, subtitle, onBack, onLogout, rightEle
     <>
       <div className="sticky top-0 z-10 bg-white border-b border-gray-100">
         {/* FamilyMart 品牌綠色頂條 */}
-        <div className="h-1" style={{ background: 'linear-gradient(90deg, #00a040, #007d30)' }} />
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--brand), var(--brand-dark))' }} />
         <div className="flex items-center px-4 py-3.5">
           {onBack && (
             <button

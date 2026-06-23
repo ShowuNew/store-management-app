@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react'
+﻿import type { CSSProperties } from 'react'
 import { ArrowUp, Store } from 'lucide-react'
 import BottomNav, { managerBottomTabs } from '../BottomNav'
 import AdminBottomNav from '../AdminBottomNav'
@@ -52,7 +52,7 @@ export default function MobileLayout({
           className="fixed right-4 z-40 w-10 h-10 rounded-full shadow-lg flex items-center justify-center transition-all"
           style={{
             bottom: (showBottomNav || showAdminBottomNav) ? '76px' : '16px',
-            background: 'linear-gradient(135deg, #00a040, #007d30)',
+            background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))',
           }}
         >
           <ArrowUp className="w-5 h-5 text-white" />

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { AlertTriangle, Clock, CheckCircle2, RefreshCw, Store, X, Image } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -29,7 +29,7 @@ const sevConfig: Record<Severity, { label: string; color: string; bg: string }> 
 const staConfig: Record<Status, { label: string; color: string; bg: string }> = {
   open:        { label: '待處理', color: '#ef4444', bg: '#fef2f2' },
   in_progress: { label: '處理中', color: '#f59e0b', bg: '#fffbeb' },
-  resolved:    { label: '已結案', color: '#10b981', bg: '#ecfdf5' },
+  resolved:    { label: '已結案', color: '#10b981', bg: 'var(--color-green-50)' },
 }
 
 // Parse photo URLs out of description text

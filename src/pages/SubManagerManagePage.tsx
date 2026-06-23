@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Link2, Copy, Check, RefreshCw, ClipboardList, Plus, CheckCircle2, Clock, XCircle, Ban } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -119,7 +119,7 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
 
   const statusLabel = (s: SubManagerSession) => {
     const now = new Date()
-    if (s.status === 'completed') return { text: '已填寫', color: '#10b981', bg: '#ecfdf5', icon: <CheckCircle2 className="w-4 h-4" /> }
+    if (s.status === 'completed') return { text: '已填寫', color: '#10b981', bg: 'var(--color-green-50)', icon: <CheckCircle2 className="w-4 h-4" /> }
     if (s.status === 'cancelled') return { text: '已取消', color: '#ef4444', bg: '#fef2f2', icon: <Ban className="w-4 h-4" /> }
     if (s.status === 'expired' || new Date(s.expires_at) < now) return { text: '已過期', color: '#9ca3af', bg: '#f3f4f6', icon: <XCircle className="w-4 h-4" /> }
     if (s.starts_at && new Date(s.starts_at) > now) return { text: '未開始', color: '#6366f1', bg: '#eef2ff', icon: <Clock className="w-4 h-4" /> }
@@ -142,8 +142,8 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
             className="flex items-center gap-2 px-4 py-2.5 rounded-t-xl font-bold text-base transition-all"
             style={{
               background:   tab === key ? '#f0fdf4' : 'transparent',
-              color:        tab === key ? '#007d30' : '#9ca3af',
-              borderBottom: tab === key ? '2px solid #007d30' : '2px solid transparent',
+              color:        tab === key ? 'var(--brand-dark)' : '#9ca3af',
+              borderBottom: tab === key ? '2px solid var(--brand-dark)' : '2px solid transparent',
             }}
           >
             {icon}{label}
@@ -199,7 +199,7 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
                   onClick={handleCreate}
                   disabled={creating}
                   className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition-opacity"
-                  style={{ background: 'linear-gradient(135deg,#00a040,#007d30)', opacity: creating ? 0.5 : 1 }}
+                  style={{ background: 'linear-gradient(135deg,var(--brand),var(--brand-dark))', opacity: creating ? 0.5 : 1 }}
                 >
                   <Link2 className="w-5 h-5" />
                   {creating ? '建立中...' : '產生小店長連結'}
@@ -226,7 +226,7 @@ export default function SubManagerManagePage({ user, onBack }: Props) {
                   onClick={handleCopy}
                   className="w-full py-4 rounded-2xl font-bold text-base flex items-center justify-center gap-2 transition-all"
                   style={{
-                    background: copied ? '#ecfdf5' : 'linear-gradient(135deg,#00a040,#007d30)',
+                    background: copied ? 'var(--color-green-50)' : 'linear-gradient(135deg,var(--brand),var(--brand-dark))',
                     color: copied ? '#059669' : 'white',
                   }}
                 >

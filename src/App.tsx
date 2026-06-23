@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from 'react'
+﻿import { useState, useEffect, lazy, Suspense } from 'react'
 import {
   Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench,
   ClipboardList, LayoutDashboard, BarChart2, Coffee, Building2,
@@ -141,9 +141,12 @@ function App() {
   const LayoutComponent = device === 'desktop' ? DesktopLayout
                         : device === 'tablet'  ? TabletLayout
                         : MobileLayout
+  const dataTheme = device === 'desktop' ? 'desktop'
+                  : device === 'tablet'  ? 'tablet'
+                  : undefined
 
   return (
-    <>
+    <div data-theme={dataTheme} style={{ display: 'contents' }}>
       <Suspense fallback={<PageLoading />}>
         <LayoutComponent
           currentPage={currentPage}
@@ -192,13 +195,13 @@ function App() {
               <button
                 onClick={confirmSwitchStore}
                 className="flex-1 py-3.5 rounded-2xl font-bold text-base text-white"
-                style={{ background: 'linear-gradient(135deg, #00a040, #007d30)' }}
+                style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))' }}
               >確認切換</button>
             </div>
           </div>
         </div>
       )}
-    </>
+    </div>
   )
 }
 

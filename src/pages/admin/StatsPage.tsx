@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { RefreshCw, TrendingUp, Award } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -204,7 +204,7 @@ export default function StatsPage({ user, onBack }: Props) {
               >
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center shrink-0"
-                  style={{ background: score >= 80 ? '#dcfce7' : score >= 60 ? '#fef9c3' : '#fee2e2' }}
+                  style={{ background: score >= 80 ? 'var(--color-green-100)' : score >= 60 ? '#fef9c3' : '#fee2e2' }}
                 >
                   <Award className="w-7 h-7" style={{ color: score >= 80 ? '#16a34a' : score >= 60 ? '#ca8a04' : '#dc2626' }} />
                 </div>

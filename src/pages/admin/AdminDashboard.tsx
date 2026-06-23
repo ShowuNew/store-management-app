@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ClipboardList, AlertTriangle, BarChart2, ShieldCheck, RefreshCw, LogOut, UserSearch, Building2, FileSearch, MousePointerClick } from 'lucide-react'
 import { supabase } from '../../lib/supabase'
@@ -37,7 +37,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
 
   const statCards = [
     { label: '今日工作提交', value: stats.dailyWork,     unit: '筆', color: '#3b82f6', bg: '#eff6ff' },
-    { label: '今日衛生記錄', value: stats.hygiene,       unit: '筆', color: '#10b981', bg: '#ecfdf5' },
+    { label: '今日衛生記錄', value: stats.hygiene,       unit: '筆', color: '#10b981', bg: 'var(--color-green-50)' },
     { label: '今日設備保養', value: stats.equipment,     unit: '筆', color: '#8b5cf6', bg: '#f5f3ff' },
     { label: '待處理異常',   value: stats.openAnomalies, unit: '件', color: '#ef4444', bg: '#fef2f2' },
   ]
@@ -56,7 +56,7 @@ export default function AdminDashboard({ user, onNavigate, onLogout }: Props) {
     <div className="min-h-dvh bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm">
-        <div className="h-1" style={{ background: 'linear-gradient(90deg, #00a040, #007d30)' }} />
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--brand), var(--brand-dark))' }} />
         <div className="px-4 pt-6 pb-5">
         <div className="flex items-start justify-between">
           <div>

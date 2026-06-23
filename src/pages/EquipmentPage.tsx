@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react'
+﻿import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { CheckCircle2, Circle, Calendar, Save, RefreshCw, AlertTriangle, Clock, Ban, RotateCcw } from 'lucide-react'
 import PageHeader from '../components/PageHeader'
@@ -52,7 +52,7 @@ const getWeekStart = () => {
 type CalStatus = 'done' | 'pending-today' | 'pending-week' | 'pending-month' | 'overdue'
 
 const calBadge: Record<CalStatus, { text: string; bg: string; color: string }> = {
-  'done':          { text: '✓ 已完成',    bg: '#ecfdf5', color: '#059669' },
+  'done':          { text: '✓ 已完成',    bg: 'var(--color-green-50)', color: '#059669' },
   'pending-today': { text: '今日待執行',  bg: '#fffbeb', color: '#d97706' },
   'pending-week':  { text: '本週待執行',  bg: '#eff6ff', color: '#2563eb' },
   'pending-month': { text: `本月7日到期`, bg: '#eff6ff', color: '#2563eb' },
@@ -246,7 +246,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
           </div>
           <div className="grid grid-cols-3 gap-2 mb-3">
             {[
-              { label: '本期已完成', value: doneThisMonth, color: '#059669', bg: '#ecfdf5' },
+              { label: '本期已完成', value: doneThisMonth, color: '#059669', bg: 'var(--color-green-50)' },
               { label: '今日已勾選', value: todayDone,     color: '#2563eb', bg: '#eff6ff' },
               { label: '逾期未執行', value: overdueCount,  color: overdueCount > 0 ? '#dc2626' : '#9ca3af', bg: overdueCount > 0 ? '#fef2f2' : '#f9fafb' },
             ].map(s => (
@@ -259,7 +259,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
           {/* Progress bar */}
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
             <div className="h-2 rounded-full transition-all"
-              style={{ width: `${items.length ? doneThisMonth / items.length * 100 : 0}%`, background: '#00a040' }} />
+              style={{ width: `${items.length ? doneThisMonth / items.length * 100 : 0}%`, background: 'var(--brand)' }} />
           </div>
           <p className="text-base text-gray-400 mt-1.5 text-right">{doneThisMonth}/{items.length} 項完成</p>
         </div>
@@ -299,7 +299,7 @@ export default function EquipmentPage({ user, onBack }: Props) {
                     transition={{ delay: i * 0.04 }}
                     className="bg-white rounded-2xl overflow-hidden shadow-sm"
                     ref={(el: HTMLDivElement | null) => { if (el) eqRefs.current.set(key, el); else eqRefs.current.delete(key) }}
-                    style={{ border: isOverdue ? '1.5px solid #fca5a5' : undefined, boxShadow: activeEqKey === key ? '0 0 0 2px #00a040, 0 4px 16px rgba(0,160,64,0.1)' : undefined, transition: 'box-shadow 0.3s', opacity: skipped ? 0.6 : 1 }}
+                    style={{ border: isOverdue ? '1.5px solid #fca5a5' : undefined, boxShadow: activeEqKey === key ? '0 0 0 2px var(--brand), 0 4px 16px var(--brand-shadow)' : undefined, transition: 'box-shadow 0.3s', opacity: skipped ? 0.6 : 1 }}
                   >
                     {skipped ? (
                       <div className="flex items-center px-4 py-3.5 gap-3">

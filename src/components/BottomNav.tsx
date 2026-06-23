@@ -1,4 +1,4 @@
-import { Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench, ListChecks, ClipboardList } from 'lucide-react'
+﻿import { Home, ClipboardCheck, ShieldCheck, AlertTriangle, Wrench, ListChecks, ClipboardList } from 'lucide-react'
 import type { Page } from '../types'
 
 interface TabDef { page: Page; icon: React.ElementType; label: string }

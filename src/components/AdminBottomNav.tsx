@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+﻿import type { ReactNode } from 'react'
 import { LayoutDashboard, ClipboardList, AlertTriangle, BarChart2, Building2 } from 'lucide-react'
 import type { Page } from '../types'
 

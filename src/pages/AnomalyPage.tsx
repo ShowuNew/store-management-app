@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+﻿import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Plus, AlertTriangle, AlertCircle, Info, Minus, Clock, CheckCircle2, X, RefreshCw,
@@ -35,7 +35,7 @@ const sevConfig: Record<Severity, { label: string; color: string; bg: string; ic
 const staConfig: Record<Status, { label: string; color: string; bg: string }> = {
   open:        { label: '待處理', color: '#ef4444', bg: '#fef2f2' },
   in_progress: { label: '處理中', color: '#f59e0b', bg: '#fffbeb' },
-  resolved:    { label: '已結案', color: '#10b981', bg: '#ecfdf5' },
+  resolved:    { label: '已結案', color: '#10b981', bg: 'var(--color-green-50)' },
 }
 
 const generalCategories = ['設備故障', '衛生問題', '商品品質', '人員事故', '顧客投訴', '設施損壞', '其他']

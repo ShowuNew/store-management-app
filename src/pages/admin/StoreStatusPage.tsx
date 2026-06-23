@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+﻿import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import {
   ArrowLeft, Building2, CheckCircle2, Clock, MinusCircle,
@@ -147,7 +147,7 @@ function ShiftRow({ label, shifts }: { label: string; shifts: StoreData['dailyWo
 function CompletionBadge({ store }: { store: StoreData }) {
   if (isAllDone(store)) {
     return (
-      <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: '#dcfce7', color: '#15803d' }}>
+      <span className="text-xs font-bold px-2 py-0.5 rounded-full" style={{ background: 'var(--color-green-100)', color: '#15803d' }}>
         全部完成
       </span>
     )
@@ -298,7 +298,7 @@ export default function StoreStatusPage({ onBack }: Props) {
     <div className="min-h-dvh bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm sticky top-0 z-10">
-        <div className="h-1" style={{ background: 'linear-gradient(90deg, #00a040, #007d30)' }} />
+        <div className="h-1" style={{ background: 'linear-gradient(90deg, var(--brand), var(--brand-dark))' }} />
         <div className="px-4 py-3 flex items-center gap-3">
           <button onClick={onBack} className="p-2 -ml-2 rounded-xl text-gray-500 hover:bg-gray-100">
             <ArrowLeft className="w-5 h-5" />

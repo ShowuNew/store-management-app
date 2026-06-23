@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
+﻿import { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   CheckCircle2, Circle, Thermometer, Save, AlertCircle,
@@ -750,7 +750,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 className="flex-1 py-2.5 rounded-xl text-base font-bold border-2 transition-all"
                 style={{
                   borderColor: selectedShift === i ? '#005f3b' : '#f3f4f6',
-                  background:  selectedShift === i ? '#ecfdf5' : '#fafafa',
+                  background:  selectedShift === i ? 'var(--color-green-50)' : '#fafafa',
                   color:       selectedShift === i ? '#005f3b' : '#9ca3af',
                 }}>
                 {s.split(' ')[0]}<br />
@@ -802,7 +802,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               </div>
             ))}
             <div className="flex items-center justify-between px-3 py-2.5 rounded-xl"
-              style={{ background: managerSignature ? '#ecfdf5' : '#fff7ed' }}>
+              style={{ background: managerSignature ? 'var(--color-green-50)' : '#fff7ed' }}>
               <span className="text-base font-bold" style={{ color: managerSignature ? '#059669' : '#c2410c' }}>
                 擔當/店長確認
               </span>
@@ -846,7 +846,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
         {!submitted ? (
           <motion.button whileTap={{ scale: 0.97 }} onClick={handleSubmit} disabled={saving}
             className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2 transition-opacity"
-            style={{ background: 'linear-gradient(135deg, #00a040, #007d30)', opacity: saving ? 0.7 : 1 }}>
+            style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))', opacity: saving ? 0.7 : 1 }}>
             <Save className="w-4 h-4" />
             {saving ? '儲存中...' : `確認送出（${user.name} 簽署）`}
           </motion.button>
@@ -923,7 +923,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                   <button
                     onClick={() => setSigModalOpen(false)}
                     className="w-full py-4 rounded-2xl text-white font-bold text-base"
-                    style={{ background: 'linear-gradient(135deg, #00a040, #007d30)' }}
+                    style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))' }}
                   >
                     完成
                   </button>
@@ -974,7 +974,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
               className="rounded-xl overflow-hidden transition-all duration-300"
               style={{
                 border: isActive ? '1.5px solid #6ee7b7' : '1px solid #f3f4f6',
-                boxShadow: isActive ? 'inset 4px 0 0 #00a040, 0 4px 16px rgba(0,160,64,0.12)' : 'none',
+                boxShadow: isActive ? 'inset 4px 0 0 var(--brand), 0 4px 16px var(--brand-shadow)' : 'none',
               }}
             >
               <button className="w-full flex items-center justify-between px-3 py-2.5"
@@ -1124,7 +1124,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 className="flex-1 py-2 rounded-lg text-sm font-bold border border-gray-200 text-gray-500 bg-white">取消</button>
               <button onClick={addCustomSpec} disabled={!customName.trim()}
                 className="flex-1 py-2 rounded-lg text-sm font-bold text-white disabled:opacity-40"
-                style={{ background: 'linear-gradient(135deg, #00a040, #007d30)' }}>確認新增</button>
+                style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))' }}>確認新增</button>
             </div>
           </div>
         ) : isManager ? (
@@ -1271,7 +1271,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
           </button>
           <button onClick={() => { if (isLast) saveCurrentCard(); else goCard(cardIdx + 1) }}
             className="flex-1 py-3 rounded-2xl text-base font-bold text-white transition-all"
-            style={{ background: isLast ? 'linear-gradient(135deg, #00a040, #007d30)' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}>
+            style={{ background: isLast ? 'linear-gradient(135deg, var(--brand), var(--brand-dark))' : 'linear-gradient(135deg, #1e40af, #3b82f6)' }}>
             {isLast ? '完成 ✓' : '確認，下一台 →'}
           </button>
         </div>
@@ -1377,7 +1377,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 <button
                   onClick={() => setExpandedIdx(allExpanded ? new Set() : new Set(filteredSpecs.map(s => s.slotKey)))}
                   className="px-3 py-1.5 rounded-xl text-base font-bold transition-all"
-                  style={{ background: allExpanded ? '#00a040' : '#f3f4f6', color: allExpanded ? 'white' : '#6b7280' }}
+                  style={{ background: allExpanded ? 'var(--brand)' : '#f3f4f6', color: allExpanded ? 'white' : '#6b7280' }}
                 >
                   {allExpanded ? '⊟ 收合全部' : '⊞ 展開全部'}
                 </button>
@@ -1588,7 +1588,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                 return (
                   <button key={t.key} onClick={() => { setFriendly(p => ({ ...p, [t.key]: !p[t.key] })); setSubmitted(false) }}
                     className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left transition-all"
-                    style={{ background: done ? '#ecfdf5' : '#f9fafb' }}>
+                    style={{ background: done ? 'var(--color-green-50)' : '#f9fafb' }}>
                     {done ? <CheckCircle2 className="w-5 h-5 shrink-0 text-green-500" /> : <Circle className="w-5 h-5 shrink-0 text-gray-200" />}
                     <div>
                       <p className="text-base font-bold" style={{ color: done ? '#059669' : '#374151' }}>
@@ -1647,7 +1647,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
             <div className="flex items-center gap-2 mb-2">
               <span
                 className="text-base font-bold px-2 py-0.5 rounded-full"
-                style={{ background: hasContent ? '#dcfce7' : '#f3f4f6', color: hasContent ? '#16a34a' : '#6b7280' }}
+                style={{ background: hasContent ? 'var(--color-green-100)' : '#f3f4f6', color: hasContent ? '#16a34a' : '#6b7280' }}
               >
                 {key}
               </span>
@@ -1702,7 +1702,7 @@ export default function DailyWorkPage({ user, onBack }: Props) {
                   whileTap={{ scale: 0.97 }}
                   onClick={() => setView(nextView)}
                   className="w-full py-4 rounded-2xl text-white font-bold text-base flex items-center justify-center gap-2"
-                  style={{ background: 'linear-gradient(135deg, #00a040, #007d30)' }}
+                  style={{ background: 'linear-gradient(135deg, var(--brand), var(--brand-dark))' }}
                 >
                   <span>下一項：{viewTitles[nextView]}</span>
                   <ChevronRight className="w-5 h-5" />

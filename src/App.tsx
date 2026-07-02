@@ -25,6 +25,7 @@ const MysteryManagePage    = lazy(() => import('./pages/admin/MysteryManagePage'
 const StoreStatusPage      = lazy(() => import('./pages/admin/StoreStatusPage'))
 const FillCheckPage        = lazy(() => import('./pages/admin/FillCheckPage'))
 const FeatureClickPage     = lazy(() => import('./pages/admin/FeatureClickPage'))
+const SupervisorImportPage = lazy(() => import('./pages/admin/SupervisorImportPage'))
 const MysteryFormPage      = lazy(() => import('./pages/MysteryFormPage'))
 const SubManagerManagePage = lazy(() => import('./pages/SubManagerManagePage'))
 const SubManagerFormPage   = lazy(() => import('./pages/SubManagerFormPage'))
@@ -43,7 +44,7 @@ const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
 const SUB_TOKEN = new URLSearchParams(window.location.search).get('sub-token')
 
 const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage', 'coffee-check', 'c15-check', 'admin-records']
-const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage', 'admin-store-status', 'admin-feature-clicks', 'admin-fill-check']
+const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage', 'admin-store-status', 'admin-feature-clicks', 'admin-fill-check', 'supervisor-import']
 
 const staffTabs = [
   { page: 'dashboard'    as Page, icon: Home,          label: '首頁'   },
@@ -126,6 +127,7 @@ function App() {
       case 'admin-store-status':   return <StoreStatusPage      user={user} onBack={goBack} />
       case 'admin-fill-check':     return <FillCheckPage        user={user} onBack={goBack} />
       case 'admin-feature-clicks': return <FeatureClickPage     user={user} onBack={goBack} />
+      case 'supervisor-import':    return <SupervisorImportPage user={user} onBack={goBack} />
       case 'sub-manager-manage':   return <SubManagerManagePage user={user} onBack={goBack} />
       case 'coffee-check':         return <CoffeeCheckPage      user={user} onBack={goBack} />
       case 'c15-check':            return <C15CheckPage         user={user} onBack={goBack} />

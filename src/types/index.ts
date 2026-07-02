@@ -20,6 +20,7 @@ export type Page =
   | 'admin-store-status'
   | 'admin-fill-check'
   | 'admin-feature-clicks'
+  | 'supervisor-import'
 
 export interface User {
   id: string
@@ -27,5 +28,6 @@ export interface User {
   role: Role
   storeId: string
   storeName: string
+  employeeId?: string
   managedStores?: { store_id: string; store_name: string }[]
 }

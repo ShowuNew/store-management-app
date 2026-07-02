@@ -271,27 +271,35 @@ function StoreCard({ store, index }: { store: StoreData; index: number }) {
 /* ══ 主頁面 ══ */
 type FilterType = 'all' | 'done' | 'issue'
 
-export default function StoreStatusPage({ onBack }: Props) {
+export default function StoreStatusPage({ user, onBack }: Props) {
   const today = new Date().toISOString().split('T')[0]
   const [dateStr, setDateStr] = useState(today)
   const [filter, setFilter]   = useState<FilterType>('all')
 
+  const storeList = useMemo(() => {
+    if (user.role === 'supervisor' && user.managedStores && user.managedStores.length > 0) {
+      const ids = new Set(user.managedStores.map(s => s.store_id))
+      return STORE_LIST.filter(s => ids.has(s.storeId))
+    }
+    return STORE_LIST
+  }, [user.managedStores, user.role])
+
   const filtered = useMemo(() => {
-    return STORE_LIST.filter(s => {
+    return storeList.filter(s => {
       if (filter === 'done')  return isAllDone(s)
       if (filter === 'issue') return hasIssue(s)
       return true
     })
-  }, [filter])
+  }, [filter, storeList])
 
-  const doneCount  = STORE_LIST.filter(isAllDone).length
-  const issueCount = STORE_LIST.filter(hasIssue).length
-  const midCount   = STORE_LIST.length - doneCount - issueCount
+  const doneCount  = storeList.filter(isAllDone).length
+  const issueCount = storeList.filter(hasIssue).length
+  const midCount   = storeList.length - doneCount - issueCount
 
   const filterTabs: { key: FilterType; label: string; count: number; color: string }[] = [
-    { key: 'all',   label: '全部',   count: STORE_LIST.length, color: '#374151' },
-    { key: 'done',  label: '全部完成', count: doneCount,          color: '#16a34a' },
-    { key: 'issue', label: '有未完成', count: issueCount,          color: '#dc2626' },
+    { key: 'all',   label: '全部',   count: storeList.length, color: '#374151' },
+    { key: 'done',  label: '全部完成', count: doneCount,        color: '#16a34a' },
+    { key: 'issue', label: '有未完成', count: issueCount,        color: '#dc2626' },
   ]
 
   return (

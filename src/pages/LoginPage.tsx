@@ -51,7 +51,9 @@ export default function LoginPage({ onLogin }: Props) {
 
   useEffect(() => { logAthParams() }, [])
 
-  const isHQ = role === 'supervisor' || role === 'admin'
+  const isAdmin      = role === 'admin'
+  const isSupervisor = role === 'supervisor'
+  const isStoreRole  = !isAdmin && !isSupervisor
 
   const writeLoginLog = (storeId: string) => {
     supabase.from('login_logs').insert({
@@ -70,11 +72,42 @@ export default function LoginPage({ onLogin }: Props) {
   }
 
   const handleLogin = async () => {
-    if (!isHQ && !/^\d{6}$/.test(storeCode.trim())) {
+    if (isStoreRole && !/^\d{6}$/.test(storeCode.trim())) {
       setError('店號須為 6 位數字'); return
+    }
+    if (isSupervisor && !storeCode.trim()) {
+      setError('請輸入員工編號'); return
     }
     if (pin.length !== 4 || !/^\d{4}$/.test(pin)) {
       setError('請輸入 4 位數字 PIN 碼'); return
+    }
+
+    if (role === 'supervisor') {
+      setChecking(true)
+      const today = new Date().toISOString().split('T')[0]
+      const { data: assignments } = await supabase
+        .from('supervisor_store_assignments')
+        .select('store_id, store_name')
+        .eq('supervisor_employee_id', storeCode.trim())
+        .eq('valid_date', today)
+      setChecking(false)
+
+      if (!assignments || assignments.length === 0) {
+        setError('查無今日輪區資料，請確認員工編號')
+        return
+      }
+
+      writeLoginLog('HQ')
+      onLogin({
+        id: storeCode.trim(),
+        name: `擔當 ${storeCode.trim()}`,
+        role: 'supervisor',
+        storeId: 'HQ',
+        storeName: '總部管理',
+        employeeId: storeCode.trim(),
+        managedStores: assignments.map((s: any) => ({ store_id: s.store_id, store_name: s.store_name })),
+      })
+      return
     }
 
     if (role === 'manager') {
@@ -101,8 +134,8 @@ export default function LoginPage({ onLogin }: Props) {
       }
     }
 
-    const effectiveStoreId = isHQ ? 'HQ' : storeCode.trim()
-    doLogin(effectiveStoreId, isHQ ? '總部管理' : `全家 ${storeCode.trim()} 店`)
+    const effectiveStoreId = isAdmin ? 'HQ' : storeCode.trim()
+    doLogin(effectiveStoreId, isAdmin ? '總部管理' : `全家 ${storeCode.trim()} 店`)
   }
 
   const handlePickStore = () => {
@@ -182,7 +215,7 @@ export default function LoginPage({ onLogin }: Props) {
               </div>
 
               {/* 店號 */}
-              {!isHQ && (
+              {isStoreRole && (
                 <div className="mb-4">
                   <label className="text-base font-semibold text-gray-600 mb-2 block">店號</label>
                   <div className="flex items-center border-2 border-gray-100 rounded-2xl px-4 bg-gray-50 focus-within:border-green-400 transition-colors" style={{ minHeight: '52px' }}>
@@ -197,6 +230,27 @@ export default function LoginPage({ onLogin }: Props) {
                       maxLength={6}
                       value={storeCode}
                       onChange={e => { setStoreCode(e.target.value.replace(/\D/g, '')); setError('') }}
+                      onKeyDown={e => e.key === 'Enter' && handleLogin()}
+                    />
+                  </div>
+                </div>
+              )}
+
+              {/* 員工編號 */}
+              {isSupervisor && (
+                <div className="mb-4">
+                  <label className="text-base font-semibold text-gray-600 mb-2 block">員工編號</label>
+                  <div className="flex items-center border-2 border-gray-100 rounded-2xl px-4 bg-gray-50 focus-within:border-green-400 transition-colors" style={{ minHeight: '52px' }}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={FM_GREEN} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0 mr-3">
+                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+                    </svg>
+                    <input
+                      type="text"
+                      inputMode="text"
+                      className="flex-1 bg-transparent text-base text-gray-800 outline-none placeholder-gray-300 py-3"
+                      placeholder="請輸入員工編號"
+                      value={storeCode}
+                      onChange={e => { setStoreCode(e.target.value); setError('') }}
                       onKeyDown={e => e.key === 'Enter' && handleLogin()}
                     />
                   </div>

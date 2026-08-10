@@ -9,6 +9,7 @@ import MobileLayout  from './components/layouts/MobileLayout'
 import TabletLayout  from './components/layouts/TabletLayout'
 import DesktopLayout from './components/layouts/DesktopLayout'
 import type { User, Page } from './types'
+import { PermissionProvider } from './contexts/PermissionContext'
 
 const LoginPage            = lazy(() => import('./pages/LoginPage'))
 const DashboardPage        = lazy(() => import('./pages/DashboardPage'))
@@ -30,7 +31,8 @@ const MysteryFormPage      = lazy(() => import('./pages/MysteryFormPage'))
 const SubManagerManagePage = lazy(() => import('./pages/SubManagerManagePage'))
 const SubManagerFormPage   = lazy(() => import('./pages/SubManagerFormPage'))
 const CoffeeCheckPage      = lazy(() => import('./pages/CoffeeCheckPage'))
-const C15CheckPage         = lazy(() => import('./pages/C15CheckPage'))
+const C15CheckPage              = lazy(() => import('./pages/C15CheckPage'))
+const FeaturePermissionPage     = lazy(() => import('./pages/admin/FeaturePermissionPage'))
 
 function PageLoading() {
   return (
@@ -44,7 +46,7 @@ const URL_TOKEN = new URLSearchParams(window.location.search).get('token')
 const SUB_TOKEN = new URLSearchParams(window.location.search).get('sub-token')
 
 const NAV_PAGES: Page[]       = ['dashboard', 'daily-work', 'hygiene', 'anomaly', 'equipment', 'inspection', 'stats', 'sub-manager-manage', 'coffee-check', 'c15-check', 'admin-records']
-const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage', 'admin-store-status', 'admin-feature-clicks', 'admin-fill-check', 'supervisor-import']
+const ADMIN_NAV_PAGES: Page[] = ['admin-dashboard', 'admin-records', 'admin-anomaly', 'admin-stats', 'mystery-manage', 'admin-store-status', 'admin-feature-clicks', 'admin-fill-check', 'supervisor-import', 'admin-permissions']
 
 const staffTabs = [
   { page: 'dashboard'    as Page, icon: Home,          label: '首頁'   },
@@ -127,7 +129,8 @@ function App() {
       case 'admin-store-status':   return <StoreStatusPage      user={user} onBack={goBack} />
       case 'admin-fill-check':     return <FillCheckPage        user={user} onBack={goBack} />
       case 'admin-feature-clicks': return <FeatureClickPage     user={user} onBack={goBack} />
-      case 'supervisor-import':    return <SupervisorImportPage user={user} onBack={goBack} />
+      case 'supervisor-import':    return <SupervisorImportPage    user={user} onBack={goBack} />
+      case 'admin-permissions':   return <FeaturePermissionPage   user={user} onBack={goBack} />
       case 'sub-manager-manage':   return <SubManagerManagePage user={user} onBack={goBack} />
       case 'coffee-check':         return <CoffeeCheckPage      user={user} onBack={goBack} />
       case 'c15-check':            return <C15CheckPage         user={user} onBack={goBack} />
@@ -148,6 +151,7 @@ function App() {
                   : undefined
 
   return (
+    <PermissionProvider role={user.role}>
     <div data-theme={dataTheme} style={{ display: 'contents' }}>
       <Suspense fallback={<PageLoading />}>
         <LayoutComponent
@@ -204,6 +208,7 @@ function App() {
         </div>
       )}
     </div>
+    </PermissionProvider>
   )
 }
 

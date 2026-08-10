@@ -21,6 +21,7 @@ export type Page =
   | 'admin-fill-check'
   | 'admin-feature-clicks'
   | 'supervisor-import'
+  | 'admin-permissions'
 
 export interface User {
   id: string
